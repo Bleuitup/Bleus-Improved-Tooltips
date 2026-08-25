@@ -1,0 +1,123 @@
+# Bleu's Improved Tooltips
+
+An NS2 client-side mod that puts the numbers a commander actually needs into the commander
+tooltips: research times, ability cooldowns, and structure health and armour.
+
+Version 0.8 — not yet published to the Workshop.
+
+## What it shows
+
+| Value | Icon | Appears on |
+|---|---|---|
+| Research time | hourglass | Researches and upgrades — Armour 3, Stomp, Biomass, weapon upgrades |
+| Cooldown | stopwatch | Commander abilities — Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst |
+| Health / Armour | cross / shield | Anything dropped, built or manufactured, both teams |
+
+Research time and cooldown join vanilla's cost / supply / biomass icons in the top-right row of the
+tooltip. Health and armour appear as a row under the description text.
+
+## Design
+
+**Nothing is registered per tech.** The values already live in `TechData.lua` under keys a tech
+cannot function without, so reading the key *is* the detection:
+
+| Value | TechData key | Vanilla entries |
+|---|---|---|
+| Research time | `kTechDataResearchTimeKey` | 77 |
+| Health | `kTechDataMaxHealth` | 81 |
+| Armour | `kTechDataMaxArmor` | — |
+| Cooldown | `kTechDataCooldown` | 19 |
+
+A mod that adds tech has to populate these for the tech to work at all, so CBM's Advanced Shade,
+CompMod's Charge and B2TP's MedTech get improved tooltips without this mod knowing they exist.
+
+**Live values where they differ from the stored ones.** Bone Wall's real health is computed at
+spawn from the team's biomass level (`BoneWall:OnInitialized`), not stored in TechData — at
+Biomass 9 the stored value of 100 is off by 800. The tooltip mirrors that calculation and tracks
+biomass as the round goes on.
+
+### Extending it from another mod
+
+Register a resolver for anything your mod computes at runtime rather than storing in TechData:
+
+```lua
+-- health, armor, researchTime, cooldown
+ImprovedTooltips.RegisterResolver("health", kTechId.MyAbility, function(techId)
+    return kMyBaseHealth + GetSomeLiveMultiplier()
+end)
+
+-- Or hide a field whose stored value would mislead a commander:
+ImprovedTooltips.SuppressField("cooldown", kTechId.MyPassiveThing)
+```
+
+Resolvers are called every frame the tooltip is visible, so keep them cheap. Return `0` or `nil`
+to hide the field. `ImprovedTooltips.GetTechCategory(techId)` returns `"tech"`, `"structure"`,
+`"cast"` or `"none"`, derived from the tech tree's own `techType` — useful for writing suppression
+rules without a hand-maintained list.
+
+Guard your registration so it does not run before this mod loads:
+
+```lua
+if ImprovedTooltips then
+    ImprovedTooltips.RegisterResolver(...)
+end
+```
+
+## How it hooks in
+
+Two post-hooks cover every commander tooltip in the game, because vanilla funnels all four
+consumers — `GUICommanderButtons`, `GUITechMap`, `GUIBioMassDisplay`, `GUICommanderHelpWidget` —
+through one pair of functions:
+
+| Hook target | Our file | What it does |
+|---|---|---|
+| `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
+| `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create and lay out the new items |
+
+Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
+of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
+deliberately low (5); ModLoader sorts entries by *descending* priority and appends post-hooks in
+that order, so a low number means these hooks run last and wrap whatever else loaded.
+
+## Layout
+
+`source/` is the tree Launch Pad builds from; `output/` is generated and git-ignored.
+
+```
+source/lua/entry/ImprovedTooltips.entry     mod entry, points at the FileHooks file
+source/lua/ImprovedTooltips/
+    ImprovedTooltips_FileHooks.lua          registers the two post-hooks
+    ImprovedTooltips_Config.lua             display options (time format, tint colours)
+    ImprovedTooltips_Values.lua             value resolution + the resolver registry
+    ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua
+    ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua
+source/ui/bleu_tooltip_icons.dds            256x64 icon sheet, 4 cells of 64x64
+tools/build_icons.ps1                       regenerates the icon sheet
+tools/build_preview.ps1                     regenerates the Workshop preview image
+```
+
+## Config
+
+`ImprovedTooltips_Config.lua`:
+
+- `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
+- `kShowZeroArmor` — show an explicit `0` for armourless structures rather than hiding the icon
+- `kMarineIconColor` / `kAlienIconColor` — per-team tint applied to the white icon sheet
+
+## Building the assets
+
+```powershell
+.\tools\build_icons.ps1
+```
+
+Regenerates `source/ui/bleu_tooltip_icons.dds` from vector drawing code and compresses it with
+`nvcompress.exe` from the game's `utils/` folder. Pass `-NS2 <path>` if the game is not at the
+default install path. Output is uncompressed RGBA rather than DXT — the sheet is tiny and DXT
+block artefacts are very visible on hard-edged white glyphs.
+
+## Known limitations
+
+- **Alien structure maturity is not shown.** A Whip goes 560 → 720 health as it matures, but the
+  mature values are constructor arguments in `AlienStructure.lua` subclasses rather than TechData,
+  so there is no generic way to read them. Only the drop-time value is shown.
+- **Not yet tested in game.** Version 0.8 exists so it can be tested before publishing.

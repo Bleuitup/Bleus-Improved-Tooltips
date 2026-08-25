@@ -1,0 +1,14 @@
+-- Bleu's Improved Tooltips
+--
+-- Client-side only: every value shown is already readable on the client (TechData is shared, the
+-- tech tree is networked), so the server does not need to run this mod.
+--
+-- Priority is deliberately low. ModLoader sorts entries by DESCENDING priority and appends each
+-- mod's post-hooks in that order, so a low number means our hooks are registered last and
+-- therefore run last - wrapping whatever CBM (100), Shimizu (99) or CompMod (50) left behind
+-- rather than being overwritten by them.
+modEntry = {
+	ModName = "Bleu's Improved Tooltips",
+	FileHooks = "lua/ImprovedTooltips/ImprovedTooltips_FileHooks.lua",
+	Priority = 5
+}
