@@ -12,10 +12,14 @@ local IT = ImprovedTooltips
 --   "suffix"   ->  "90s"   "10s"
 --   "clock"    ->  "1:30"  "0:10"
 --
--- "seconds" is the default. The only place vanilla prints a research duration is the production
--- queue's hover text (ns2/lua/GUIProduction.lua), which uses "1:23" - but that is a live countdown,
--- where a clock reads naturally. These are static properties of the tech, and the same row also
--- carries cooldowns of 3 to 20 seconds, where "0:03" reads worse than "3".
+-- "seconds" is settled, confirmed against the published build - a 90 second research reads "90".
+-- The other two modes are kept for anyone who prefers them, but do not change the default.
+--
+-- For the record, since it looks inconsistent at first glance: the only place vanilla prints a
+-- research duration is the production queue's hover text (ns2/lua/GUIProduction.lua:335), and that
+-- uses "1:23". But that is a live countdown, where a clock reads naturally. These are static
+-- properties of the tech, and the same row also carries cooldowns of 3 to 20 seconds, where "0:03"
+-- reads worse than "3".
 IT.kTimeFormat = "seconds"
 
 -- Show the armor figure next to health. Armor is 0 on a fair number of structures (Bone Wall,
