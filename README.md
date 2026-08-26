@@ -49,8 +49,7 @@ candidates come from `kTechDataCooldown`, so modded abilities qualify automatica
 
 ### The vanilla bug it depends on
 
-A commander who takes the chair while a team ability is on cooldown never saw the rotating dial,
-and neither did a second commander sitting at another command station when the first one cast.
+A commander who takes the chair while a team ability is on cooldown never saw the rotating dial.
 Enforcement was always correct — only the display was blind.
 
 `gTechIdCooldowns` exists separately in the server VM and in every client VM, and nothing syncs
@@ -63,12 +62,17 @@ if Server then
 end
 ```
 
-an empty block. `ImprovedTooltips_CooldownSync.lua` fills it in, on both paths: replaying live
-cooldowns to a commander on their first move tick after taking the chair, and broadcasting each new
-cooldown to any other commander already seated on that team. It reuses vanilla's own `AbilityResult`
-message rather than adding one, and recovers the original start time through the public
-`GetCooldownFraction` as `castTime = now - (1 - fraction) * duration`, since `gTechIdCooldowns`
-itself is file-local. Fixing this also makes the vanilla button dial work in both cases.
+an empty block. `ImprovedTooltips_CooldownSync.lua` fills it in, replaying the team's live cooldowns
+to a commander on their first move tick after taking the chair. It reuses vanilla's own
+`AbilityResult` message rather than adding one, and recovers the original start time through the
+public `GetCooldownFraction` as `castTime = now - (1 - fraction) * duration`, since
+`gTechIdCooldowns` itself is file-local. Fixing this also makes the vanilla button dial work.
+
+Only the login case needs handling: a team can have at most one commander at a time no matter how
+many command structures it owns (`CommandStructure:GetIsPlayerValidForCommander` requires
+`not team:GetHasCommander()`), so there is never a second seated commander to forward a cooldown to.
+Every path that starts a cooldown already messages the one commander there is — the normal cast, and
+`Drifter.lua:525` for drifter-delivered clouds.
 
 This is the mod's only server-side code. It needs the server anyway (see [Servers](#servers)).
 
@@ -130,7 +134,7 @@ through one pair of functions:
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
 | `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for both commander classes |
-| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` and `OnProcessMove` to sync team cooldowns to commanders vanilla never tells |
+| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `OnProcessMove` to replay the team's live cooldowns to a commander on taking the chair |
 
 Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
 of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
@@ -221,10 +225,9 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - Added the "In Cooldown" panel — a titled panel on the right of the commander's screen listing
   team abilities currently on cooldown, with vanilla's rotating dial and the seconds left. Both
   teams; abilities qualify at 5s or more by default.
-- Fixed the vanilla bug where a commander who did not personally cast an ability never saw its
-  cooldown dial — on taking the chair mid-cooldown, and on a second command station. Server
-  enforcement was always correct; only the display was blind. This also repairs the vanilla button
-  dial, not just the new panel.
+- Fixed the vanilla bug where a commander who took the chair while a team ability was on cooldown
+  never saw its dial. Server enforcement was always correct; only the display was blind. This also
+  repairs the vanilla button dial, not just the new panel.
 - The mod gains its first server-side file as a result. It already had to be installed server-side.
 
 **0.85**

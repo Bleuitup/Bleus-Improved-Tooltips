@@ -90,33 +90,16 @@ local function SyncTeamCooldowns(commander)
 
 end
 
--- Login sync alone is not enough. Marines can have two command stations manned at once, and the
--- team cooldown is shared between them - so when one commander casts, vanilla tells only the caster
--- and the other commander's dial stays blank even though they were seated the whole time. This is
--- the broadcast that vanilla's empty "-- send message to commander to sync the cd" was meant to be.
+-- Only the login case needs handling. A team can have at most ONE commander at a time regardless of
+-- how many command structures it owns: CommandStructure:GetIsPlayerValidForCommander requires
+-- `not team:GetHasCommander()`, which is true if any Commander entity exists on the team, and
+-- NS2Gamerules:OnCommanderLogin gates on the same thing. So there is never a second seated
+-- commander to forward a cooldown to.
 --
--- Wrapping SetTechCooldown rather than the cast site catches every path that starts a cooldown,
--- including Drifter.lua's, which sets one directly on the commander.
-local originalSetTechCooldown = Commander.SetTechCooldown
-
-function Commander:SetTechCooldown(techId, cooldownDuration, startTime)
-
-	originalSetTechCooldown(self, techId, cooldownDuration, startTime)
-
-	if techId == kTechId.None or not techId or not cooldownDuration or cooldownDuration <= 0 then
-		return
-	end
-
-	for _, other in ipairs(GetEntitiesForTeam("Commander", self:GetTeamNumber())) do
-		-- Vanilla already messages the caster from ProcessTechTreeAction; skip them so their
-		-- client does not get the same cooldown set twice in a frame.
-		if other ~= self and other.itCooldownsSynced then
-			SendCooldown(other, techId, startTime)
-		end
-	end
-
-end
-
+-- Every path that starts a cooldown already messages the one commander there is: the normal cast in
+-- Commander_Server.lua, and Drifter.lua:525 for drifter-delivered clouds. What none of them handle
+-- is a commander who was not in the chair at the time, which is what the sync below is for.
+--
 -- Sent on the commander's first move tick rather than at login. NetworkMessages_Client's handler
 -- drops the message unless Client.GetLocalPlayer():GetIsCommander() is already true, and at login
 -- the client has not necessarily swapped its local player over to the Commander entity yet. A move

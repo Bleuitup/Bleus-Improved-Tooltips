@@ -79,10 +79,18 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   Heal Wave 6, Power Surge 4, Rupture 4, Hallucination Cloud 3, Nutrient Mist 2.
 - **That table is file-local and never networked.** It exists separately in the server VM and every
   client VM. A client's copy is only written by `Commander:OnAbilityResultMessage`, driven by the
-  `AbilityResult` message, which vanilla sends **only to the casting commander**. Hence the two
-  display bugs this mod fixes: taking the chair mid-cooldown, and a second command station.
-  Vanilla marks the gap itself — `Commander:SetTechCooldown` ends with an empty
+  `AbilityResult` message, which vanilla sends **only to the casting commander**. Hence the display
+  bug this mod fixes: taking the chair while an ability is already on cooldown. Vanilla marks the
+  gap itself — `Commander:SetTechCooldown` ends with an empty
   `if Server then -- send message to commander to sync the cd end`.
+- **A team has at most ONE commander at a time**, however many command structures it owns — the
+  user corrected me on this and the code agrees: `CommandStructure:GetIsPlayerValidForCommander`
+  requires `not team:GetHasCommander()` (true if any Commander entity exists on the team), and
+  `NS2Gamerules:OnCommanderLogin` gates on the same. `PlayingTeam:GetCommander()` just returns
+  `commanders[1]`. **Do not write code that forwards state between simultaneous commanders** — a
+  `SetTechCooldown` broadcast doing exactly that was written and removed as dead code. Every path
+  that starts a cooldown already messages the single commander: the normal cast, and
+  `Drifter.lua:525`.
 - **No new network message was needed.** `AbilityResult` already carries `(techId, success,
   castTime)`. Since `gTechIdCooldowns` is unreachable, the start time is recovered through the
   public `GetCooldownFraction` as `castTime = now - (1 - fraction) * duration`.
