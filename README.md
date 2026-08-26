@@ -32,6 +32,46 @@ exactly as it is, so a tooltip with nothing extra to show is pixel-identical to 
 No vanilla tech carries both a research time and a cooldown, so the row is at most three entries
 wide. Modded tech that somehow has both will simply show both.
 
+## "In Cooldown" panel
+
+Commander ability cooldowns in NS2 are **team-global**, not per-commander — `Commander.lua:22`
+keeps them in `local gTechIdCooldowns = {}` keyed by *team number*, and the server blocks a cast by
+checking that team table. Three Shades cannot alternate Ink to keep ARCs suppressed.
+
+Vanilla only surfaces that on the ability's own button, so a panel on the right of the commander's
+screen lists whatever is currently on cooldown, using vanilla's own `GUIDial` and per-team cooldown
+textures so it spins exactly like the button does, plus the seconds remaining.
+
+Abilities qualify at `kCooldownPanelMinDuration` seconds or more (default 5): Shade Ink 15s,
+Nano Shield 10s, Heal Wave 6s. Shorter ones — Rupture 4s, Hallucination Cloud 3s, Nutrient Mist 2s —
+are excluded because they would flicker in and out constantly. As everywhere else in this mod the
+candidates come from `kTechDataCooldown`, so modded abilities qualify automatically.
+
+### The vanilla bug it depends on
+
+A commander who takes the chair while a team ability is on cooldown never saw the rotating dial,
+and neither did a second commander sitting at another command station when the first one cast.
+Enforcement was always correct — only the display was blind.
+
+`gTechIdCooldowns` exists separately in the server VM and in every client VM, and nothing syncs
+them. A client's copy is only ever written by the `AbilityResult` message, which the server sends
+to the casting commander alone. Vanilla marks the gap itself — `Commander:SetTechCooldown` ends:
+
+```lua
+if Server then
+    -- send message to commander to sync the cd
+end
+```
+
+an empty block. `ImprovedTooltips_CooldownSync.lua` fills it in, on both paths: replaying live
+cooldowns to a commander on their first move tick after taking the chair, and broadcasting each new
+cooldown to any other commander already seated on that team. It reuses vanilla's own `AbilityResult`
+message rather than adding one, and recovers the original start time through the public
+`GetCooldownFraction` as `castTime = now - (1 - fraction) * duration`, since `gTechIdCooldowns`
+itself is file-local. Fixing this also makes the vanilla button dial work in both cases.
+
+This is the mod's only server-side code. It needs the server anyway (see [Servers](#servers)).
+
 ## Design
 
 **Nothing is registered per tech.** The values already live in `TechData.lua` under keys a tech
@@ -89,6 +129,8 @@ through one pair of functions:
 |---|---|---|
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
+| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for both commander classes |
+| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` and `OnProcessMove` to sync team cooldowns to commanders vanilla never tells |
 
 Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
 of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
@@ -102,11 +144,14 @@ that order, so a low number means these hooks run last and wrap whatever else lo
 ```
 source/lua/entry/ImprovedTooltips.entry     mod entry, points at the FileHooks file
 source/lua/ImprovedTooltips/
-    ImprovedTooltips_FileHooks.lua          registers the two post-hooks
-    ImprovedTooltips_Config.lua             display options (time format, tint colours)
+    ImprovedTooltips_FileHooks.lua          registers the post-hooks
+    ImprovedTooltips_Config.lua             display options (time format, tints, panel)
     ImprovedTooltips_Values.lua             value resolution + the resolver registry
-    ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua
-    ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua
+    ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua       (client)
+    ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua (client)
+    ImprovedTooltips_ClientUI.lua           post-hook on ClientUI.lua            (client)
+    ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
+    GUIImprovedTooltipsCooldowns.lua        the "In Cooldown" panel
 source/ui/bleu_tooltip_icons.dds            256x64 icon sheet, 4 cells of 64x64
 tools/build_icons.ps1                       regenerates the icon sheet
 preview.jpg                                 Workshop preview, 512x512
@@ -126,6 +171,10 @@ and `mod.settings` names the file by extension.
 - `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
 - `kShowZeroArmor` — show an explicit `0` for armourless structures rather than hiding the icon
 - `kMarineIconColor` / `kAlienIconColor` — per-team tint applied to the white icon sheet
+- `kShowCooldownPanel` — turn the "In Cooldown" panel off entirely
+- `kCooldownPanelMinDuration` — minimum cooldown, in seconds, to earn a panel entry (default 5)
+- `kCooldownPanelOffset` — panel position, offset from the right edge / vertical middle
+- `kCooldownPanelShowSeconds` — show the remaining seconds under each icon
 
 ## Building the assets
 
@@ -167,6 +216,16 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**Unreleased**
+- Added the "In Cooldown" panel — a titled panel on the right of the commander's screen listing
+  team abilities currently on cooldown, with vanilla's rotating dial and the seconds left. Both
+  teams; abilities qualify at 5s or more by default.
+- Fixed the vanilla bug where a commander who did not personally cast an ability never saw its
+  cooldown dial — on taking the chair mid-cooldown, and on a second command station. Server
+  enforcement was always correct; only the display was blind. This also repairs the vanilla button
+  dial, not just the new panel.
+- The mod gains its first server-side file as a result. It already had to be installed server-side.
 
 **0.85**
 - Moved research time and cooldown out of vanilla's top-right icon row and into a single stat row

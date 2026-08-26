@@ -185,6 +185,56 @@ function IT.GetValues(techId)
 end
 
 ------------------------------------------------------------------------------------------------
+-- Cooldown tech enumeration
+------------------------------------------------------------------------------------------------
+
+-- Every techId carrying a cooldown, found the same way everything else here is: by asking TechData
+-- rather than keeping a list. Used by the cooldown sync (server) and the "In Cooldown" panel
+-- (client), and it picks up modded abilities for free.
+--
+-- Built once on first use rather than at load time, because TechData is assembled during startup
+-- and mods post-hook it - asking too early would miss whatever had not been added yet.
+local cooldownTechIds = nil
+
+function IT.GetTechIdsWithCooldown(minDuration)
+
+	if not cooldownTechIds then
+
+		cooldownTechIds = { }
+
+		for name, techId in pairs(kTechId) do
+			-- kTechId carries reverse string lookups and a Max sentinel alongside the real values.
+			if type(techId) == "number" and type(name) == "string" and name ~= "Max" and techId ~= kTechId.None then
+				local cooldown = LookupTechData(techId, kTechDataCooldown, 0)
+				if type(cooldown) == "number" and cooldown > 0 then
+					table.insert(cooldownTechIds, techId)
+				end
+			end
+		end
+
+		-- pairs() order is undefined; sort so the panel lists abilities consistently between
+		-- clients and across rounds rather than in whatever order the hash walk produced.
+		table.sort(cooldownTechIds)
+
+	end
+
+	if not minDuration or minDuration <= 0 then
+		return cooldownTechIds
+	end
+
+	local filtered = { }
+	for i = 1, #cooldownTechIds do
+		local techId = cooldownTechIds[i]
+		if LookupTechData(techId, kTechDataCooldown, 0) >= minDuration then
+			table.insert(filtered, techId)
+		end
+	end
+
+	return filtered
+
+end
+
+------------------------------------------------------------------------------------------------
 -- Vanilla dynamic values
 ------------------------------------------------------------------------------------------------
 

@@ -30,3 +30,24 @@ IT.kShowZeroArmor = true
 -- Icon tint. One white icon set is tinted per team so it sits correctly on either commander HUD.
 IT.kMarineIconColor = Color(0.7, 0.9, 1, 1)
 IT.kAlienIconColor = Color(1, 0.79, 0.3, 1)
+
+------------------------------------------------------------------------------------------------
+-- "In Cooldown" panel
+------------------------------------------------------------------------------------------------
+
+-- Commander ability cooldowns are team-global (see ImprovedTooltips_CooldownSync.lua), so a Shade
+-- Ink on cooldown blocks every Shade, not just the one that cast it. This panel surfaces that.
+IT.kShowCooldownPanel = true
+
+-- Only abilities with at least this much cooldown get a panel entry. Vanilla durations are
+-- Shade Ink 15, Nano Shield 10, Heal Wave 6, Power Surge 4, Rupture 4, Hallucination Cloud 3,
+-- Nutrient Mist 2. At 5 the panel shows the ones worth tracking and does not flicker constantly
+-- from the two- and three-second abilities.
+IT.kCooldownPanelMinDuration = 5
+
+-- Position of the panel, as an offset from the right edge of the screen. x is negative (leftward
+-- from that edge); y is measured down from the vertical middle. Both are pre-GUIScale.
+IT.kCooldownPanelOffset = Vector(-210, -120, 0)
+
+-- Show the remaining time in seconds under each icon, the way the tooltips show durations.
+IT.kCooldownPanelShowSeconds = true

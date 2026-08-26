@@ -71,8 +71,43 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   and "Client Side Only" are **not** valid values. This mod uses `Look and Feel` /
   `Must be run on Server` (see the consistency note at the top).
 
+## Commander ability cooldowns (verified 2026-08-26)
+
+- **Cooldowns are team-global, not per-commander.** `Commander.lua:22` holds
+  `local gTechIdCooldowns = {}` keyed by **team number**; `Commander_Server.lua:504` blocks a cast
+  by checking it. Three Shades cannot alternate Ink. Durations: Shade Ink 15, Nano Shield 10,
+  Heal Wave 6, Power Surge 4, Rupture 4, Hallucination Cloud 3, Nutrient Mist 2.
+- **That table is file-local and never networked.** It exists separately in the server VM and every
+  client VM. A client's copy is only written by `Commander:OnAbilityResultMessage`, driven by the
+  `AbilityResult` message, which vanilla sends **only to the casting commander**. Hence the two
+  display bugs this mod fixes: taking the chair mid-cooldown, and a second command station.
+  Vanilla marks the gap itself — `Commander:SetTechCooldown` ends with an empty
+  `if Server then -- send message to commander to sync the cd end`.
+- **No new network message was needed.** `AbilityResult` already carries `(techId, success,
+  castTime)`. Since `gTechIdCooldowns` is unreachable, the start time is recovered through the
+  public `GetCooldownFraction` as `castTime = now - (1 - fraction) * duration`.
+- **`OnCommandAbilityResult` drops the message unless `Client.GetLocalPlayer():GetIsCommander()` is
+  already true**, so syncing at login is racy — the client may not have swapped to the Commander
+  entity yet. Sync on the commander's first server-side `OnProcessMove` instead, which only happens
+  once the client is driving. `self.itCooldownsSynced` gates it; a fresh Commander entity is created
+  by `player:Replace` on every login, so the flag resets naturally.
+- **Hook `lua/Commander.lua`, never `lua/Commander_Server.lua`**, to wrap Commander methods:
+  `Commander.lua:69` loads the server file long before `OnProcessMove` (~line 472) and
+  `SetTechCooldown` (~408) are defined, so a hook there would wrap nothing.
+- **Guard bot commanders.** `bots/CommanderBrain.lua:244` and `Drifter.lua:523` also call
+  `SetTechCooldown`; virtual players have no client to message. Check `GetIsVirtual()`.
+- The rotating timer is vanilla's `GUIDial` (`lua/GUIDial.lua`) with `ui/{marine,alien}_command_cooldown.dds`,
+  configured as in `GUICommanderButtons.lua:75-118`. Anchoring it `Left`/`Bottom` with a zero offset
+  over an equally sized parent makes it overlay exactly, because `GUIDial:Initialize` applies its own
+  `-BackgroundHeight` offset.
+- `kTechId` is **bidirectional** — `enum` rawsets both `[name]=value` and `[value]=name` (see
+  CompMod's `EnumUtils.AppendToEnum`), so iterating it needs a
+  `type(v) == "number" and type(k) == "string"` guard, and must skip `Max`.
+
 ## Environment constraints
 
+- **`python` on PATH is the Microsoft Store stub**, not a real interpreter — it fails with "Python
+  was not found". Do not reach for it for scripted text edits; use the Edit tool or `perl`.
 - **Syntax-check before shipping:** `C:\Users\maost\AppData\Local\Programs\Lua\bin\luac.exe -p <file>`.
   It is **Lua 5.4** and NS2 runs **5.1**, so a pass proves the file parses but not 5.1 compatibility —
   and it says nothing about GUI layout or NS2 API use. Never report a `luac -p` pass as "verified";
