@@ -1,7 +1,10 @@
 # Bleu's Improved Tooltips
 
-An NS2 client-side mod that puts the numbers a commander actually needs into the commander
-tooltips: research times, ability cooldowns, and structure health and armour.
+An NS2 mod that puts the numbers a commander actually needs into the commander tooltips: research
+times, ability cooldowns, and structure health and armour.
+
+All the work happens client-side — every value is already on the client and nothing is sent
+anywhere — but that does **not** mean it runs on any server; see [Servers](#servers).
 
 Version 0.81. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
@@ -127,6 +130,28 @@ Regenerates `source/ui/bleu_tooltip_icons.dds` from vector drawing code and comp
 `nvcompress.exe` from the game's `utils/` folder. Pass `-NS2 <path>` if the game is not at the
 default install path. Output is uncompressed RGBA rather than DXT — the sheet is tiny and DXT
 block artefacts are very visible on hard-edged white glyphs.
+
+## Servers
+
+The mod reads only client-side state and sends nothing, so it needs no server logic. It still has
+to be installed on the server, because of NS2's consistency check rather than anything this mod
+does:
+
+- `ns2/lua/ServerConfig.lua` defaults `consistency_enabled = true` and
+  `use_own_consistency_config = false`, so a stock server uses the built-in config.
+- That config (`core/lua/ConsistencyConfig.lua`) sets `restrict = { "lua/entry/*.entry" }`, fed to
+  `Server.AddRestrictedFileHashes`. Entry files are how a mod declares itself, so this is the hook
+  UWE uses to control which mods a client may load — note the `ignore` list carves out specific
+  cosmetic files (`ui/crosshairs.dds`, hitsound banks) precisely so *those* client mods work.
+
+A client carrying `lua/entry/ImprovedTooltips.entry` that the server does not have is therefore
+expected to fail the check. Admins should add the mod to the server's mod list, or whitelist it.
+
+The Workshop item is tagged `Must be run on Server` for this reason.
+
+> The exact engine behaviour of `Server.AddRestrictedFileHashes` is not readable from Lua, so this
+> is read off the config and NS2's server defaults rather than measured. If it turns out a stock
+> server does accept it, the tag and this section should be revisited.
 
 ## Known limitations
 

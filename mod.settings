@@ -1,8 +1,34 @@
-name        = "Bleus Improved Tooltips"
+name        = "Bleu's Improved Tooltips"
 source_dir  = "source"
 output_dir  = "output"
-description = [=[]=]
+description = [=[[b]Puts the numbers a commander actually needs into the commander tooltips.[/b] Research times, ability cooldowns, and structure health and armour, on the tooltip you are already looking at - no alt-tabbing to a wiki mid-round.
+
+[h1]What it adds[/h1]
+
+[list]
+[*] [b]Research time[/b] - an hourglass and a number on every research and upgrade. Armour 3 reads "40 res, 120 seconds" instead of just "40 res".
+[*] [b]Cooldown[/b] - a stopwatch on commander abilities: Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst, and the rest.
+[*] [b]Health and armour[/b] - for anything you drop or build, on both teams.
+[/list]
+
+All of it sits in one row under the tooltip title, above the description. The card grows to fit, and tooltips with nothing extra to show look exactly as they always did.
+
+[h1]Live values[/h1]
+
+Numbers that change during a round are read live rather than printed from a table. Bone Wall's health scales with your biomass level, so at Biomass 9 the tooltip says 900, not 100.
+
+[h1]Works with other mods[/h1]
+
+Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here. Modders can register their own value resolvers for anything they compute at runtime - see the README on GitHub.
+
+[h1]Servers[/h1]
+
+The mod is purely visual. It only reads values your own client already has, it sends nothing, and it does not change gameplay in any way.
+
+Even so, NS2's default consistency check restricts which mod entry files a client is allowed to load, so on a server running stock settings the server needs to have this mod too. If you want it on a server you play on, ask the admin to add it.
+
+Source: https://github.com/Bleuitup/Bleus-Improved-Tooltips]=]
 image       = "preview.jpg"
-tag_modtype = ""
-tag_support = ""
+tag_modtype = "Look and Feel"
+tag_support = "Must be run on Server"
 publish_id = 3790290682

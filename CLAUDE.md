@@ -5,9 +5,18 @@ covers things that are easy to get wrong.
 
 ## What this is
 
-A **client-side-only** NS2 mod (standalone ModLoader mod, not a Shine extension) that adds
-research time, cooldown, health and armour to the commander tooltips. Every value is readable on
-the client, so the server does not need it.
+A standalone ModLoader NS2 mod (not a Shine extension) that adds research time, cooldown, health
+and armour to the commander tooltips. All the logic is client-side — every value is readable on the
+client and nothing is networked.
+
+**But it is not a "works on any server" client mod, and must not be described as one.** NS2's
+default consistency config restricts `lua/entry/*.entry`
+(`core/lua/ConsistencyConfig.lua:29` → `Server.AddRestrictedFileHashes`), and `ServerConfig.lua:49-50`
+defaults `consistency_enabled = true` / `use_own_consistency_config = false`. A client carrying an
+entry file the server lacks is expected to be rejected, so the server needs the mod as well. 0.8
+shipped with the description claiming the opposite and `tag_support = "Passes Default Consistency"`;
+both were corrected in 0.81 to `Must be run on Server`. The user flagged this before I checked —
+they were right.
 
 ## Verified facts about vanilla (checked against the install, do not re-derive)
 
@@ -60,7 +69,7 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   `Crosshairs`, `Hitsound`, `Alien Vision`, `Gameplay Tweak`, `Look and Feel`, `Custom Game Mode`,
   `Localization`; support is `Passes Default Consistency` or `Must be run on Server`. "Interface"
   and "Client Side Only" are **not** valid values. This mod uses `Look and Feel` /
-  `Passes Default Consistency`.
+  `Must be run on Server` (see the consistency note at the top).
 
 ## Environment constraints
 
@@ -99,6 +108,15 @@ Launch Pad **rewrites `mod.settings` on publish** from the copy it loaded when t
 opened. Editing it on disk while Launch Pad has the project open gets silently clobbered. Change
 `mod.settings` → fully close Launch Pad → reopen → publish. Workshop descriptions are BBCode, not
 Markdown.
+
+**It bit this repo on the 0.8 publish (2026-08-26).** Launch Pad wrote back a `mod.settings` with
+the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped from the name, and
+`publish_id = 3790290682` added. It was restored by hand in 0.81. Two lessons:
+
+1. **Keep `publish_id`** — it is the only thing tying the project to the existing Workshop item.
+2. **Never `git add -A` blind after the user has published.** Diff the staged changes first; the
+   0.81 commit swept the wiped `mod.settings` in unnoticed. `git status` + `git diff --cached` on
+   `mod.settings` before committing.
 
 ## Status
 

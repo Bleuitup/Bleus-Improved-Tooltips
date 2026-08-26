@@ -1,7 +1,12 @@
 -- Bleu's Improved Tooltips
 --
--- Client-side only: every value shown is already readable on the client (TechData is shared, the
--- tech tree is networked), so the server does not need to run this mod.
+-- Client-side in the sense that all the work happens there: every value shown is already readable
+-- on the client (TechData is shared, the tech tree is networked), and nothing is sent anywhere.
+--
+-- That does NOT mean it runs on any server. NS2's default consistency config restricts
+-- "lua/entry/*.entry" (core/lua/ConsistencyConfig.lua) and ships with consistency_enabled = true,
+-- so a stock server rejects a client carrying an entry file the server does not have. In practice
+-- the server has to run this mod too.
 --
 -- Priority is deliberately low. ModLoader sorts entries by DESCENDING priority and appends each
 -- mod's post-hooks in that order, so a low number means our hooks are registered last and
