@@ -123,8 +123,11 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 - Version 0.85, tested in game by the user and published. (There is no published 0.81 — that was the
   working version number while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
-- `preview.jpg` is a generated placeholder (`tools/build_preview.ps1`) — replace it with a real
-  screenshot of an improved tooltip when there is one worth showing. Must stay 512x512.
+- `preview.jpg` is the user's own artwork (added 2026-08-26), replacing the generated placeholder.
+  `tools/build_preview.ps1`, which produced that placeholder, has been deleted — do not recreate a
+  script that writes `preview.jpg`, it would silently clobber real artwork.
+  **It must stay 512x512 and stay a JPEG**: Steam rejects other sizes for this item, and
+  `mod.settings` names the file by extension, so a `.png` beside it does nothing.
 - **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
   re-propose `M:SS`. `kTimeFormat` keeps the other modes, but `"seconds"` is the decision.
 - Open: `preview.jpg` is still a generated placeholder and wants a real in-game screenshot.

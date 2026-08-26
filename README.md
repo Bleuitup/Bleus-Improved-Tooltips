@@ -109,8 +109,15 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua
 source/ui/bleu_tooltip_icons.dds            256x64 icon sheet, 4 cells of 64x64
 tools/build_icons.ps1                       regenerates the icon sheet
-tools/build_preview.ps1                     regenerates the Workshop preview image
+preview.jpg                                 Workshop preview, 512x512
+mod.settings                                Launch Pad project settings
 ```
+
+The repo root doubles as the NS2 Launch Pad project — `mod.settings`, `preview.jpg` and `output/`
+are all Launch Pad needs, so it can be opened and published directly from here.
+
+`preview.jpg` **must stay 512x512 and must stay a JPEG**; Steam rejects other sizes for this item,
+and `mod.settings` names the file by extension.
 
 ## Config
 
