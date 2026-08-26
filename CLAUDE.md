@@ -120,8 +120,8 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 
 ## Status
 
-- Version 0.81. **0.8 was tested in game by the user and published**; 0.81's changes (stat row moved
-  under the title, hourglass redrawn) have themselves not been run yet.
+- Version 0.85, tested in game by the user and published. (There is no published 0.81 — that was the
+  working version number while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
 - `preview.jpg` is a generated placeholder (`tools/build_preview.ps1`) — replace it with a real
   screenshot of an improved tooltip when there is one worth showing. Must stay 512x512.

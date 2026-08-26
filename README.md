@@ -6,7 +6,7 @@ times, ability cooldowns, and structure health and armour.
 All the work happens client-side — every value is already on the client and nothing is sent
 anywhere — but that does **not** mean it runs on any server; see [Servers](#servers).
 
-Version 0.81. Published to the Steam Workshop as
+Version 0.85. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -161,7 +161,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
-**0.81**
+**0.85**
 - Moved research time and cooldown out of vanilla's top-right icon row and into a single stat row
   under the title, alongside health and armour. In 0.8 each extra icon in the top row pushed it
   further left, and with a long title it collided with the title text.

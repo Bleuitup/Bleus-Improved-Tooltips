@@ -24,7 +24,7 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
-IT.kVersion = "0.81"
+IT.kVersion = "0.85"
 
 -- The four extra fields this mod can show. Used as keys throughout, including in the public API.
 IT.kFields = { "health", "armor", "researchTime", "cooldown" }
