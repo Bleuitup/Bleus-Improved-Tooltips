@@ -163,6 +163,21 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 
 ## Status
 
+> ### ⚠ `main` is AHEAD of the published build and UNTESTED
+>
+> Everything after `v0.85` — the "In Cooldown" panel and the cooldown-sync fix — has **never been
+> run in game**. It is marked by the annotated tag **`pending-test/cooldown-panel`**, whose message
+> carries the full test checklist:
+>
+> ```bash
+> git tag -l 'pending-test/*'
+> git show pending-test/cooldown-panel
+> ```
+>
+> Tag namespaces: `v*` = published, `pending-test/*` = compiles but unverified. **Delete the
+> pending-test tag once the work is tested and released.** Do not publish to the Workshop while one
+> is outstanding without saying so explicitly.
+
 - Version 0.85, tested in game by the user and published. (There is no published 0.81 — that was the
   working version number while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
@@ -173,4 +188,4 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
   `mod.settings` names the file by extension, so a `.png` beside it does nothing.
 - **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
   re-propose `M:SS`. `kTimeFormat` keeps the other modes, but `"seconds"` is the decision.
-- Open: `preview.jpg` is still a generated placeholder and wants a real in-game screenshot.
+- Open: nothing, beyond testing the `pending-test/cooldown-panel` work above.
