@@ -3,7 +3,8 @@
 An NS2 client-side mod that puts the numbers a commander actually needs into the commander
 tooltips: research times, ability cooldowns, and structure health and armour.
 
-Version 0.8 — not yet published to the Workshop.
+Version 0.81. Published to the Steam Workshop as
+[item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
 
@@ -13,8 +14,20 @@ Version 0.8 — not yet published to the Workshop.
 | Cooldown | stopwatch | Commander abilities — Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst |
 | Health / Armour | cross / shield | Anything dropped, built or manufactured, both teams |
 
-Research time and cooldown join vanilla's cost / supply / biomass icons in the top-right row of the
-tooltip. Health and armour appear as a row under the description text.
+All of it appears as a single row directly under the tooltip's title, above the description:
+
+```
+Armor #3 ( C )                    40 [res]
+[hourglass] 120
+Gives Marines 60 extra armor
+```
+
+The card grows to fit — vanilla already sizes the panel from its content every frame, so the row
+only has to declare its height. Vanilla's own top-right icon row (cost / supply / biomass) is left
+exactly as it is, so a tooltip with nothing extra to show is pixel-identical to vanilla.
+
+No vanilla tech carries both a research time and a cooldown, so the row is at most three entries
+wide. Modded tech that somehow has both will simply show both.
 
 ## Design
 
@@ -72,7 +85,7 @@ through one pair of functions:
 | Hook target | Our file | What it does |
 |---|---|---|
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
-| `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create and lay out the new items |
+| `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
 
 Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
 of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
@@ -120,4 +133,16 @@ block artefacts are very visible on hard-edged white glyphs.
 - **Alien structure maturity is not shown.** A Whip goes 560 → 720 health as it matures, but the
   mature values are constructor arguments in `AlienStructure.lua` subclasses rather than TechData,
   so there is no generic way to read them. Only the drop-time value is shown.
-- **Not yet tested in game.** Version 0.8 exists so it can be tested before publishing.
+
+## Changelog
+
+**0.81**
+- Moved research time and cooldown out of vanilla's top-right icon row and into a single stat row
+  under the title, alongside health and armour. In 0.8 each extra icon in the top row pushed it
+  further left, and with a long title it collided with the title text.
+- Dropped 0.8's repacking of vanilla's own cost / supply / biomass icons — no longer needed, and it
+  means tooltips with no extra data now render exactly as vanilla does.
+- Redrew the hourglass. The 0.8 version was a flat bowtie of two bars and two triangles; it now has
+  rounded caps, concave glass, and sand falling from a full upper bulb into a mound below.
+
+**0.8** — first published build.

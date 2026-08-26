@@ -1,16 +1,22 @@
 -- Bleu's Improved Tooltips
 -- lua/ImprovedTooltips/ImprovedTooltips_TooltipGUI.lua
 --
--- Post-hook on lua/GUICommanderTooltip.lua. Adds two things to the commander tooltip:
+-- Post-hook on lua/GUICommanderTooltip.lua. Inserts one stat row directly under the tooltip's
+-- title, above the description, showing health, armour and research time or cooldown:
 --
---   * the top-right icon row gains a research-time and a cooldown entry, alongside vanilla's
---     cost / supply / biomass icons;
---   * a stat row appears under the description text showing health and armor.
+--     Armor #3 ( C )                    40 [res]
+--     [hourglass] 120
+--     Gives Marines 60 extra armor
 --
--- Vanilla's icon row uses hardcoded slots (cost at slot 1, supply at 3, biomass at 5, measured
--- leftward from the right edge in icon-widths), which leaves holes whenever a tech has some but
--- not all of them. Rather than fight that, we let vanilla position everything and then repack the
--- whole row right-to-left over the icons that actually ended up visible.
+-- 0.8 put research time and cooldown in vanilla's top-right icon row instead. That row is
+-- positioned right-to-left from the panel edge, so every icon added to it pushes the row a further
+-- ~2 icon-widths left - and with a long title the row ran into the title text. Moving our values
+-- out of that row entirely fixes the collision at its source, and means a tooltip with no extra
+-- data to show is now pixel-identical to vanilla (0.8 also repacked vanilla's own icons, which is
+-- no longer needed and has been dropped).
+--
+-- The panel grows to fit automatically: vanilla's CalculateTotalTextHeight -> UpdateSizeAndPosition
+-- sizes the background from its content every frame, so the row only has to declare its height.
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
@@ -27,6 +33,9 @@ local kIconCoords = {
 	cooldown = { 192, 0, 256, 64 },
 }
 
+-- Left-to-right order of the stat row.
+local kRowOrder = { "health", "armor", "research", "cooldown" }
+
 -- Recomputed on every Initialize, which is also what OnResolutionChanged triggers.
 local kStatRowYOffset
 local kStatRowHeight
@@ -34,10 +43,10 @@ local kStatIconTextGap
 local kStatEntryGap
 
 local function UpdateScale()
-	kStatRowYOffset  = GUIScale(10)
+	kStatRowYOffset  = GUIScale(8)
 	kStatRowHeight   = GUICommanderTooltip.kResourceIconSize
 	kStatIconTextGap = GUIScale(4)
-	kStatEntryGap    = GUIScale(18)
+	kStatEntryGap    = GUIScale(20)
 end
 
 local function GetIconColor()
@@ -68,22 +77,11 @@ end
 -- Item creation
 ------------------------------------------------------------------------------------------------
 
--- Builds an icon with a number attached, matching how vanilla builds its cost/supply/biomass
--- entries so the new ones sit correctly beside them.
---
--- textSide "left"  -> number is right-aligned just left of the icon  ("90 [hourglass]")
---                     icon anchors to the panel's RIGHT edge, since the top-right row is
---                     positioned with negative offsets from there.
--- textSide "right" -> number is left-aligned just right of the icon  ("[health] 650")
---                     icon anchors to the panel's LEFT edge, like vanilla's text blocks.
-local function CreateIconWithText(coords, textSide)
+-- One entry: an icon with its number to the right of it, as "[health] 1500".
+local function CreateEntry(coords)
 
 	local icon = GUIManager:CreateGraphicItem()
-	if textSide == "right" then
-		icon:SetAnchor(GUIItem.Left, GUIItem.Top)
-	else
-		icon:SetAnchor(GUIItem.Right, GUIItem.Top)
-	end
+	icon:SetAnchor(GUIItem.Left, GUIItem.Top)
 	icon:SetSize(Vector(GUICommanderTooltip.kResourceIconSize, GUICommanderTooltip.kResourceIconSize, 0))
 	icon:SetTexture(kIconTexture)
 	icon:SetTexturePixelCoordinates(GUIUnpackCoords(coords))
@@ -93,25 +91,17 @@ local function CreateIconWithText(coords, textSide)
 	local text = GUIManager:CreateTextItem()
 	text:SetFontSize(GUICommanderTooltip.kCostFontSize)
 	text:SetScale(GetScaledVector())
+	text:SetAnchor(GUIItem.Right, GUIItem.Top)
+	text:SetTextAlignmentX(GUIItem.Align_Min)
+	text:SetTextAlignmentY(GUIItem.Align_Center)
+	text:SetPosition(Vector(kStatIconTextGap, GUICommanderTooltip.kResourceIconSize / 2, 0))
 	text:SetColor(Color(1, 1, 1, 1))
 	text:SetFontIsBold(true)
 	text:SetFontName(Fonts.kAgencyFB_Small)
-	text:SetTextAlignmentY(GUIItem.Align_Center)
-
-	if textSide == "right" then
-		text:SetAnchor(GUIItem.Right, GUIItem.Top)
-		text:SetTextAlignmentX(GUIItem.Align_Min)
-		text:SetPosition(Vector(kStatIconTextGap, GUICommanderTooltip.kResourceIconSize / 2, 0))
-	else
-		text:SetAnchor(GUIItem.Left, GUIItem.Top)
-		text:SetTextAlignmentX(GUIItem.Align_Max)
-		text:SetPosition(Vector(GUICommanderTooltip.kCostXOffset, GUICommanderTooltip.kResourceIconSize / 2, 0))
-	end
-
 	GUIMakeFontScale(text)
 	icon:AddChild(text)
 
-	return icon, text
+	return { icon = icon, text = text }
 
 end
 
@@ -125,17 +115,13 @@ function GUICommanderTooltip:Initialize()
 
 	-- Parented to self.background, so vanilla's Uninitialize destroys these along with everything
 	-- else - no cleanup hook needed.
-	self.itResearchIcon, self.itResearchText = CreateIconWithText(kIconCoords.research, "left")
-	self.background:AddChild(self.itResearchIcon)
-
-	self.itCooldownIcon, self.itCooldownText = CreateIconWithText(kIconCoords.cooldown, "left")
-	self.background:AddChild(self.itCooldownIcon)
-
-	self.itHealthIcon, self.itHealthText = CreateIconWithText(kIconCoords.health, "right")
-	self.background:AddChild(self.itHealthIcon)
-
-	self.itArmorIcon, self.itArmorText = CreateIconWithText(kIconCoords.armor, "right")
-	self.background:AddChild(self.itArmorIcon)
+	self.itEntries = { }
+	for i = 1, #kRowOrder do
+		local field = kRowOrder[i]
+		local entry = CreateEntry(kIconCoords[field])
+		self.background:AddChild(entry.icon)
+		self.itEntries[field] = entry
+	end
 
 end
 
@@ -143,85 +129,78 @@ end
 -- Layout
 ------------------------------------------------------------------------------------------------
 
--- Vanilla's slot formula, from GUICommanderTooltip:Initialize: slot 1 sits at the right edge and
--- each further slot steps two icon-widths left.
-local function SetIconSlot(icon, slot)
-
-	local x = -GUICommanderTooltip.kResourceIconSize * (2 * slot - 1) + GUICommanderTooltip.kResourceIconXOffset
-	icon:SetPosition(Vector(x, GUICommanderTooltip.kResourceIconYOffset, 0))
-
+-- Where vanilla's nextYPosition chain starts, i.e. the bottom of the title line.
+local function GetTitleBottom(self)
+	return self.text:GetPosition().y + self.text:GetTextHeight(self.text:GetText()) * self.text:GetScale().y
 end
 
-local function RepackIconRow(self)
-
-	local row = { self.resourceIcon, self.supplyIcon, self.biomassIcon, self.itResearchIcon, self.itCooldownIcon }
-
-	local slot = 1
-	for i = 1, #row do
-		local icon = row[i]
-		if icon and icon:GetIsVisible() then
-			SetIconSlot(icon, slot)
-			slot = slot + 1
-		end
-	end
-
-end
-
--- Mirrors the nextYPosition chain inside vanilla's UpdateData to find where the description text
--- actually ends. Runs after vanilla has positioned everything, so it reads final positions.
-local function GetContentBottom(self)
-
-	local y = self.text:GetPosition().y + self.text:GetTextHeight(self.text:GetText()) * self.text:GetScale().y
-
-	if self.requires:GetIsVisible() then
-		y = self.requires:GetPosition().y
-			+ self.requires:GetTextHeight(self.requires:GetText()) * self.requires:GetScale().y
-			+ self.requiresInfo:GetTextHeight(self.requiresInfo:GetText()) * self.requiresInfo:GetScale().y
-	end
-
-	if self.enables:GetIsVisible() and string.len(self.enablesInfo:GetText()) > 0 then
-		y = self.enables:GetPosition().y
-			+ self.enables:GetTextHeight(self.enables:GetText()) * self.enables:GetScale().y
-			+ self.enablesInfo:GetTextHeight(self.enablesInfo:GetText()) * self.enablesInfo:GetScale().y
-	end
-
-	if self.info:GetIsVisible() then
-		y = self.info:GetPosition().y + self.info:GetTextHeight(self.info:GetText()) * self.info:GetScale().y
-	end
-
-	return y
-
-end
-
-local function GetEntryWidth(text)
+local function GetEntryWidth(entry)
 	return GUICommanderTooltip.kResourceIconSize + kStatIconTextGap
-		+ text:GetTextWidth(text:GetText()) * text:GetScale().x
+		+ entry.text:GetTextWidth(entry.text:GetText()) * entry.text:GetScale().x
+end
+
+-- Vanilla positions requires/enables/info straight after the title. With a row inserted between,
+-- they all move down by the same amount, which preserves the spacing vanilla chose between them.
+local function ShiftBlock(item, dy)
+
+	if item:GetIsVisible() then
+		local pos = item:GetPosition()
+		item:SetPosition(Vector(pos.x, pos.y + dy, 0))
+	end
+
+end
+
+local function GetDisplayValue(field, values)
+
+	if field == "health" then
+		return values.health > 0 and ToString(math.floor(values.health + 0.5)) or nil
+	elseif field == "armor" then
+		-- An explicit 0 tells a commander "no armour" rather than "not measured", but only
+		-- alongside a health figure - a lone "0" would be meaningless.
+		if values.armor > 0 then
+			return ToString(math.floor(values.armor + 0.5))
+		elseif values.health > 0 and IT.kShowZeroArmor then
+			return "0"
+		end
+		return nil
+	elseif field == "research" then
+		return values.researchTime > 0 and FormatDuration(values.researchTime) or nil
+	elseif field == "cooldown" then
+		return values.cooldown > 0 and FormatDuration(values.cooldown) or nil
+	end
+
+	return nil
+
 end
 
 local function LayoutStatRow(self, values)
 
-	local showHealth = values ~= nil and values.health > 0
-	local showArmor = values ~= nil and (values.armor > 0 or (showHealth and IT.kShowZeroArmor))
-
-	self.itHealthIcon:SetIsVisible(showHealth)
-	self.itArmorIcon:SetIsVisible(showArmor)
-
-	if not showHealth and not showArmor then
-		return
-	end
-
-	local y = GetContentBottom(self) + kStatRowYOffset
+	local shown = false
 	local x = GUICommanderTooltip.kTextXOffset
+	local y = GetTitleBottom(self) + kStatRowYOffset
 
-	if showHealth then
-		self.itHealthText:SetText(ToString(math.floor(values.health + 0.5)))
-		self.itHealthIcon:SetPosition(Vector(x, y, 0))
-		x = x + GetEntryWidth(self.itHealthText) + kStatEntryGap
+	for i = 1, #kRowOrder do
+
+		local field = kRowOrder[i]
+		local entry = self.itEntries[field]
+		local display = values and GetDisplayValue(field, values) or nil
+
+		entry.icon:SetIsVisible(display ~= nil)
+
+		if display then
+			entry.text:SetText(display)
+			entry.icon:SetPosition(Vector(x, y, 0))
+			x = x + GetEntryWidth(entry) + kStatEntryGap
+			shown = true
+		end
+
 	end
 
-	if showArmor then
-		self.itArmorText:SetText(ToString(math.floor(values.armor + 0.5)))
-		self.itArmorIcon:SetPosition(Vector(x, y, 0))
+	if shown then
+		local dy = kStatRowHeight + kStatRowYOffset
+		ShiftBlock(self.requires, dy)
+		ShiftBlock(self.enables, dy)
+		ShiftBlock(self.info, dy)
 	end
 
 end
@@ -240,8 +219,7 @@ function GUICommanderTooltip:CalculateTotalTextHeight(text, requires, enables, i
 
 	-- kStatRowHeight is nil until the first Initialize. In practice Initialize always runs first,
 	-- but this is reached from vanilla code we do not control, so do not assume it.
-	local values = IT.lastValues
-	if kStatRowHeight and values and (values.health > 0 or values.armor > 0) then
+	if kStatRowHeight and IT.lastValues then
 		totalHeight = totalHeight + kStatRowHeight + kStatRowYOffset
 	end
 
@@ -255,23 +233,7 @@ function GUICommanderTooltip:UpdateData(text, hotkey, costNumber, requires, enab
 
 	originalUpdateData(self, text, hotkey, costNumber, requires, enables, info, typeNumber, supplyRequired, biomass)
 
-	local values = IT.lastValues
-
-	local showResearch = values ~= nil and values.researchTime > 0
-	local showCooldown = values ~= nil and values.cooldown > 0
-
-	self.itResearchIcon:SetIsVisible(showResearch)
-	if showResearch then
-		self.itResearchText:SetText(FormatDuration(values.researchTime))
-	end
-
-	self.itCooldownIcon:SetIsVisible(showCooldown)
-	if showCooldown then
-		self.itCooldownText:SetText(FormatDuration(values.cooldown))
-	end
-
-	RepackIconRow(self)
-	LayoutStatRow(self, values)
+	LayoutStatRow(self, IT.lastValues)
 
 end
 

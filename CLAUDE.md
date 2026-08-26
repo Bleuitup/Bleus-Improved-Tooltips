@@ -38,7 +38,15 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   `GUIBioMassDisplay.lua:271`.
 - **Vanilla's icon row uses hardcoded slots**, not a flow layout: cost at slot 1, supply at 3,
   biomass at 5, where slot *n* sits at `-kResourceIconSize * (2n-1) + kResourceIconXOffset` from the
-  right edge. We let vanilla position them and then repack over the visible ones.
+  right edge. **We no longer touch that row at all** (0.81). 0.8 added research/cooldown to it and
+  repacked it; because the row grows leftward, each added icon moved it ~2 icon-widths further left
+  and it collided with long titles. Do not put anything back in that row.
+- **`self.text` (the title) is not clipped or wrapped** — unlike requires/enables/info, it has no
+  `SetTextClipped`, so it runs as long as it needs to and will happily overlap anything on the
+  right-hand side of the same line. This is why the top row is off limits.
+- **No vanilla tech has both a research time and a cooldown** — verified by scanning every TechData
+  block for both keys, zero hits (77 have research time, 19 have cooldown). So the stat row is at
+  most three entries wide. The code does not *depend* on this; a modded tech with both renders both.
 - **The only place vanilla prints a research duration** is `GUIProduction.lua:335`, the production
   queue's hover text, as `M:SS` — but that is a live countdown. We default to raw seconds; see
   `kTimeFormat` in the config if that is revisited.
@@ -56,10 +64,12 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
 
 ## Environment constraints
 
-- **No standalone Lua interpreter** on this machine — nothing here can even be syntax-checked
-  locally. Everything must be verified in-game.
-- **No `gh` CLI** — a GitHub remote has to be created on github.com by hand, then `git remote add`
-  + push (Git Credential Manager supplies auth).
+- **Syntax-check before shipping:** `C:\Users\maost\AppData\Local\Programs\Lua\bin\luac.exe -p <file>`.
+  It is **Lua 5.4** and NS2 runs **5.1**, so a pass proves the file parses but not 5.1 compatibility —
+  and it says nothing about GUI layout or NS2 API use. Never report a `luac -p` pass as "verified";
+  behaviour is in-game-only.
+- **`gh` CLI is installed** at `C:\Program Files\GitHub CLI\gh.exe`, authenticated as `Bleuitup`.
+  It is *not* on the Bash tool's PATH — call it by full path or from PowerShell.
 - **No ImageMagick and no Python.** `convert` on PATH is Windows' FAT-to-NTFS converter — never
   invoke it. Image work goes through PowerShell + `System.Drawing`, and DDS conversion through the
   game's own `utils\nvcompress.exe` / `utils\nvdecompress.exe`.
@@ -92,7 +102,10 @@ Markdown.
 
 ## Status
 
-- Version 0.8. **Never run in game.** Nothing here is verified beyond reading vanilla source.
-- No GitHub remote yet.
+- Version 0.81. **0.8 was tested in game by the user and published**; 0.81's changes (stat row moved
+  under the title, hourglass redrawn) have themselves not been run yet.
+- Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
 - `preview.jpg` is a generated placeholder (`tools/build_preview.ps1`) — replace it with a real
-  screenshot of an improved tooltip before publishing. Must stay 512x512.
+  screenshot of an improved tooltip when there is one worth showing. Must stay 512x512.
+- Open with the user: whether the Workshop item's tags should change (they raised server-side /
+  whitelisting), and whether durations should switch from raw seconds to `M:SS`.
