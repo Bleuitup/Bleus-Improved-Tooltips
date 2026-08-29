@@ -149,11 +149,24 @@ function GUIImprovedTooltipsCooldowns:GetEntry(index)
 		return self.entries[index]
 	end
 
+	-- Each entry sits on the same button plate the production/research display uses
+	-- (GUIProduction.lua), which is what gives the row its own shape. Before this the panel drew one
+	-- flat translucent rectangle behind everything, which read as a hard-edged box - obvious on the
+	-- alien side under the soft smoke, and just as wrong on the marine side where there is no smoke
+	-- to distract from it.
+	local plate = GUIManager:CreateGraphicItem()
+	plate:SetAnchor(GUIItem.Left, GUIItem.Top)
+	plate:SetSize(Vector(kIconSize, kIconSize, 0))
+	plate:SetTexture((self.teamType == kAlienTeamType)
+		and "ui/alien_buildmenu_buttonbg.dds"
+		or  "ui/marine_buildmenu_buttonbg.dds")
+	self.background:AddChild(plate)
+
 	local icon = GUIManager:CreateGraphicItem()
 	icon:SetAnchor(GUIItem.Left, GUIItem.Top)
 	icon:SetSize(Vector(kIconSize, kIconSize, 0))
 	icon:SetTexture("ui/buildmenu.dds")
-	self.background:AddChild(icon)
+	plate:AddChild(icon)
 
 	local dial = GUIDial()
 	dial:Initialize(GetDialSettings(self.teamType))
@@ -174,7 +187,7 @@ function GUIImprovedTooltipsCooldowns:GetEntry(index)
 	GUIMakeFontScale(seconds)
 	icon:AddChild(seconds)
 
-	local entry = { icon = icon, dial = dial, seconds = seconds }
+	local entry = { plate = plate, icon = icon, dial = dial, seconds = seconds }
 	self.entries[index] = entry
 
 	return entry
@@ -185,7 +198,7 @@ function GUIImprovedTooltipsCooldowns:HideFrom(index)
 
 	for i = index, #self.entries do
 		local entry = self.entries[i]
-		entry.icon:SetIsVisible(false)
+		entry.plate:SetIsVisible(false)
 		entry.dial:SetIsVisible(false)
 	end
 
@@ -301,8 +314,8 @@ function GUIImprovedTooltipsCooldowns:Update(deltaTime)
 		local item = active[i]
 		local entry = self:GetEntry(i)
 
-		entry.icon:SetIsVisible(true)
-		entry.icon:SetPosition(Vector(x, y, 0))
+		entry.plate:SetIsVisible(true)
+		entry.plate:SetPosition(Vector(x, y, 0))
 		entry.icon:SetTexturePixelCoordinates(GUIUnpackCoords(GetTextureCoordinatesForIcon(item.techId, isMarine)))
 
 		entry.dial:SetIsVisible(true)

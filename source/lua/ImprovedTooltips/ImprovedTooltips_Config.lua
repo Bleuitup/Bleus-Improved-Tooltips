@@ -57,12 +57,17 @@ IT.kCooldownPanelOffset = Vector(-210, -120, 0)
 -- Show the remaining time in seconds under each icon, the way the tooltips show durations.
 IT.kCooldownPanelShowSeconds = true
 
--- Backing plate opacity behind the panel, per team.
+-- Backing plate opacity behind the whole panel, per team. Both are 0.
 --
--- Alien is 0 on purpose. The alien panel is backed by ui/alien_logout_smkmask.dds through
--- GUISmoke.surface_shader, and that mask is a soft blob whose alpha falls to 0 at every edge - so
--- the smoke alone has no hard border. Putting any flat colour behind it draws a crisp rectangle
--- underneath the soft smoke, which reads as the effect being cut out of a box. Let the smoke be the
--- background. Raise this only if the text turns out to be unreadable over a bright map.
+-- Each entry now sits on the game's own build-menu button plate, the same one the research display
+-- uses, so the row has a shape of its own and needs nothing behind it. Any flat colour here draws a
+-- hard-edged rectangle: obvious on the alien side, where the smoke mask fades to nothing at its
+-- edges and the box shows through underneath, and just as wrong on the marine side where there is
+-- no smoke to distract from it. Raise one only if text turns out unreadable over a bright map.
 IT.kCooldownPanelAlienBackgroundAlpha = 0
-IT.kCooldownPanelMarineBackgroundAlpha = 0.55
+IT.kCooldownPanelMarineBackgroundAlpha = 0
+
+-- Also tint the health and armour icons on VANILLA's selection panel - the one you get clicking an
+-- existing structure - to match their own figures. Vanilla colours the two numbers differently but
+-- draws both icons in one flat team colour.
+IT.kTintSelectionPanelIcons = true

@@ -88,6 +88,41 @@ local function GetTextColor(field, teamType)
 
 end
 
+-- The icons are tinted to their own figure's colour, so a cross and its number read as one thing.
+--
+-- SetColor multiplies, so it can only darken - and vanilla's health/armour art is not white, it is
+-- already the team's colour. These are the brightest pixels of those cells, measured from the
+-- atlases: marine (152,186,195), alien (244,185,55).
+--
+-- Dividing the target by that base gives the tint needed to land on it. It works out well, because
+-- the art base is essentially the HEALTH colour already - that is presumably why vanilla chose it -
+-- so health needs no tint at all, and armour darkens onto its own colour. Anything the multiply
+-- cannot reach is clamped to 1, i.e. left as the art is.
+local kIconArtBase = {
+	[kMarineTeamType] = Color(152 / 255, 186 / 255, 195 / 255, 1),
+	[kAlienTeamType]  = Color(244 / 255, 185 / 255, 55 / 255, 1),
+}
+
+local function GetVanillaIconTint(field, teamType)
+
+	local base = kIconArtBase[teamType]
+	if not base then
+		return nil
+	end
+
+	local target = GetTextColor(field, teamType)
+
+	local function channel(t, b)
+		if b <= 0 then
+			return 1
+		end
+		return math.min(1, t / b)
+	end
+
+	return Color(channel(target.r, base.r), channel(target.g, base.g), channel(target.b, base.b), 1)
+
+end
+
 -- Resolves which texture and cell each entry draws from, for the given team. Returns texture,
 -- coords, tint - tint nil meaning "leave it alone, the art is already the right colour".
 local function GetIconSource(field, teamType, tint)
@@ -96,7 +131,7 @@ local function GetIconSource(field, teamType, tint)
 		local atlas = (teamType == kAlienTeamType)
 			and "ui/alien_commander_textures.dds"
 			or  "ui/marine_commander_textures.dds"
-		return atlas, kVanillaIconCoords[field], nil
+		return atlas, kVanillaIconCoords[field], GetVanillaIconTint(field, teamType)
 	end
 
 	if field == "speed" then
@@ -245,7 +280,16 @@ local function GetDisplayValue(field, values)
 		end
 		return nil
 	elseif field == "speed" then
-		if not IT.kShowSpeed or values.speed <= 0 then
+		if not IT.kShowSpeed then
+			return nil
+		end
+		-- A speed of 0 is normally hidden, or every static structure in the game would carry a
+		-- pointless "0". It IS shown when something registered that zero deliberately - ARC Deploy,
+		-- where losing all movement is the whole point of the button.
+		if values.speed <= 0 then
+			if values.techId and IT.HasResolver("speed", values.techId) then
+				return "0"
+			end
 			return nil
 		end
 		-- Speeds are small and fractional (ARC 2.0, Shade 2.5, Shift 2.9, Whip 3.5), so a whole

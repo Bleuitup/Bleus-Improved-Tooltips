@@ -122,6 +122,17 @@ function IT.RegisterResolver(field, techId, resolverFunction)
 
 end
 
+-- True when a techId has an explicitly registered resolver for a field, as opposed to falling back
+-- to the default lookup.
+--
+-- This is what lets a zero mean two different things. A default speed of 0 means "this does not
+-- move", and showing it would put a pointless "0" on every structure in the game. But a resolver
+-- that deliberately returns 0 - ARC Deploy, say - is making a statement, and hiding it would lose
+-- exactly the information it exists to convey.
+function IT.HasResolver(field, techId)
+	return resolvers[field] ~= nil and resolvers[field][techId] ~= nil
+end
+
 -- Hide a field for one techId even though TechData carries a value for it. For tech where the
 -- stored number exists for the engine's benefit but would mislead a commander.
 function IT.SuppressField(field, techId)
@@ -140,18 +151,27 @@ end
 -- Value resolution
 ------------------------------------------------------------------------------------------------
 
--- Movement speed is the one field with no TechData key at all - it lives as a class constant,
--- `<Class>.kMoveSpeed`, on the six things that move: ARC 2.0, Shade 2.5, Shift 2.9, Whip 3.5,
--- MAC 6, Drifter 11.
+-- Movement speed has no TechData key at all. The class is found the same way as everywhere else
+-- here: kTechId is bidirectional (see GetTechIdsWithCooldown), so kTechId[techId] gives the enum's
+-- own name - "ARC", "MAC", "Crag" - and NS2 classes are globals under exactly those names. A modded
+-- mover whose techId is named after its class is picked up with no registration.
 --
--- Rather than keep a techId -> class table, the class is derived. kTechId is bidirectional (see
--- GetTechIdsWithCooldown), so kTechId[techId] gives the enum's own name - "ARC", "MAC", "Drifter",
--- "Whip" - and NS2 classes are globals under exactly those names. A modded mover whose techId is
--- named after its class is therefore picked up with no registration, same as everything else here.
+-- Getting the SPEED off that class is the awkward part, because vanilla is not consistent:
 --
--- The lookup is deliberately paranoid: plenty of techId names collide with unrelated globals
--- (kTechId.Move and the Move hotkey table, for one), so a hit only counts if it is a table carrying
--- a positive numeric kMoveSpeed.
+--   ARC, Drifter   `<Class>.kMoveSpeed`, no accessor at all
+--   MAC, Whip      `<Class>.kMoveSpeed`, exposed by GetMoveSpeed
+--   Shift          `Shift.kMoveSpeed`, exposed by GetMaxSpeed
+--   Crag           `Crag.kMaxSpeed` - a DIFFERENT constant name, exposed by GetMaxSpeed
+--   Shade          the global `kAlienStructureMoveSpeed` (1.73), exposed by GetMaxSpeed.
+--                  `Shade.kMoveSpeed = 2.5` also exists but nothing reads it - it is vestigial.
+--
+-- So reading kMoveSpeed alone gets Crag wrong (shows nothing; it moves at 2.9) and Shade wrong
+-- (shows the dead 2.5 instead of 1.73). Both were shipped that way once.
+--
+-- The accessor is the authority, so it is asked first. These accessors are one-line constant
+-- returns, so they answer correctly with no instance - but MAC's reads self.rolloutSourceFactory
+-- and self:GetIsInCombat(), which throws on a nil self. pcall contains that, and the constant is
+-- the fallback, which is the right base value for MAC anyway.
 local function LookupClassMoveSpeed(techId)
 
 	local className = kTechId[techId]
@@ -164,8 +184,24 @@ local function LookupClassMoveSpeed(techId)
 		return 0
 	end
 
-	local speed = class.kMoveSpeed
-	return (type(speed) == "number" and speed > 0) and speed or 0
+	-- Ask the accessor, statically. Anything that needs a real instance throws and is skipped.
+	for _, accessor in ipairs({ "GetMaxSpeed", "GetMoveSpeed" }) do
+		if type(class[accessor]) == "function" then
+			local ok, speed = pcall(class[accessor])
+			if ok and type(speed) == "number" and speed > 0 then
+				return speed
+			end
+		end
+	end
+
+	for _, key in ipairs({ "kMoveSpeed", "kMaxSpeed" }) do
+		local speed = class[key]
+		if type(speed) == "number" and speed > 0 then
+			return speed
+		end
+	end
+
+	return 0
 
 end
 
@@ -199,6 +235,9 @@ function IT.GetValues(techId)
 	end
 
 	local values = {
+		-- Carried so the renderer can ask HasResolver and tell a meaningful zero from an absent
+		-- one. Not a field in kFields, so it does not affect the "anything to show?" test below.
+		techId       = techId,
 		health       = IT.GetValue("health", techId),
 		armor        = IT.GetValue("armor", techId),
 		researchTime = IT.GetValue("researchTime", techId),

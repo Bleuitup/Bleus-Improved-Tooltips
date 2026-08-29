@@ -116,12 +116,18 @@ cannot function without, so reading the key *is* the detection:
 | Armour | `kTechDataMaxArmor` | — |
 | Cooldown | `kTechDataCooldown` | 19 |
 
-**Speed is the exception** — it has no TechData key at all, living instead as a class constant,
-`<Class>.kMoveSpeed`. Rather than keep a techId→class table, the class is derived: `kTechId` is
-bidirectional, so `kTechId[techId]` yields the enum's own name (`"ARC"`, `"MAC"`, `"Drifter"`), and
-NS2 classes are globals under exactly those names. A modded mover whose techId is named after its
-class is picked up with no registration. The lookup only accepts a table carrying a positive numeric
-`kMoveSpeed`, since plenty of techId names collide with unrelated globals.
+**Speed is the exception** - it has no TechData key at all. The class is derived the same way:
+`kTechId` is bidirectional, so `kTechId[techId]` yields the enum's own name (`"ARC"`, `"MAC"`,
+`"Crag"`), and NS2 classes are globals under exactly those names. A modded mover whose techId is
+named after its class is picked up with no registration.
+
+Getting the speed off that class is the awkward part, because vanilla is inconsistent: ARC and
+Drifter keep it in `kMoveSpeed` with no accessor; MAC and Whip expose `GetMoveSpeed`; Shift uses
+`GetMaxSpeed`; **Crag** keeps it under a different name entirely (`Crag.kMaxSpeed`); and **Shade**'s
+real speed is the global `kAlienStructureMoveSpeed` (1.73), with `Shade.kMoveSpeed = 2.5` sitting
+there vestigially, read by nothing. So the accessor is asked first, statically - they are one-line
+constant returns, and the one that needs a real instance (MAC) throws and falls back to the constant,
+which is its correct base value anyway.
 
 ### Icons
 
@@ -195,6 +201,7 @@ through one pair of functions:
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
 | `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, so the whole team sees it |
+| `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health/armour icons to match their figures |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client only.** Wraps `OnInitialized` to replay synced cooldowns into vanilla's own table, fixing vanilla's button dial |
 | `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's team-cooldown message in every VM |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
@@ -218,6 +225,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua       (client)
     ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua (client)
     ImprovedTooltips_ClientUI.lua           post-hook on ClientUI.lua            (client)
+    ImprovedTooltips_SelectionPanel.lua     post-hook on GUISelectionPanel.lua   (client)
     ImprovedTooltips_CooldownDial.lua       post-hook on Commander.lua           (client)
     ImprovedTooltips_NetworkMessages.lua    post-hook on NetworkMessages.lua     (shared)
     ImprovedTooltips_CooldownState.lua      team cooldown table + server publish
@@ -243,6 +251,7 @@ and `mod.settings` names the file by extension.
 - `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
 - `kShowZeroArmor` — show an explicit `0` for armourless structures rather than hiding the icon
 - `kShowSpeed` — show movement speed for things that move
+- `kTintSelectionPanelIcons` — also tint the icons on vanilla's selection panel to match
 - `kMarineIconColor` / `kAlienIconColor` — per-team tint, applied to the mod's own icons only
   (vanilla's health and armour art is already team-coloured and is left alone)
 - `kShowCooldownPanel` — turn the "In Cooldown" panel off entirely
@@ -298,6 +307,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - ARC Deploy and Undeploy buttons now describe the stance they put the ARC into, so the Deploy
   button shows the armour dropping to 0 and the loss of movement.
 - Health and armour figures are coloured the way vanilla colours them in the selection panel.
+- Health and armour ICONS are tinted to match their own figures, in the mod's tooltips and in
+  vanilla's selection panel.
+- Fixed Crag showing no speed, and Shade showing the wrong one - Crag keeps its speed under a
+  different constant name, and Shade's real speed is a global, not the vestigial Shade.kMoveSpeed.
+- ARC Deploy now shows speed as an explicit 0 rather than hiding it.
+- The cooldown panel entries now sit on the game's own build-menu button plate instead of one flat
+  rectangle behind the whole panel, which removes the hard-edged box on both teams.
 
 **0.86**
 - Added the "In Cooldown" panel — a titled panel on the right of the screen listing team abilities

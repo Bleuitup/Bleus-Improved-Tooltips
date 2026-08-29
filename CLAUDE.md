@@ -141,6 +141,12 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   structure. They are already coloured per team, so **do not tint them**, and they sit in the very
   atlas the tooltip background already loads. 0.86 and earlier drew custom ones after rejecting the
   softer copies in `ui/alien_buymenu.dds`; that was looking at the wrong atlas.
+- **Tinting those icons only works one way.** `SetColor` multiplies, so it can only darken, and the
+  art is not white — measured brightest pixels are marine `(152,186,195)`, alien `(244,185,55)`. The
+  tint is `target / artBase`, clamped to 1. It works out because the art base is essentially the
+  *health* colour already, so health needs no tint and armour darkens onto its own colour. The same
+  maths is applied to vanilla's selection panel in `ImprovedTooltips_SelectionPanel.lua`; **keep the
+  two in step.**
 - **Match the figure colours too**, from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`
   (`GUISelectionPanel.lua:21-27`): marine health `(0.725, 1, 1)`, marine armour `(0.078, 0.9, 1)`,
   alien health `(1, 197/255, 71/255)`, alien armour `(1, 143/255, 34/255)`. Read at runtime with
@@ -161,11 +167,27 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
 
 ## Movement speed and ARC stances
 
-- **Speed has no TechData key.** It is `<Class>.kMoveSpeed`: ARC 2.0, Shade 2.5, Shift 2.9,
-  Whip 3.5, MAC 6, Drifter 11. Derived without a lookup table by exploiting `kTechId` being
-  bidirectional — `kTechId[techId]` gives `"ARC"`, and NS2 classes are globals under those names.
-  Guarded to only accept a table with a positive numeric `kMoveSpeed`, because names collide
-  (`kTechId.Move` vs the `Move` hotkey table).
+- **Speed has no TechData key**, and vanilla stores it inconsistently. Verified values:
+
+  | Class | Real source | Speed |
+  |---|---|---|
+  | ARC | `ARC.kMoveSpeed`, no accessor (`ARC_Server.lua:29`) | 2.0 |
+  | Drifter | `Drifter.kMoveSpeed`, no accessor | 11 |
+  | MAC | `MAC.kMoveSpeed` via `GetMoveSpeed` | 6 |
+  | Whip | `Whip.kMoveSpeed` via `GetMoveSpeed` | 3.5 |
+  | Shift | `Shift.kMoveSpeed` via `GetMaxSpeed` | 2.9 |
+  | **Crag** | **`Crag.kMaxSpeed`** via `GetMaxSpeed` — different constant name | 2.9 |
+  | **Shade** | **global `kAlienStructureMoveSpeed`** via `GetMaxSpeed` | **1.73** |
+
+  **`Shade.kMoveSpeed = 2.5` is vestigial — nothing reads it.** Reading `kMoveSpeed` alone therefore
+  shows nothing for Crag and a wrong 2.5 for Shade; both shipped that way once. The accessor is the
+  authority and is called **statically** (no instance) inside `pcall`: these are one-line constant
+  returns, and MAC's — which needs `self` — throws and falls back to the constant, its correct base.
+- The class is found via `kTechId[techId]` (bidirectional enum) → `_G[name]`. Guarded because names
+  collide (`kTechId.Move` vs the `Move` hotkey table).
+- **A zero speed means two different things.** The default 0 ("does not move") is hidden, or every
+  structure would carry a pointless `0`; a 0 from a *registered resolver* is deliberate and is
+  shown. `IT.HasResolver(field, techId)` distinguishes them. This is what puts `0` on ARC Deploy.
 - **ARC stance changes armour AND speed**: `kARCArmor = 400` / `kARCDeployedArmor = 0`
   (`BalanceHealth.lua:100-101`), kept as `undeployedArmor`/`deployedArmor` at `ARC.lua:212-213`.
   `kTechId.ARCDeploy` and `kTechId.ARCUndeploy` have **no TechData entries at all**, so the mod
