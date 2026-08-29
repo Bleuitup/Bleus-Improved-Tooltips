@@ -7,7 +7,7 @@ The tooltip work is entirely client-side. The "In Cooldown" panel additionally n
 which broadcasts team cooldowns that vanilla never sends to anyone but the commander who cast. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 0.86. Published to the Steam Workshop as
+Version 0.9. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -304,24 +304,23 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
-**Unreleased**
-- Health and armour icons now use vanilla's own, from the commander atlas GUISelectionPanel
-  draws from - already team-coloured, and two fewer glyphs for the mod to carry.
-- Added movement speed to the tooltips for things that move: ARC, MAC, Drifter, Whip, Shade, Shift.
-- ARC Deploy and Undeploy buttons now describe the stance they put the ARC into, so the Deploy
-  button shows the armour dropping to 0 and the loss of movement.
-- Health and armour figures are coloured the way vanilla colours them in the selection panel.
-- Health and armour ICONS are tinted to match their own figures, in the mod's tooltips and in
-  vanilla's selection panel.
-- Fixed Crag showing no speed, and Shade showing the wrong one - Crag keeps its speed under a
-  different constant name, and Shade's real speed is a global, not the vestigial Shade.kMoveSpeed.
-- ARC Deploy now shows speed as an explicit 0 rather than hiding it.
-- The cooldown panel entries now sit on the game's own build-menu button plate instead of one flat
-  rectangle behind the whole panel, which removes the hard-edged box on both teams.
-- Fixed the Drifter button showing no speed: it is kTechId.DrifterEgg, a class with no speed of its
-  own, so speed is aliased to the Drifter it hatches - as vanilla already does for its health.
-- Health and armour icons are now resampled into the mod's own sheet, so they match the other icons
-  in size and are fully opaque. Vanilla's selection panel is repointed at the same glyphs.
+**0.9**
+- **Movement speed** added for things that move: ARC 2.0, Shade 1.73, Crag 2.9, Shift 2.9, Whip 3.5,
+  MAC 6, Drifter 11.
+- **ARC stances.** The Deploy and Undeploy buttons now describe the state they put the ARC into, so
+  Deploy shows armour dropping to 0 and speed to 0 — the cost of deploying, visible while choosing.
+- **Health and armour icons replaced with vanilla's own** cross and shield, resampled into the mod's
+  sheet so they match the other icons in size and are fully opaque. The mod's earlier hand-drawn
+  pair is gone.
+- **Colour.** Figures and icons both take vanilla's selection-panel colours — marine health pale
+  cyan, marine armour deep teal, alien health yellow, alien armour darker orange — so a number means
+  the same thing wherever it is read. Vanilla's own selection panel is brought in line too.
+- **Cooldown panel** entries now sit on the game's build-menu button plate rather than one flat
+  rectangle behind the whole panel, removing the hard-edged box on both teams.
+- Fixed Crag showing no speed and Shade showing a wrong one: Crag stores its speed under a different
+  constant name, and Shade's real speed is a global, `Shade.kMoveSpeed` being vestigial.
+- Fixed the Drifter button showing no speed: it is `kTechId.DrifterEgg`, a class with no speed of its
+  own, so speed is aliased to the Drifter it hatches — as vanilla already does for its health.
 
 **0.86**
 - Added the "In Cooldown" panel — a titled panel on the right of the screen listing team abilities

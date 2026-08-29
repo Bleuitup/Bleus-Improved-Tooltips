@@ -292,7 +292,7 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- Version 0.86, tested in game (client and dedicated server) and published. (There is no published
+- Version 0.9, tested in game (client and dedicated server) and published. (There is no published
   0.81 — that was the working version number while the stat row was moved and the hourglass redrawn;
   it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
