@@ -89,16 +89,22 @@ function GUIImprovedTooltipsCooldowns:Initialize()
 	self.entries = { }
 	self.activeCount = 0
 
+	local isAlien = self.teamType == kAlienTeamType
+	local backingAlpha = isAlien and IT.kCooldownPanelAlienBackgroundAlpha
+		or IT.kCooldownPanelMarineBackgroundAlpha
+
 	self.background = GUIManager:CreateGraphicItem()
 	self.background:SetLayer(kGUILayerCommanderHUD)
 	self.background:SetAnchor(GUIItem.Right, GUIItem.Center)
-	self.background:SetColor(Color(0, 0, 0, 0.55))
+	self.background:SetColor(Color(0, 0, 0, backingAlpha))
 	self.background:SetIsVisible(false)
 
 	-- Aliens get the smoky backdrop the rest of their commander UI uses. Same construction as
 	-- GUICommanderTooltip:InitSmokeyBackground.
-	if self.teamType == kAlienTeamType then
-		self.background:SetColor(Color(0, 0, 0, 0.35))
+	--
+	-- The backing plate is transparent for aliens (see the config). The smoke mask fades to nothing
+	-- at its edges, so any flat colour behind it shows up as a hard rectangle under soft smoke.
+	if isAlien then
 		self.smoke = GUIManager:CreateGraphicItem()
 		self.smoke:SetAnchor(GUIItem.Middle, GUIItem.Center)
 		self.smoke:SetShader("shaders/GUISmoke.surface_shader")

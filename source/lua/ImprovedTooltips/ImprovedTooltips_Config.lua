@@ -51,3 +51,13 @@ IT.kCooldownPanelOffset = Vector(-210, -120, 0)
 
 -- Show the remaining time in seconds under each icon, the way the tooltips show durations.
 IT.kCooldownPanelShowSeconds = true
+
+-- Backing plate opacity behind the panel, per team.
+--
+-- Alien is 0 on purpose. The alien panel is backed by ui/alien_logout_smkmask.dds through
+-- GUISmoke.surface_shader, and that mask is a soft blob whose alpha falls to 0 at every edge - so
+-- the smoke alone has no hard border. Putting any flat colour behind it draws a crisp rectangle
+-- underneath the soft smoke, which reads as the effect being cut out of a box. Let the smoke be the
+-- background. Raise this only if the text turns out to be unreadable over a bright map.
+IT.kCooldownPanelAlienBackgroundAlpha = 0
+IT.kCooldownPanelMarineBackgroundAlpha = 0.55
