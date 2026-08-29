@@ -134,6 +134,41 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   CompMod's `EnumUtils.AppendToEnum`), so iterating it needs a
   `type(v) == "number" and type(k) == "string"` guard, and must skip `Max`.
 
+## Icons: prefer vanilla, ship as little as possible
+
+- **Health and armour come from `ui/{marine,alien}_commander_textures.dds`** at `(0,363)-(48,411)`
+  and `(48,363)-(96,411)` — the cells `GUISelectionPanel.lua:54-55` draws when you click a
+  structure. They are already coloured per team, so **do not tint them**, and they sit in the very
+  atlas the tooltip background already loads. 0.86 and earlier drew custom ones after rejecting the
+  softer copies in `ui/alien_buymenu.dds`; that was looking at the wrong atlas.
+- **Alien speed uses the Celerity icon**, `kTechIdToMaterialOffset[kTechId.Celerity] = 64` → cell
+  (4,5) of `ui/buildmenu.dds`. Greyscale, already points right, and CBM assigns the same index to
+  `SpurPassive`.
+- **Icon indices in `buildmenu.dds` are `y*12 + x`, 80px cells**, sheet is 960 wide.
+- The mod's own sheet is now **192x64, three cells**: hourglass, stopwatch, marine speed chevron.
+- **The marine chevron is lifted, not drawn**: `marine_buildmenu_insight.dds` row 2 col 4
+  (x 240-320, y 80-160), mirrored to point right. Its button plate is **opaque**, so unlike the
+  buy-menu glyphs the alpha channel is useless — luminance becomes the mask instead. Luminance alone
+  still cannot remove the plate's *border*, which is as bright as the glyph, so the extract is
+  cropped to `(14,10)-(74,70)`; the measured glyph extent is x 20-70, y 12-66.
+- **Before adding an icon, look for a vanilla one.** The atlases worth checking are
+  `{marine,alien}_commander_textures.dds` (selection panel furniture), `buildmenu.dds` (all tech
+  icons), and `marine_buildmenu_insight.dds` (arrows, symbols).
+
+## Movement speed and ARC stances
+
+- **Speed has no TechData key.** It is `<Class>.kMoveSpeed`: ARC 2.0, Shade 2.5, Shift 2.9,
+  Whip 3.5, MAC 6, Drifter 11. Derived without a lookup table by exploiting `kTechId` being
+  bidirectional — `kTechId[techId]` gives `"ARC"`, and NS2 classes are globals under those names.
+  Guarded to only accept a table with a positive numeric `kMoveSpeed`, because names collide
+  (`kTechId.Move` vs the `Move` hotkey table).
+- **ARC stance changes armour AND speed**: `kARCArmor = 400` / `kARCDeployedArmor = 0`
+  (`BalanceHealth.lua:100-101`), kept as `undeployedArmor`/`deployedArmor` at `ARC.lua:212-213`.
+  `kTechId.ARCDeploy` and `kTechId.ARCUndeploy` have **no TechData entries at all**, so the mod
+  registers resolvers making each button describe the state it puts the ARC into.
+- Those resolvers read the constants **inside** the closure, not at registration: this file loads
+  from a post-hook with no guarantee `ARC.lua` or `BalanceHealth.lua` have run yet.
+
 ## ARC targeting (researched 2026-08-29, nothing built yet)
 
 Explored improving the feedback between an ARC's range circle and what it can actually hit. Facts,

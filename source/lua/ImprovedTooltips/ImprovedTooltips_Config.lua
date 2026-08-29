@@ -27,7 +27,12 @@ IT.kTimeFormat = "seconds"
 -- so a commander can tell "no armor" apart from "not measured".
 IT.kShowZeroArmor = true
 
--- Icon tint. One white icon set is tinted per team so it sits correctly on either commander HUD.
+-- Show movement speed for things that move: ARC 2.0, Shade 2.5, Shift 2.9, Whip 3.5, MAC 6,
+-- Drifter 11. Read from the class's own kMoveSpeed rather than TechData, which has no key for it.
+IT.kShowSpeed = true
+
+-- Icon tint. Applies to the mod's own icons only. Vanilla's health and armour art is already
+-- coloured per team and is left untinted.
 IT.kMarineIconColor = Color(0.7, 0.9, 1, 1)
 IT.kAlienIconColor = Color(1, 0.79, 0.3, 1)
 

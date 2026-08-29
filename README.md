@@ -17,6 +17,7 @@ Version 0.86. Published to the Steam Workshop as
 | Research time | hourglass | Researches and upgrades — Armour 3, Stomp, Biomass, weapon upgrades |
 | Cooldown | stopwatch | Commander abilities — Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst |
 | Health / Armour | cross / shield | Anything dropped, built or manufactured, both teams |
+| Speed | chevrons / celerity | Things that move — ARC, MAC, Drifter, Whip, Shade, Shift |
 
 All of it appears as a single row directly under the tooltip's title, above the description:
 
@@ -115,6 +116,35 @@ cannot function without, so reading the key *is* the detection:
 | Armour | `kTechDataMaxArmor` | — |
 | Cooldown | `kTechDataCooldown` | 19 |
 
+**Speed is the exception** — it has no TechData key at all, living instead as a class constant,
+`<Class>.kMoveSpeed`. Rather than keep a techId→class table, the class is derived: `kTechId` is
+bidirectional, so `kTechId[techId]` yields the enum's own name (`"ARC"`, `"MAC"`, `"Drifter"`), and
+NS2 classes are globals under exactly those names. A modded mover whose techId is named after its
+class is picked up with no registration. The lookup only accepts a table carrying a positive numeric
+`kMoveSpeed`, since plenty of techId names collide with unrelated globals.
+
+### Icons
+
+The mod ships only what the game does not already have:
+
+| Icon | Source |
+|---|---|
+| Health, Armour | `ui/{marine,alien}_commander_textures.dds` — the cells `GUISelectionPanel` draws when you click an existing structure. Already team-coloured, so not tinted |
+| Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds` — CBM uses the same index for `SpurPassive` |
+| Hourglass, stopwatch, marine chevron | `ui/bleu_tooltip_icons.dds`, the mod's own 192×64 sheet |
+
+The marine speed chevron is the only glyph without a usable vanilla form: the closest,
+`marine_buildmenu_insight.dds` row 2 column 4, points the wrong way and sits on a button plate, so
+`tools/build_icons.ps1` mirrors it and keys the plate out rather than redrawing it.
+
+### ARC stances
+
+An ARC is a different unit depending on its stance — `kARCArmor = 400` undeployed against
+`kARCDeployedArmor = 0`, and it cannot move once deployed. `kTechId.ARC` already carries the
+undeployed values, but the two stance buttons carry no TechData at all, which leaves them free to
+describe the state they put the ARC *into*. So the Deploy button reads `0` armour and no speed,
+making the cost of deploying visible while you are choosing it.
+
 A mod that adds tech has to populate these for the tech to work at all, so CBM's Advanced Shade,
 CompMod's Charge and B2TP's MedTech get improved tooltips without this mod knowing they exist.
 
@@ -190,7 +220,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
     ImprovedTooltips_CooldownJoin.lua       post-hook on NS2Gamerules.lua        (server)
     GUIImprovedTooltipsCooldowns.lua        the "In Cooldown" panel
-source/ui/bleu_tooltip_icons.dds            256x64 icon sheet, 4 cells of 64x64
+source/ui/bleu_tooltip_icons.dds            192x64 icon sheet, 3 cells of 64x64
 tools/build_icons.ps1                       regenerates the icon sheet
 preview.jpg                                 Workshop preview, 512x512
 mod.settings                                Launch Pad project settings
@@ -208,7 +238,9 @@ and `mod.settings` names the file by extension.
 
 - `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
 - `kShowZeroArmor` — show an explicit `0` for armourless structures rather than hiding the icon
-- `kMarineIconColor` / `kAlienIconColor` — per-team tint applied to the white icon sheet
+- `kShowSpeed` — show movement speed for things that move
+- `kMarineIconColor` / `kAlienIconColor` — per-team tint, applied to the mod's own icons only
+  (vanilla's health and armour art is already team-coloured and is left alone)
 - `kShowCooldownPanel` — turn the "In Cooldown" panel off entirely
 - `kCooldownPanelMinDuration` — minimum cooldown, in seconds, to earn a panel entry (default 5)
 - `kCooldownPanelOffset` — panel position, offset from the right edge / vertical middle
@@ -254,6 +286,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**Unreleased**
+- Health and armour icons now use vanilla's own, from the commander atlas GUISelectionPanel
+  draws from - already team-coloured, and two fewer glyphs for the mod to carry.
+- Added movement speed to the tooltips for things that move: ARC, MAC, Drifter, Whip, Shade, Shift.
+- ARC Deploy and Undeploy buttons now describe the stance they put the ARC into, so the Deploy
+  button shows the armour dropping to 0 and the loss of movement.
 
 **0.86**
 - Added the "In Cooldown" panel — a titled panel on the right of the screen listing team abilities

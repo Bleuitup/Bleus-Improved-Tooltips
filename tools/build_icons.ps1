@@ -1,24 +1,32 @@
 # Bleu's Improved Tooltips - icon atlas generator
 #
-# Produces source/ui/bleu_tooltip_icons.dds: a 256x64 sheet of four 64x64 cells, in this order:
+# Produces source/ui/bleu_tooltip_icons.dds: a 192x64 sheet of three 64x64 cells, in this order:
 #
-#   0 health (cross)   1 armor (shield)   2 research time (hourglass)   3 cooldown (stopwatch)
+#   0 research time (hourglass)   1 cooldown (stopwatch)   2 speed, marine (double chevron)
 #
-# The cell order is what ImprovedTooltips_TooltipGUI.lua's kIconCoords indexes into - change one
+# The cell order is what ImprovedTooltips_TooltipGUI.lua's kOwnIconCoords indexes into - change one
 # and change the other.
 #
 # The glyphs are pure white with an alpha mask, because the mod tints them per team at runtime
 # (IT.kMarineIconColor / IT.kAlienIconColor) via GUIItem:SetColor, which multiplies.
 #
-# Why drawn rather than lifted from vanilla: the health cross and armor shield DO exist in
-# ui/alien_buymenu.dds at (854,318)-(887,351) and (887,318)-(920,351), and extracting them works
-# (use the source alpha channel, not luminance - they sit on a rounded button plate whose alpha
-# runs to about 65). But they are soft, gradient-shaded buy-menu art, and next to a crisp
-# hourglass they read as a different icon set. Drawing all four keeps the row consistent, stays
-# sharp at the ~32px the tooltip actually renders them at, and does not break if another mod
-# replaces alien_buymenu.dds.
+# ONLY icons with no vanilla equivalent live here. Everything the game already ships is used
+# directly, so the mod carries as little art as possible:
 #
-# Requires nvcompress.exe, which ships with the game under utils/.
+#   health, armor  -> ui/{marine,alien}_commander_textures.dds at (0,363)-(48,411) and
+#                     (48,363)-(96,411). These are what GUISelectionPanel draws when you click an
+#                     existing structure, they are already coloured per team, and they live in the
+#                     very atlas the tooltip background is already textured with. An earlier version
+#                     of this mod drew its own cross and shield after rejecting the softer copies in
+#                     ui/alien_buymenu.dds - that was a mistake, these are the right ones.
+#   speed (alien)  -> the Celerity icon, index 64 in ui/buildmenu.dds (cell 4,5). Already points
+#                     right and reads as motion; CBM uses the same index for SpurPassive.
+#
+# The marine speed chevron is the one glyph with no usable vanilla form: the closest is
+# ui/marine_buildmenu_insight.dds row 2 column 4, which points the wrong way and sits on a rounded
+# button plate. It is mirrored and keyed out below rather than redrawn.
+#
+# Requires nvcompress.exe and nvdecompress.exe, which ship with the game under utils/.
 
 param(
     [string]$NS2 = "D:\SteamLibrary\steamapps\common\Natural Selection 2"
@@ -35,7 +43,7 @@ $dds = Join-Path $outDir "bleu_tooltip_icons.dds"
 $CELL = 64
 $SS   = 4     # supersample factor; glyphs are drawn at 4x and downsampled for clean edges
 
-$atlas = New-Object System.Drawing.Bitmap(($CELL*4), $CELL, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$atlas = New-Object System.Drawing.Bitmap(($CELL*3), $CELL, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 $ag = [System.Drawing.Graphics]::FromImage($atlas)
 $ag.Clear([System.Drawing.Color]::Transparent)
 $ag.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
@@ -71,19 +79,7 @@ function RoundRect($x, $y, $w, $h, $r) {
 
 $white = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
 
-# 0 - health: a plain cross, matching the proportions of vanilla's buy-menu health glyph.
-$r = New-Canvas; $b = $r[0]; $g = $r[1]
-$arm = 12; $len = 46; $c = 32
-$g.FillRectangle($white, (Rct ($c-$arm/2) ($c-$len/2) $arm $len))
-$g.FillRectangle($white, (Rct ($c-$len/2) ($c-$arm/2) $len $arm))
-$g.Dispose(); Commit $b 0
-
-# 1 - armor: flat-topped shield tapering to a point, matching vanilla's shape.
-$r = New-Canvas; $b = $r[0]; $g = $r[1]
-$g.FillPolygon($white, @((Pt 11 11), (Pt 53 11), (Pt 53 34), (Pt 32 55), (Pt 11 34)))
-$g.Dispose(); Commit $b 1
-
-# 2 - research time: hourglass. Rounded caps, concave glass drawn as an outline, upper bulb solid
+# 0 - research time: hourglass. Rounded caps, concave glass drawn as an outline, upper bulb solid
 # with sand, lower bulb holding a mound with a stream falling into it. The first version of this
 # was a flat bowtie - two bars and two solid triangles - which read as too plain; the sand and the
 # curved glass are what make it recognisable at the ~32px it actually renders at.
@@ -113,9 +109,9 @@ $mound.AddBezier((Pt 45 51.5), (Pt 41 44.5), (Pt 35 42), (Pt 32 42))
 $mound.AddBezier((Pt 32 42), (Pt 29 42), (Pt 23 44.5), (Pt 19 51.5))
 $g.FillPath($white, $mound)
 $g.FillRectangle($white, (Rct 31.25 30 1.5 11))    # falling stream
-$g.Dispose(); Commit $b 2
+$g.Dispose(); Commit $b 0
 
-# 3 - cooldown: stopwatch, ring plus stem plus two hands.
+# 1 - cooldown: stopwatch, ring plus stem plus two hands.
 $r = New-Canvas; $b = $r[0]; $g = $r[1]
 $ringPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (5*$SS))
 $g.FillRectangle($white, (Rct 27 5 10 7))
@@ -125,7 +121,55 @@ $handPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
 $handPen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Round
 $g.DrawLine($handPen, (Pt 32 36), (Pt 32 22))
 $g.DrawLine($handPen, (Pt 32 36), (Pt 43 36))
-$g.Dispose(); Commit $b 3
+$g.Dispose(); Commit $b 1
+
+# 2 - speed, marine: the double chevron from ui/marine_buildmenu_insight.dds row 2 column 4
+# (12 columns of 80px, so x 240-320, y 80-160). Vanilla's points left, so it is mirrored.
+#
+# It sits on a rounded dark button plate, and unlike the buy-menu glyphs that plate is opaque - the
+# alpha channel is no use for separating them. Luminance works instead: the plate is near-black, the
+# chevron is bright cyan. So luminance becomes the alpha mask and the colour is flattened to white,
+# which also lets the runtime team tint apply cleanly.
+$nvdecompress = Join-Path $NS2 "utils\nvdecompress.exe"
+if (-not (Test-Path -LiteralPath $nvdecompress)) { throw "nvdecompress.exe not found at $nvdecompress" }
+
+$insightDds = Join-Path $NS2 "ns2\ui\marine_buildmenu_insight.dds"
+$workDds = Join-Path $env:TEMP "bit_insight.dds"
+$workTga = [System.IO.Path]::ChangeExtension($workDds, ".tga")
+Copy-Item -LiteralPath $insightDds -Destination $workDds -Force
+& $nvdecompress $workDds | Out-Null
+if (-not (Test-Path -LiteralPath $workTga)) { throw "nvdecompress produced no TGA for $insightDds" }
+
+$srcW = 960
+$tga = [System.IO.File]::ReadAllBytes($workTga)
+$chevron = New-Object System.Drawing.Bitmap(80, 80, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+for ($y = 0; $y -lt 80; $y++) {
+    for ($x = 0; $x -lt 80; $x++) {
+        # 18-byte TGA header, BGRA, top-left origin. Source cell starts at (240, 80).
+        $i = 18 + ((($y + 80) * $srcW) + ($x + 240)) * 4
+        $lum = [int](0.114*$tga[$i] + 0.587*$tga[$i+1] + 0.299*$tga[$i+2])
+        # The plate floor sits around 25-40; lift off it so it goes fully clear.
+        $a = [int]((($lum - 45) * 255.0) / (200 - 45))
+        if ($a -lt 0) { $a = 0 }; if ($a -gt 255) { $a = 255 }
+        $chevron.SetPixel($x, $y, [System.Drawing.Color]::FromArgb($a, 255, 255, 255))
+    }
+}
+
+$r = New-Canvas; $b = $r[0]; $g = $r[1]
+$g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+# Negative width mirrors horizontally, turning vanilla's "<<" into ">>".
+$pad = 6 * $SS
+#
+# Cropped to (14,10)-(74,70) rather than the full 80x80 cell. Luminance alone cannot remove the
+# plate, because its rounded border is as bright as the chevron itself - but the border only touches
+# the cell's outer edge. Measured glyph extent is x 20-70, y 12-66, so this crop clears the border
+# on all four sides while keeping the whole glyph.
+$g.DrawImage($chevron,
+    (New-Object System.Drawing.Rectangle(($CELL*$SS - $pad), $pad, (-($CELL*$SS - 2*$pad)), ($CELL*$SS - 2*$pad))),
+    (New-Object System.Drawing.Rectangle(14, 10, 60, 60)),
+    [System.Drawing.GraphicsUnit]::Pixel)
+$g.Dispose(); Commit $b 2
+$chevron.Dispose()
 
 $ag.Dispose()
 $atlas.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)

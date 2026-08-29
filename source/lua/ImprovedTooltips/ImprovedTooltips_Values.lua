@@ -26,8 +26,8 @@ local IT = ImprovedTooltips
 
 IT.kVersion = "0.86"
 
--- The four extra fields this mod can show. Used as keys throughout, including in the public API.
-IT.kFields = { "health", "armor", "researchTime", "cooldown" }
+-- The extra fields this mod can show. Used as keys throughout, including in the public API.
+IT.kFields = { "health", "armor", "researchTime", "cooldown", "speed" }
 
 -- Broad classification of what a techId IS, derived from the tech tree rather than a hand-kept
 -- list. Not used to decide which numbers to show - that is driven purely by which TechData keys
@@ -88,18 +88,17 @@ local resolvers = IT._resolvers
 local suppressed = IT._suppressed
 
 if not resolvers then
-
 	resolvers = { }
 	suppressed = { }
-
-	for i = 1, #IT.kFields do
-		resolvers[IT.kFields[i]] = { }
-		suppressed[IT.kFields[i]] = { }
-	end
-
 	IT._resolvers = resolvers
 	IT._suppressed = suppressed
+end
 
+-- Filled in per field rather than only when the tables are first created, so adding a field to
+-- kFields does not leave a nil subtable behind on a reload that reused the existing tables.
+for i = 1, #IT.kFields do
+	resolvers[IT.kFields[i]] = resolvers[IT.kFields[i]] or { }
+	suppressed[IT.kFields[i]] = suppressed[IT.kFields[i]] or { }
 end
 
 local function IsValidField(field)
@@ -141,11 +140,41 @@ end
 -- Value resolution
 ------------------------------------------------------------------------------------------------
 
+-- Movement speed is the one field with no TechData key at all - it lives as a class constant,
+-- `<Class>.kMoveSpeed`, on the six things that move: ARC 2.0, Shade 2.5, Shift 2.9, Whip 3.5,
+-- MAC 6, Drifter 11.
+--
+-- Rather than keep a techId -> class table, the class is derived. kTechId is bidirectional (see
+-- GetTechIdsWithCooldown), so kTechId[techId] gives the enum's own name - "ARC", "MAC", "Drifter",
+-- "Whip" - and NS2 classes are globals under exactly those names. A modded mover whose techId is
+-- named after its class is therefore picked up with no registration, same as everything else here.
+--
+-- The lookup is deliberately paranoid: plenty of techId names collide with unrelated globals
+-- (kTechId.Move and the Move hotkey table, for one), so a hit only counts if it is a table carrying
+-- a positive numeric kMoveSpeed.
+local function LookupClassMoveSpeed(techId)
+
+	local className = kTechId[techId]
+	if type(className) ~= "string" then
+		return 0
+	end
+
+	local class = _G[className]
+	if type(class) ~= "table" then
+		return 0
+	end
+
+	local speed = class.kMoveSpeed
+	return (type(speed) == "number" and speed > 0) and speed or 0
+
+end
+
 local kDefaultLookup = {
 	health       = function(techId) return LookupTechData(techId, kTechDataMaxHealth, 0) end,
 	armor        = function(techId) return LookupTechData(techId, kTechDataMaxArmor, 0) end,
 	researchTime = function(techId) return LookupTechData(techId, kTechDataResearchTimeKey, 0) end,
 	cooldown     = function(techId) return LookupTechData(techId, kTechDataCooldown, 0) end,
+	speed        = LookupClassMoveSpeed,
 }
 
 function IT.GetValue(field, techId)
@@ -174,13 +203,16 @@ function IT.GetValues(techId)
 		armor        = IT.GetValue("armor", techId),
 		researchTime = IT.GetValue("researchTime", techId),
 		cooldown     = IT.GetValue("cooldown", techId),
+		speed        = IT.GetValue("speed", techId),
 	}
 
-	if values.health == 0 and values.armor == 0 and values.researchTime == 0 and values.cooldown == 0 then
-		return nil
+	for i = 1, #IT.kFields do
+		if values[IT.kFields[i]] > 0 then
+			return values
+		end
 	end
 
-	return values
+	return nil
 
 end
 
@@ -251,6 +283,39 @@ local function GetAlienBioMassLevel()
 
 	return 0
 
+end
+
+-- An ARC is a different unit depending on its stance, and vanilla stores both sets:
+-- kARCArmor = 400 undeployed against kARCDeployedArmor = 0 (BalanceHealth.lua:100-101), and it
+-- cannot move at all once deployed. ARC.lua:212-213 keeps both as undeployedArmor/deployedArmor.
+--
+-- kTechId.ARC itself carries the undeployed values in TechData and moves at ARC.kMoveSpeed, so it
+-- needs nothing. The two stance buttons carry no TechData at all, which leaves them free to
+-- describe the state they put the ARC INTO - so the Deploy button reads "0 armour, no speed",
+-- making the cost of deploying visible at the moment you are choosing it.
+-- The constants are read inside the resolvers, not captured here: this file is loaded from a
+-- post-hook and there is no guarantee ARC.lua or BalanceHealth.lua have run yet at registration
+-- time. Resolvers only run while a tooltip is on screen, by which point everything is loaded.
+local function RegisterArcStance(techId, getArmor, getSpeed)
+
+	IT.RegisterResolver("armor", techId, getArmor)
+	IT.RegisterResolver("speed", techId, getSpeed)
+	IT.RegisterResolver("health", techId, function()
+		return LookupTechData(kTechId.ARC, kTechDataMaxHealth, 0)
+	end)
+
+end
+
+if kTechId.ARCDeploy then
+	RegisterArcStance(kTechId.ARCDeploy,
+		function() return kARCDeployedArmor or 0 end,
+		function() return 0 end)
+end
+
+if kTechId.ARCUndeploy then
+	RegisterArcStance(kTechId.ARCUndeploy,
+		function() return kARCArmor or 0 end,
+		function() return ARC and ARC.kMoveSpeed or 0 end)
 end
 
 IT.RegisterResolver("health", kTechId.BoneWall, function(techId)

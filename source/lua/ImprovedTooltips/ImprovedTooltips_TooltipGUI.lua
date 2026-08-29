@@ -22,19 +22,57 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 local IT = ImprovedTooltips
 
-local kIconTexture = "ui/bleu_tooltip_icons.dds"
+-- Icons come from three places, because the mod ships only what the game does not already have.
+--
+--   health, armor  - ui/{marine,alien}_commander_textures.dds, the same atlas the tooltip
+--                    background uses, at the cells GUISelectionPanel draws when you click an
+--                    existing structure (GUISelectionPanel.lua:54-55). Already coloured per team,
+--                    so these are NOT tinted at runtime.
+--   speed (alien)  - the Celerity icon in ui/buildmenu.dds, index 64 -> cell (4,5). Points right
+--                    already; CBM uses the same index for SpurPassive.
+--   the rest       - ui/bleu_tooltip_icons.dds, our own 192x64 sheet, white and tinted per team.
+--                    See tools/build_icons.ps1; keep the cell order in step with it.
+local kOwnIconTexture = "ui/bleu_tooltip_icons.dds"
 
--- Four 64x64 icons laid out in one row. tools/build_icons.ps1 generates the sheet and documents
--- the cell order - keep the two in step.
-local kIconCoords = {
-	health   = { 0,   0, 64,  64 },
-	armor    = { 64,  0, 128, 64 },
-	research = { 128, 0, 192, 64 },
-	cooldown = { 192, 0, 256, 64 },
+local kOwnIconCoords = {
+	research     = { 0,   0, 64,  64 },
+	cooldown     = { 64,  0, 128, 64 },
+	speedMarine  = { 128, 0, 192, 64 },
 }
 
+local kVanillaIconCoords = {
+	health = { 0,  363, 48, 411 },
+	armor  = { 48, 363, 96, 411 },
+}
+
+-- Celerity, index 64 in a 12-column sheet of 80px cells.
+local kCelerityCoords = { 4 * 80, 5 * 80, 5 * 80, 6 * 80 }
+local kBuildMenuTexture = "ui/buildmenu.dds"
+
 -- Left-to-right order of the stat row.
-local kRowOrder = { "health", "armor", "research", "cooldown" }
+local kRowOrder = { "health", "armor", "speed", "research", "cooldown" }
+
+-- Resolves which texture and cell each entry draws from, for the given team. Returns texture,
+-- coords, tint - tint nil meaning "leave it alone, the art is already the right colour".
+local function GetIconSource(field, teamType, tint)
+
+	if field == "health" or field == "armor" then
+		local atlas = (teamType == kAlienTeamType)
+			and "ui/alien_commander_textures.dds"
+			or  "ui/marine_commander_textures.dds"
+		return atlas, kVanillaIconCoords[field], nil
+	end
+
+	if field == "speed" then
+		if teamType == kAlienTeamType then
+			return kBuildMenuTexture, kCelerityCoords, tint
+		end
+		return kOwnIconTexture, kOwnIconCoords.speedMarine, tint
+	end
+
+	return kOwnIconTexture, kOwnIconCoords[field], tint
+
+end
 
 -- Recomputed on every Initialize, which is also what OnResolutionChanged triggers.
 local kStatRowYOffset
@@ -78,14 +116,18 @@ end
 ------------------------------------------------------------------------------------------------
 
 -- One entry: an icon with its number to the right of it, as "[health] 1500".
-local function CreateEntry(coords)
+local function CreateEntry(field, teamType, tint)
+
+	local texture, coords, iconTint = GetIconSource(field, teamType, tint)
 
 	local icon = GUIManager:CreateGraphicItem()
 	icon:SetAnchor(GUIItem.Left, GUIItem.Top)
 	icon:SetSize(Vector(GUICommanderTooltip.kResourceIconSize, GUICommanderTooltip.kResourceIconSize, 0))
-	icon:SetTexture(kIconTexture)
+	icon:SetTexture(texture)
 	icon:SetTexturePixelCoordinates(GUIUnpackCoords(coords))
-	icon:SetColor(GetIconColor())
+	-- Vanilla's health and armour art is already the team's colour, so it is left untinted;
+	-- multiplying it again would darken it.
+	icon:SetColor(iconTint or Color(1, 1, 1, 1))
 	icon:SetIsVisible(false)
 
 	local text = GUIManager:CreateTextItem()
@@ -115,10 +157,13 @@ function GUICommanderTooltip:Initialize()
 
 	-- Parented to self.background, so vanilla's Uninitialize destroys these along with everything
 	-- else - no cleanup hook needed.
+	local teamType = CommanderUI_IsAlienCommander() and kAlienTeamType or kMarineTeamType
+	local tint = GetIconColor()
+
 	self.itEntries = { }
 	for i = 1, #kRowOrder do
 		local field = kRowOrder[i]
-		local entry = CreateEntry(kIconCoords[field])
+		local entry = CreateEntry(field, teamType, tint)
 		self.background:AddChild(entry.icon)
 		self.itEntries[field] = entry
 	end
@@ -163,6 +208,18 @@ local function GetDisplayValue(field, values)
 			return "0"
 		end
 		return nil
+	elseif field == "speed" then
+		if not IT.kShowSpeed or values.speed <= 0 then
+			return nil
+		end
+		-- Speeds are small and fractional (ARC 2.0, Shade 2.5, Shift 2.9, Whip 3.5), so a whole
+		-- number would collapse Shade and Shift onto the same figure. One decimal, trimmed when it
+		-- is a round number so MAC reads "6" rather than "6.0".
+		local speed = values.speed
+		if math.abs(speed - math.floor(speed + 0.5)) < 0.05 then
+			return ToString(math.floor(speed + 0.5))
+		end
+		return string.format("%.1f", speed)
 	elseif field == "research" then
 		return values.researchTime > 0 and FormatDuration(values.researchTime) or nil
 	elseif field == "cooldown" then
