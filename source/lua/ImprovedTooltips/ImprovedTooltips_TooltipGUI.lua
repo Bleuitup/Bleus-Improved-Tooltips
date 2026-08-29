@@ -52,6 +52,42 @@ local kBuildMenuTexture = "ui/buildmenu.dds"
 -- Left-to-right order of the stat row.
 local kRowOrder = { "health", "armor", "speed", "research", "cooldown" }
 
+-- Health and armour figures are coloured the way vanilla colours them in the selection panel, so a
+-- number means the same thing wherever you read it: marine health pale cyan, marine armour deep
+-- teal, alien health yellow, alien armour darker orange.
+--
+-- Read from GUISelectionPanel at runtime rather than copied, so the mod follows anything that
+-- changes them. The literals below are only a fallback for the case where that file has not loaded
+-- - they are vanilla's own values (GUISelectionPanel.lua:21-27).
+local kFallbackHealthColors = {
+	[kMarineTeamType] = Color(0.725, 1, 1, 1),
+	[kAlienTeamType]  = Color(1, 197 / 255, 71 / 255, 1),
+}
+
+local kFallbackArmorColors = {
+	[kMarineTeamType] = Color(0.078, 0.9, 1, 1),
+	[kAlienTeamType]  = Color(1, 143 / 255, 34 / 255, 1),
+}
+
+local function GetTextColor(field, teamType)
+
+	local vanilla, fallback
+
+	if field == "health" then
+		vanilla = GUISelectionPanel and GUISelectionPanel.kHealthBarColors
+		fallback = kFallbackHealthColors
+	elseif field == "armor" then
+		vanilla = GUISelectionPanel and GUISelectionPanel.kArmorBarColors
+		fallback = kFallbackArmorColors
+	else
+		-- Durations and speed have no vanilla precedent to match; plain white.
+		return Color(1, 1, 1, 1)
+	end
+
+	return (vanilla and vanilla[teamType]) or fallback[teamType] or Color(1, 1, 1, 1)
+
+end
+
 -- Resolves which texture and cell each entry draws from, for the given team. Returns texture,
 -- coords, tint - tint nil meaning "leave it alone, the art is already the right colour".
 local function GetIconSource(field, teamType, tint)
@@ -137,7 +173,7 @@ local function CreateEntry(field, teamType, tint)
 	text:SetTextAlignmentX(GUIItem.Align_Min)
 	text:SetTextAlignmentY(GUIItem.Align_Center)
 	text:SetPosition(Vector(kStatIconTextGap, GUICommanderTooltip.kResourceIconSize / 2, 0))
-	text:SetColor(Color(1, 1, 1, 1))
+	text:SetColor(GetTextColor(field, teamType))
 	text:SetFontIsBold(true)
 	text:SetFontName(Fonts.kAgencyFB_Small)
 	GUIMakeFontScale(text)

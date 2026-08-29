@@ -141,6 +141,10 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   structure. They are already coloured per team, so **do not tint them**, and they sit in the very
   atlas the tooltip background already loads. 0.86 and earlier drew custom ones after rejecting the
   softer copies in `ui/alien_buymenu.dds`; that was looking at the wrong atlas.
+- **Match the figure colours too**, from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`
+  (`GUISelectionPanel.lua:21-27`): marine health `(0.725, 1, 1)`, marine armour `(0.078, 0.9, 1)`,
+  alien health `(1, 197/255, 71/255)`, alien armour `(1, 143/255, 34/255)`. Read at runtime with
+  those literals as fallback, so the mod follows anything that changes them.
 - **Alien speed uses the Celerity icon**, `kTechIdToMaterialOffset[kTechId.Celerity] = 64` → cell
   (4,5) of `ui/buildmenu.dds`. Greyscale, already points right, and CBM assigns the same index to
   `SpurPassive`.

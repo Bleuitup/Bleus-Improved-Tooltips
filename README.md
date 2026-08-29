@@ -130,6 +130,10 @@ The mod ships only what the game does not already have:
 | Icon | Source |
 |---|---|
 | Health, Armour | `ui/{marine,alien}_commander_textures.dds` — the cells `GUISelectionPanel` draws when you click an existing structure. Already team-coloured, so not tinted |
+
+The health and armour figures are coloured to match, read from `GUISelectionPanel.kHealthBarColors`
+and `kArmorBarColors` at runtime: marine health pale cyan, marine armour deep teal, alien health
+yellow, alien armour darker orange. So a number means the same thing wherever you read it.
 | Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds` — CBM uses the same index for `SpurPassive` |
 | Hourglass, stopwatch, marine chevron | `ui/bleu_tooltip_icons.dds`, the mod's own 192×64 sheet |
 
@@ -293,6 +297,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - Added movement speed to the tooltips for things that move: ARC, MAC, Drifter, Whip, Shade, Shift.
 - ARC Deploy and Undeploy buttons now describe the stance they put the ARC into, so the Deploy
   button shows the armour dropping to 0 and the loss of movement.
+- Health and armour figures are coloured the way vanilla colours them in the selection panel.
 
 **0.86**
 - Added the "In Cooldown" panel — a titled panel on the right of the screen listing team abilities
