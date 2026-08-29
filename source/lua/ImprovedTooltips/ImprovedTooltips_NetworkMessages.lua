@@ -49,6 +49,15 @@ if Client then
 
 		IT.SetTeamCooldown(msg.techId, msg.startTime)
 
+		-- Keep vanilla's own table in step while commanding, so the button dial cannot drift from
+		-- the panel. Vanilla already messages the commander for anything they cast, so this is
+		-- usually a no-op writing the same value - SetTechCooldown updates in place, so that is
+		-- harmless. It matters for any cooldown started by a route that does not message them.
+		local player = Client.GetLocalPlayer()
+		if player and player.GetIsCommander and player:GetIsCommander() then
+			IT.ApplyCooldownToVanillaDial(player, msg.techId, msg.startTime)
+		end
+
 	end
 
 	Client.HookNetworkMessage("ImprovedTooltipsCooldown", OnCooldownMessage)

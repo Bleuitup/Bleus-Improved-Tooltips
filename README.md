@@ -88,7 +88,20 @@ A team has at most one commander at a time no matter how many command structures
 (`CommandStructure:GetIsPlayerValidForCommander` requires `not team:GetHasCommander()`), so there is
 no second-commander case to handle — only the rest of the team.
 
-This is the mod's only server-side code. It needs the server anyway (see [Servers](#servers)).
+### Vanilla's own button dial
+
+The mod's table drives the mod's panel. It does not drive vanilla's rotating dial on the commander
+button, which reads `gTechIdCooldowns` through `Commander:GetCooldownFraction` — so that dial stayed
+blank for a commander who took the chair mid-cooldown even once the panel was correct.
+
+No server involvement is needed to fix it. By the time you sit down, your client has already been
+receiving the team broadcast as a field player; the data just isn't anywhere vanilla looks. Becoming
+a commander is exactly the moment vanilla's table is empty and the mod's is not, so
+`Commander:OnInitialized` replays ours into vanilla's through the public `SetTechCooldown`. The
+network handler does the same for live updates while commanding, so the two views cannot drift.
+
+The broadcast and the join resync are the mod's only server-side code; everything else, including
+this dial bridge, is client-side. It needs the server anyway (see [Servers](#servers)).
 
 ## Design
 
@@ -148,6 +161,7 @@ through one pair of functions:
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
 | `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, so the whole team sees it |
+| `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client only.** Wraps `OnInitialized` to replay synced cooldowns into vanilla's own table, fixing vanilla's button dial |
 | `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's team-cooldown message in every VM |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
 | `lua/NS2Gamerules.lua` | `ImprovedTooltips_CooldownJoin.lua` | **Server only.** Wraps `JoinTeam` to hand a joining player the current cooldowns |
@@ -170,6 +184,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua       (client)
     ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua (client)
     ImprovedTooltips_ClientUI.lua           post-hook on ClientUI.lua            (client)
+    ImprovedTooltips_CooldownDial.lua       post-hook on Commander.lua           (client)
     ImprovedTooltips_NetworkMessages.lua    post-hook on NetworkMessages.lua     (shared)
     ImprovedTooltips_CooldownState.lua      team cooldown table + server publish
     ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
@@ -249,6 +264,8 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   on the casting commander's client, so field players had no data at all.
 - Fixed the underlying vanilla bug — nobody but the commander who personally cast an ability ever
   saw its dial. Enforcement was always correct; only the display was blind.
+- Vanilla's own rotating dial on the commander button is fixed too, not just the new panel: taking
+  the chair mid-cooldown now shows the ability as blocked on its own button.
 - Removed a hard-edged backing rectangle that showed through the alien panel's smoke.
 - The mod gains its first server-side code as a result. It already had to be installed server-side.
 

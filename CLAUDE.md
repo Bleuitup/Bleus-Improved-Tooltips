@@ -82,6 +82,14 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   `AbilityResult` message, which vanilla sends **only to the casting commander**. Vanilla marks the
   gap itself — `Commander:SetTechCooldown` ends with an empty
   `if Server then -- send message to commander to sync the cd end`.
+- **Two tables, and both need feeding.** The mod's own table drives the mod's panel; vanilla's
+  `gTechIdCooldowns` drives vanilla's rotating dial on the commander button. Filling only ours fixes
+  the panel and leaves the button dial blank — that regression shipped once, in `20b8b80`, because
+  the rewrite for team-wide visibility replaced the `AbilityResult` replay that had been feeding
+  vanilla's table. `Commander:SetTechCooldown` is the public way into vanilla's, so
+  `ImprovedTooltips_CooldownDial.lua` replays ours into it on `Commander:OnInitialized`
+  (client-side, no server involvement — the client already has the data from the team broadcast).
+  **If you touch the cooldown sync, check both views.**
 - **The mod keeps its OWN client-side table** (`ImprovedTooltips_CooldownState.lua`) rather than
   reading `Commander:GetCooldownFraction`. That method exists only on a Commander, and on a client
   is only ever populated for the player who cast — so a field player, or a commander who just left

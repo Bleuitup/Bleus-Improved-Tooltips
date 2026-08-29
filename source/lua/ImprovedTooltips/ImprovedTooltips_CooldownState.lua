@@ -67,6 +67,52 @@ function IT.GetTeamCooldownFraction(techId)
 end
 
 ------------------------------------------------------------------------------------------------
+-- Bridging back into vanilla's own cooldown table
+------------------------------------------------------------------------------------------------
+--
+-- The mod's table drives the mod's panel. It does NOT drive vanilla's rotating dial on the
+-- commander button, which reads gTechIdCooldowns through Commander:GetCooldownFraction. So a
+-- commander who takes the chair mid-cooldown still sees a blank button dial even though our panel
+-- is correct.
+--
+-- Commander:SetTechCooldown is the public way into that table - it writes gTechIdCooldowns keyed by
+-- team - so pushing our synced state through it fixes the vanilla dial with no server involvement
+-- at all. The client already has everything needed.
+--
+-- Writing an entry vanilla already holds is harmless: SetTechCooldown searches by techId and
+-- updates in place rather than appending. Expired entries are harmless too, since
+-- GetCooldownFraction returns 0 once the time has passed - but they are skipped anyway.
+
+function IT.ApplyCooldownToVanillaDial(commander, techId, startTime)
+
+	if not commander or not commander.SetTechCooldown or not techId or techId == kTechId.None then
+		return
+	end
+
+	local duration = LookupTechData(techId, kTechDataCooldown, 0)
+	if type(duration) ~= "number" or duration <= 0 then
+		return
+	end
+
+	if startTime + duration <= Shared.GetTime() then
+		return
+	end
+
+	commander:SetTechCooldown(techId, duration, startTime)
+
+end
+
+-- Replays everything currently known into vanilla's table. Called when the local player becomes a
+-- commander, which is the moment vanilla's table is empty but ours is not.
+function IT.PushAllCooldownsToVanillaDial(commander)
+
+	for techId, startTime in pairs(IT.teamCooldowns) do
+		IT.ApplyCooldownToVanillaDial(commander, techId, startTime)
+	end
+
+end
+
+------------------------------------------------------------------------------------------------
 -- Server: publishing cooldowns to the team
 ------------------------------------------------------------------------------------------------
 --

@@ -22,6 +22,9 @@ if Client then
 	ModLoader.SetupFileHook("lua/Player_Client.lua", "lua/ImprovedTooltips/ImprovedTooltips_TooltipData.lua", "post")
 	ModLoader.SetupFileHook("lua/GUICommanderTooltip.lua", "lua/ImprovedTooltips/ImprovedTooltips_TooltipGUI.lua", "post")
 	ModLoader.SetupFileHook("lua/ClientUI.lua", "lua/ImprovedTooltips/ImprovedTooltips_ClientUI.lua", "post")
+	-- Client side of Commander.lua: replays synced cooldowns into vanilla's own table when the
+	-- local player takes the chair, so vanilla's button dial works too and not just our panel.
+	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownDial.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
