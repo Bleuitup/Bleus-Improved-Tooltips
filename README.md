@@ -131,21 +131,25 @@ which is its correct base value anyway.
 
 ### Icons
 
-The mod ships only what the game does not already have:
+Only the hourglass and stopwatch are drawn from scratch. Everything else is vanilla art:
 
 | Icon | Source |
 |---|---|
-| Health, Armour | `ui/{marine,alien}_commander_textures.dds` — the cells `GUISelectionPanel` draws when you click an existing structure. Already team-coloured, so not tinted |
+| Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds`, used straight from vanilla — CBM assigns the same index to `SpurPassive` |
+| Health, armour | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
+| Marine speed | `marine_buildmenu_insight.dds` row 2 col 4, mirrored to point right and lifted off its button plate |
+| Hourglass, stopwatch | Drawn in `tools/build_icons.ps1` |
 
-The health and armour figures are coloured to match, read from `GUISelectionPanel.kHealthBarColors`
-and `kArmorBarColors` at runtime: marine health pale cyan, marine armour deep teal, alien health
-yellow, alien armour darker orange. So a number means the same thing wherever you read it.
-| Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds` — CBM uses the same index for `SpurPassive` |
-| Hourglass, stopwatch, marine chevron | `ui/bleu_tooltip_icons.dds`, the mod's own 192×64 sheet |
+Health and armour are resampled rather than drawn from the vanilla atlas at runtime for three
+reasons: the source glyphs fill only ~29px of a 48px cell, so at icon size they came out smaller
+than everything beside them; they top out at alpha 233, so they looked translucent next to the
+opaque ones; and being amber they could not be tinted onto a target colour at all, since `SetColor`
+multiplies and can only darken. The baked copies are white and fully opaque, so the tint lands
+exactly. Vanilla's own selection panel is repointed at the same glyphs, keeping its own size.
 
-The marine speed chevron is the only glyph without a usable vanilla form: the closest,
-`marine_buildmenu_insight.dds` row 2 column 4, points the wrong way and sits on a button plate, so
-`tools/build_icons.ps1` mirrors it and keys the plate out rather than redrawing it.
+The figures are coloured from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`, read at
+runtime — marine health pale cyan, marine armour deep teal, alien health yellow, alien armour darker
+orange — and the icons take the same colour, so a number means the same thing wherever you read it.
 
 ### ARC stances
 
@@ -232,7 +236,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
     ImprovedTooltips_CooldownJoin.lua       post-hook on NS2Gamerules.lua        (server)
     GUIImprovedTooltipsCooldowns.lua        the "In Cooldown" panel
-source/ui/bleu_tooltip_icons.dds            192x64 icon sheet, 3 cells of 64x64
+source/ui/bleu_tooltip_icons.dds            320x64 icon sheet, 5 cells of 64x64
 tools/build_icons.ps1                       regenerates the icon sheet
 preview.jpg                                 Workshop preview, 512x512
 mod.settings                                Launch Pad project settings
@@ -314,6 +318,10 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - ARC Deploy now shows speed as an explicit 0 rather than hiding it.
 - The cooldown panel entries now sit on the game's own build-menu button plate instead of one flat
   rectangle behind the whole panel, which removes the hard-edged box on both teams.
+- Fixed the Drifter button showing no speed: it is kTechId.DrifterEgg, a class with no speed of its
+  own, so speed is aliased to the Drifter it hatches - as vanilla already does for its health.
+- Health and armour icons are now resampled into the mod's own sheet, so they match the other icons
+  in size and are fully opaque. Vanilla's selection panel is repointed at the same glyphs.
 
 **0.86**
 - Added the "In Cooldown" panel — a titled panel on the right of the screen listing team abilities

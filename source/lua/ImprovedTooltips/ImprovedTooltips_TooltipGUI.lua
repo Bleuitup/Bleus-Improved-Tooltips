@@ -38,11 +38,8 @@ local kOwnIconCoords = {
 	research     = { 0,   0, 64,  64 },
 	cooldown     = { 64,  0, 128, 64 },
 	speedMarine  = { 128, 0, 192, 64 },
-}
-
-local kVanillaIconCoords = {
-	health = { 0,  363, 48, 411 },
-	armor  = { 48, 363, 96, 411 },
+	health       = { 192, 0, 256, 64 },
+	armor        = { 256, 0, 320, 64 },
 }
 
 -- Celerity, index 64 in a 12-column sheet of 80px cells.
@@ -88,50 +85,17 @@ local function GetTextColor(field, teamType)
 
 end
 
--- The icons are tinted to their own figure's colour, so a cross and its number read as one thing.
---
--- SetColor multiplies, so it can only darken - and vanilla's health/armour art is not white, it is
--- already the team's colour. These are the brightest pixels of those cells, measured from the
--- atlases: marine (152,186,195), alien (244,185,55).
---
--- Dividing the target by that base gives the tint needed to land on it. It works out well, because
--- the art base is essentially the HEALTH colour already - that is presumably why vanilla chose it -
--- so health needs no tint at all, and armour darkens onto its own colour. Anything the multiply
--- cannot reach is clamped to 1, i.e. left as the art is.
-local kIconArtBase = {
-	[kMarineTeamType] = Color(152 / 255, 186 / 255, 195 / 255, 1),
-	[kAlienTeamType]  = Color(244 / 255, 185 / 255, 55 / 255, 1),
-}
-
-local function GetVanillaIconTint(field, teamType)
-
-	local base = kIconArtBase[teamType]
-	if not base then
-		return nil
-	end
-
-	local target = GetTextColor(field, teamType)
-
-	local function channel(t, b)
-		if b <= 0 then
-			return 1
-		end
-		return math.min(1, t / b)
-	end
-
-	return Color(channel(target.r, base.r), channel(target.g, base.g), channel(target.b, base.b), 1)
-
-end
-
 -- Resolves which texture and cell each entry draws from, for the given team. Returns texture,
 -- coords, tint - tint nil meaning "leave it alone, the art is already the right colour".
 local function GetIconSource(field, teamType, tint)
 
+	-- Health and armour use the mod's resampled copies of vanilla's glyphs rather than the vanilla
+	-- atlas directly: those are only ~29px inside a 48px cell, so drawn at icon size they came out
+	-- smaller than everything beside them, and they top out at alpha 233 so they looked faintly
+	-- translucent. Being white, they also take the exact figure colour, which the original amber art
+	-- could not - SetColor multiplies, so it can only darken.
 	if field == "health" or field == "armor" then
-		local atlas = (teamType == kAlienTeamType)
-			and "ui/alien_commander_textures.dds"
-			or  "ui/marine_commander_textures.dds"
-		return atlas, kVanillaIconCoords[field], GetVanillaIconTint(field, teamType)
+		return kOwnIconTexture, kOwnIconCoords[field], GetTextColor(field, teamType)
 	end
 
 	if field == "speed" then

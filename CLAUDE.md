@@ -141,11 +141,13 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   structure. They are already coloured per team, so **do not tint them**, and they sit in the very
   atlas the tooltip background already loads. 0.86 and earlier drew custom ones after rejecting the
   softer copies in `ui/alien_buymenu.dds`; that was looking at the wrong atlas.
-- **Tinting those icons only works one way.** `SetColor` multiplies, so it can only darken, and the
-  art is not white — measured brightest pixels are marine `(152,186,195)`, alien `(244,185,55)`. The
-  tint is `target / artBase`, clamped to 1. It works out because the art base is essentially the
-  *health* colour already, so health needs no tint and armour darkens onto its own colour. The same
-  maths is applied to vanilla's selection panel in `ImprovedTooltips_SelectionPanel.lua`; **keep the
+- **The mod ships resampled copies of vanilla's cross and shield** (atlas cells 3 and 4), rather
+  than drawing the vanilla atlas directly. Three reasons, all found in testing: the source glyphs
+  occupy only ~29px of a 48px cell so they rendered smaller than the other icons; they top out at
+  alpha 233 (149 on the marine atlas) so they looked translucent beside the opaque drawn glyphs; and
+  being amber they could not be tinted onto a target colour at all, because `SetColor` multiplies
+  and can only darken. The baked copies are white and fully opaque, so the tint lands exactly.
+  `ImprovedTooltips_SelectionPanel.lua` repoints vanilla's own panel at the same cells - **keep the
   two in step.**
 - **Match the figure colours too**, from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`
   (`GUISelectionPanel.lua:21-27`): marine health `(0.725, 1, 1)`, marine armour `(0.078, 0.9, 1)`,
@@ -185,6 +187,11 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   returns, and MAC's — which needs `self` — throws and falls back to the constant, its correct base.
 - The class is found via `kTechId[techId]` (bidirectional enum) → `_G[name]`. Guarded because names
   collide (`kTechId.Move` vs the `Move` hotkey table).
+- **The techId on a button is not always the thing it produces.** The alien drifter button is
+  `kTechId.DrifterEgg` (`AlienCommander.lua:565`), and `DrifterEgg` is its own class with no speed,
+  so name-derivation found nothing and the button showed none. Vanilla already points that button's
+  TechData at `kDrifterHealth`/`kDrifterArmor`, so a resolver aliases speed to `kTechId.Drifter` too.
+  **If a value is missing for one button, check whether its techId names the produced unit.**
 - **A zero speed means two different things.** The default 0 ("does not move") is hidden, or every
   structure would carry a pointless `0`; a 0 from a *registered resolver* is deliberate and is
   shown. `IT.HasResolver(field, techId)` distinguishes them. This is what puts `0` on ARC Deploy.

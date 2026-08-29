@@ -1,8 +1,9 @@
 # Bleu's Improved Tooltips - icon atlas generator
 #
-# Produces source/ui/bleu_tooltip_icons.dds: a 192x64 sheet of three 64x64 cells, in this order:
+# Produces source/ui/bleu_tooltip_icons.dds: a 320x64 sheet of five 64x64 cells, in this order:
 #
-#   0 research time (hourglass)   1 cooldown (stopwatch)   2 speed, marine (double chevron)
+#   0 research (hourglass)  1 cooldown (stopwatch)  2 speed, marine (chevron)
+#   3 health (cross)        4 armour (shield)
 #
 # The cell order is what ImprovedTooltips_TooltipGUI.lua's kOwnIconCoords indexes into - change one
 # and change the other.
@@ -10,21 +11,18 @@
 # The glyphs are pure white with an alpha mask, because the mod tints them per team at runtime
 # (IT.kMarineIconColor / IT.kAlienIconColor) via GUIItem:SetColor, which multiplies.
 #
-# ONLY icons with no vanilla equivalent live here. Everything the game already ships is used
-# directly, so the mod carries as little art as possible:
+# Nothing here is drawn from scratch except the hourglass and stopwatch. The rest is vanilla art,
+# resampled - the mod invents as little as possible:
 #
-#   health, armor  -> ui/{marine,alien}_commander_textures.dds at (0,363)-(48,411) and
-#                     (48,363)-(96,411). These are what GUISelectionPanel draws when you click an
-#                     existing structure, they are already coloured per team, and they live in the
-#                     very atlas the tooltip background is already textured with. An earlier version
-#                     of this mod drew its own cross and shield after rejecting the softer copies in
-#                     ui/alien_buymenu.dds - that was a mistake, these are the right ones.
-#   speed (alien)  -> the Celerity icon, index 64 in ui/buildmenu.dds (cell 4,5). Already points
-#                     right and reads as motion; CBM uses the same index for SpurPassive.
+#   health, armour -> vanilla's own selection-panel glyphs, resampled to match the other icons in
+#                     size and made fully opaque. See the block that builds them for why they are
+#                     baked in rather than drawn from the vanilla atlas at runtime.
+#   marine speed   -> ui/marine_buildmenu_insight.dds row 2 column 4, mirrored to point right and
+#                     lifted off its button plate.
 #
-# The marine speed chevron is the one glyph with no usable vanilla form: the closest is
-# ui/marine_buildmenu_insight.dds row 2 column 4, which points the wrong way and sits on a rounded
-# button plate. It is mirrored and keyed out below rather than redrawn.
+# The one icon still used straight from vanilla at runtime, with no cell here, is ALIEN speed: the
+# Celerity icon, index 64 in ui/buildmenu.dds (cell 4,5). It already points right, reads as motion,
+# and CBM assigns the same index to SpurPassive.
 #
 # Requires nvcompress.exe and nvdecompress.exe, which ship with the game under utils/.
 
@@ -43,7 +41,7 @@ $dds = Join-Path $outDir "bleu_tooltip_icons.dds"
 $CELL = 64
 $SS   = 4     # supersample factor; glyphs are drawn at 4x and downsampled for clean edges
 
-$atlas = New-Object System.Drawing.Bitmap(($CELL*3), $CELL, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$atlas = New-Object System.Drawing.Bitmap(($CELL*5), $CELL, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 $ag = [System.Drawing.Graphics]::FromImage($atlas)
 $ag.Clear([System.Drawing.Color]::Transparent)
 $ag.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
@@ -170,6 +168,69 @@ $g.DrawImage($chevron,
     [System.Drawing.GraphicsUnit]::Pixel)
 $g.Dispose(); Commit $b 2
 $chevron.Dispose()
+
+# 3, 4 - health cross and armour shield, resampled from ui/alien_commander_textures.dds at
+# (0,363)-(48,411) and (48,363)-(96,411). These are vanilla's own selection-panel glyphs, the ones
+# that appear when you click a structure.
+#
+# They are baked into this sheet rather than drawn from the vanilla atlas at runtime for three
+# reasons, all of which came out of testing:
+#   * SIZE. In the source they occupy only ~29px of a 48px cell, so drawn at our icon size they came
+#     out visibly smaller than the hourglass and stopwatch beside them. Cropping to the measured
+#     glyph bounds and rescaling makes them match.
+#   * ALPHA. The source tops out at alpha 233 (marine's copy only reaches 149), so they rendered
+#     slightly translucent next to the fully opaque drawn glyphs. SetColor multiplies, so alpha
+#     cannot be raised at runtime - it has to be fixed in the texture.
+#   * COLOUR. Flattening to white means the runtime team tint lands on the exact target colour
+#     instead of compounding with the art's own amber, which previously meant health could not be
+#     tinted at all (multiply only darkens).
+#
+# The alien copy is the source for both teams because its alpha is the higher of the two; the glyph
+# shapes are identical between the atlases, only the palette differs, and the palette is discarded.
+$commanderDds = Join-Path $NS2 "ns2\ui\alien_commander_textures.dds"
+$cmdWork = Join-Path $env:TEMP "bit_commander.dds"
+$cmdTga = [System.IO.Path]::ChangeExtension($cmdWork, ".tga")
+Copy-Item -LiteralPath $commanderDds -Destination $cmdWork -Force
+& $nvdecompress $cmdWork | Out-Null
+if (-not (Test-Path -LiteralPath $cmdTga)) { throw "nvdecompress produced no TGA for $commanderDds" }
+
+$cmdBytes = [System.IO.File]::ReadAllBytes($cmdTga)
+$cmdW = 1024
+$kSourceMaxAlpha = 233   # measured; scaling by 255/this makes the glyph core fully opaque
+
+# $bounds are the measured tight extents of the glyph inside its 48x48 cell.
+function Add-CommanderGlyph($cellX, $bx1, $by1, $bx2, $by2, $slot) {
+
+    $gw = $bx2 - $bx1 + 1
+    $gh = $by2 - $by1 + 1
+    $glyph = New-Object System.Drawing.Bitmap($gw, $gh, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+
+    for ($y = 0; $y -lt $gh; $y++) {
+        for ($x = 0; $x -lt $gw; $x++) {
+            $i = 18 + (((($y + $by1 + 363)) * $cmdW) + ($x + $bx1 + $cellX)) * 4
+            $a = [int]($cmdBytes[$i+3] * 255.0 / $kSourceMaxAlpha)
+            if ($a -gt 255) { $a = 255 }
+            $glyph.SetPixel($x, $y, [System.Drawing.Color]::FromArgb($a, 255, 255, 255))
+        }
+    }
+
+    # Fit into the cell preserving aspect, with the same padding the other glyphs use.
+    $pad = 6
+    $box = $CELL - 2*$pad
+    $scale = [Math]::Min($box / $gw, $box / $gh)
+    $dw = [int]($gw * $scale); $dh = [int]($gh * $scale)
+    $dx = $slot*$CELL + [int](($CELL - $dw) / 2)
+    $dy = [int](($CELL - $dh) / 2)
+
+    $ag.DrawImage($glyph,
+        (New-Object System.Drawing.Rectangle($dx, $dy, $dw, $dh)),
+        (New-Object System.Drawing.Rectangle(0, 0, $gw, $gh)),
+        [System.Drawing.GraphicsUnit]::Pixel)
+    $glyph.Dispose()
+}
+
+Add-CommanderGlyph 0  10 8  38 36  3    # health cross
+Add-CommanderGlyph 48 11 11 37 36  4    # armour shield
 
 $ag.Dispose()
 $atlas.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)

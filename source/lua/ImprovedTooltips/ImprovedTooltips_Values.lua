@@ -205,6 +205,8 @@ local function LookupClassMoveSpeed(techId)
 
 end
 
+IT.GetClassMoveSpeed = LookupClassMoveSpeed
+
 local kDefaultLookup = {
 	health       = function(techId) return LookupTechData(techId, kTechDataMaxHealth, 0) end,
 	armor        = function(techId) return LookupTechData(techId, kTechDataMaxArmor, 0) end,
@@ -322,6 +324,19 @@ local function GetAlienBioMassLevel()
 
 	return 0
 
+end
+
+-- The alien commander's drifter button is kTechId.DrifterEgg, not kTechId.Drifter
+-- (AlienCommander.lua:565) - you drop an egg, and a Drifter hatches from it. DrifterEgg is its own
+-- class with no speed of its own, so deriving from the techId name finds nothing and the button
+-- showed no speed at all.
+--
+-- Vanilla already treats that button as describing the Drifter it produces: its TechData carries
+-- kDrifterHealth and kDrifterArmor, not the egg's. Speed follows the same reading.
+if kTechId.DrifterEgg then
+	IT.RegisterResolver("speed", kTechId.DrifterEgg, function()
+		return IT.GetClassMoveSpeed(kTechId.Drifter)
+	end)
 end
 
 -- An ARC is a different unit depending on its stance, and vanilla stores both sets:

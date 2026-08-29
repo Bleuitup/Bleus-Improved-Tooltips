@@ -1,16 +1,20 @@
 -- Bleu's Improved Tooltips
 -- lua/ImprovedTooltips/ImprovedTooltips_SelectionPanel.lua
 --
--- Post-hook on lua/GUISelectionPanel.lua. Tints the health and armour icons on vanilla's selection
--- panel - the one you get when you click an existing structure - to match their own figures.
+-- Post-hook on lua/GUISelectionPanel.lua. Brings vanilla's selection panel - the one you get when
+-- you click an existing structure - in line with the mod's tooltips.
 --
--- Vanilla already colours the two NUMBERS differently (kHealthBarColors / kArmorBarColors) but
--- draws both ICONS in one flat team colour, so the cross and the shield look identical while the
--- numbers beside them do not. This makes the icon agree with its number, in the same way and with
--- the same maths the mod's own tooltips use.
+-- Vanilla already colours the two NUMBERS differently (kHealthBarColors / kArmorBarColors) but draws
+-- both ICONS in one flat team colour, so the cross and the shield look identical while the numbers
+-- beside them do not.
 --
--- Kept in step with ImprovedTooltips_TooltipGUI.lua: same measured art base, same divide-and-clamp.
--- If the tint changes in one place, change it in the other.
+-- The icons are repointed at the mod's own resampled copies of those same glyphs. They are the same
+-- art, so the panel looks unchanged in shape, but they are white and fully opaque - which means the
+-- colour can be set exactly (SetColor multiplies, so the original amber could only ever be darkened,
+-- never moved onto the cyan of marine armour) and they no longer render at the source's alpha 233,
+-- or 149 on the marine atlas.
+--
+-- Size is deliberately left alone: the panel sets it, and it should keep its own proportions.
 
 if not Client then
 	return
@@ -20,27 +24,21 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 local IT = ImprovedTooltips
 
--- Brightest pixels of the health/armour cells in ui/{marine,alien}_commander_textures.dds.
-local kIconArtBase = {
-	[kMarineTeamType] = Color(152 / 255, 186 / 255, 195 / 255, 1),
-	[kAlienTeamType]  = Color(244 / 255, 185 / 255, 55 / 255, 1),
+local kIconTexture = "ui/bleu_tooltip_icons.dds"
+local kIconCoords = {
+	health = { 192, 0, 256, 64 },
+	armor  = { 256, 0, 320, 64 },
 }
 
-local function GetTint(targetColor, teamType)
+local function ApplyIcon(item, coords, color)
 
-	local base = kIconArtBase[teamType]
-	if not base or not targetColor then
-		return nil
+	if not item or not color then
+		return
 	end
 
-	local function channel(t, b)
-		if b <= 0 then
-			return 1
-		end
-		return math.min(1, t / b)
-	end
-
-	return Color(channel(targetColor.r, base.r), channel(targetColor.g, base.g), channel(targetColor.b, base.b), 1)
+	item:SetTexture(kIconTexture)
+	item:SetTexturePixelCoordinates(GUIUnpackCoords(coords))
+	item:SetColor(color)
 
 end
 
@@ -54,21 +52,15 @@ function GUISelectionPanel:InitializeSingleSelectionItems()
 		return
 	end
 
-	-- Vanilla derives teamType the same way a few lines above where it colours the text.
+	-- Same accessor vanilla uses a few lines above, where it colours the text.
 	local teamType = PlayerUI_GetTeamType()
 
-	if self.healthIcon and GUISelectionPanel.kHealthBarColors then
-		local tint = GetTint(GUISelectionPanel.kHealthBarColors[teamType], teamType)
-		if tint then
-			self.healthIcon:SetColor(tint)
-		end
+	if GUISelectionPanel.kHealthBarColors then
+		ApplyIcon(self.healthIcon, kIconCoords.health, GUISelectionPanel.kHealthBarColors[teamType])
 	end
 
-	if self.armorIcon and GUISelectionPanel.kArmorBarColors then
-		local tint = GetTint(GUISelectionPanel.kArmorBarColors[teamType], teamType)
-		if tint then
-			self.armorIcon:SetColor(tint)
-		end
+	if GUISelectionPanel.kArmorBarColors then
+		ApplyIcon(self.armorIcon, kIconCoords.armor, GUISelectionPanel.kArmorBarColors[teamType])
 	end
 
 end
