@@ -79,10 +79,24 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   Heal Wave 6, Power Surge 4, Rupture 4, Hallucination Cloud 3, Nutrient Mist 2.
 - **That table is file-local and never networked.** It exists separately in the server VM and every
   client VM. A client's copy is only written by `Commander:OnAbilityResultMessage`, driven by the
-  `AbilityResult` message, which vanilla sends **only to the casting commander**. Hence the display
-  bug this mod fixes: taking the chair while an ability is already on cooldown. Vanilla marks the
+  `AbilityResult` message, which vanilla sends **only to the casting commander**. Vanilla marks the
   gap itself — `Commander:SetTechCooldown` ends with an empty
   `if Server then -- send message to commander to sync the cd end`.
+- **The mod keeps its OWN client-side table** (`ImprovedTooltips_CooldownState.lua`) rather than
+  reading `Commander:GetCooldownFraction`. That method exists only on a Commander, and on a client
+  is only ever populated for the player who cast — so a field player, or a commander who just left
+  the chair, has no data at all. The mod's table lives on the shared `ImprovedTooltips` table, not
+  on the player entity, so it survives entity replacement on spawn/death/logout.
+- **`AbilityResult` cannot be reused to reach field players.** `OnCommandAbilityResult` bails unless
+  `Client.GetLocalPlayer():GetIsCommander()`, and `Client.HookNetworkMessage` is handed the function
+  **by value** at load, so redefining the global later does not change what is registered. Hence the
+  mod's own `ImprovedTooltipsCooldown` message.
+- **`ClientUI` matches with `forPlayer:isa(class)`** (`ClientUI.lua:307`, `:386`), so registering a
+  script for `"Player"` covers every class. It is not exact-name matching. Ready room is excluded
+  separately via `kShowOnTeam[kTeamReadyRoom]`.
+- **A GUI script registered for `Player` survives class AND team changes**, so anything cached at
+  Initialize from the team (dial texture, tint, smoke) goes stale on a team switch. The panel
+  re-initialises when `PlayerUI_GetTeamType()` no longer matches what it cached.
 - **A team has at most ONE commander at a time**, however many command structures it owns — the
   user corrected me on this and the code agrees: `CommandStructure:GetIsPlayerValidForCommander`
   requires `not team:GetHasCommander()` (true if any Commander entity exists on the team), and

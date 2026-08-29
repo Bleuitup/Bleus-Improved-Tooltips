@@ -3,8 +3,9 @@
 An NS2 mod that puts the numbers a commander actually needs into the commander tooltips: research
 times, ability cooldowns, and structure health and armour.
 
-All the work happens client-side — every value is already on the client and nothing is sent
-anywhere — but that does **not** mean it runs on any server; see [Servers](#servers).
+The tooltip work is entirely client-side. The "In Cooldown" panel additionally needs the server,
+which broadcasts team cooldowns that vanilla never sends to anyone but the commander who cast. Note
+this mod has to be installed server-side regardless; see [Servers](#servers).
 
 Version 0.85. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
@@ -38,9 +39,11 @@ Commander ability cooldowns in NS2 are **team-global**, not per-commander — `C
 keeps them in `local gTechIdCooldowns = {}` keyed by *team number*, and the server blocks a cast by
 checking that team table. Three Shades cannot alternate Ink to keep ARCs suppressed.
 
-Vanilla only surfaces that on the ability's own button, so a panel on the right of the commander's
-screen lists whatever is currently on cooldown, using vanilla's own `GUIDial` and per-team cooldown
-textures so it spins exactly like the button does, plus the seconds remaining.
+Vanilla only surfaces that on the ability's own button, and only for the commander. This panel sits
+on the right of the screen for **every player on the team**, listing whatever is currently on
+cooldown, using vanilla's own `GUIDial` and per-team cooldown textures so it spins exactly like the
+button does, plus the seconds remaining. Shade Ink being down is as useful to a field alien deciding
+whether to push as it is to the commander.
 
 Abilities qualify at `kCooldownPanelMinDuration` seconds or more (default 5): Shade Ink 15s,
 Nano Shield 10s, Heal Wave 6s. Shorter ones — Rupture 4s, Hallucination Cloud 3s, Nutrient Mist 2s —
@@ -49,8 +52,9 @@ candidates come from `kTechDataCooldown`, so modded abilities qualify automatica
 
 ### The vanilla bug it depends on
 
-A commander who takes the chair while a team ability is on cooldown never saw the rotating dial.
-Enforcement was always correct — only the display was blind.
+Nobody but the commander who personally cast an ability ever saw its rotating dial - not a commander
+who took the chair mid-cooldown, not one who had just left it, and no field player at all.
+Enforcement was always correct; only the display was blind.
 
 `gTechIdCooldowns` exists separately in the server VM and in every client VM, and nothing syncs
 them. A client's copy is only ever written by the `AbilityResult` message, which the server sends
@@ -62,17 +66,27 @@ if Server then
 end
 ```
 
-an empty block. `ImprovedTooltips_CooldownSync.lua` fills it in, replaying the team's live cooldowns
-to a commander on their first move tick after taking the chair. It reuses vanilla's own
-`AbilityResult` message rather than adding one, and recovers the original start time through the
-public `GetCooldownFraction` as `castTime = now - (1 - fraction) * duration`, since
-`gTechIdCooldowns` itself is file-local. Fixing this also makes the vanilla button dial work.
+an empty block.
 
-Only the login case needs handling: a team can have at most one commander at a time no matter how
-many command structures it owns (`CommandStructure:GetIsPlayerValidForCommander` requires
-`not team:GetHasCommander()`), so there is never a second seated commander to forward a cooldown to.
-Every path that starts a cooldown already messages the one commander there is — the normal cast, and
-`Drifter.lua:525` for drifter-delivered clouds.
+The mod fills it in by keeping **its own** cooldown table client-side, fed by its own message
+broadcast to the whole team — on each new cooldown (`SetTechCooldown`) and as a full resync when a
+player joins a team (`JoinTeam`). Because that state lives in the mod rather than on the player
+entity, it survives the entity being replaced on spawn, death, or leaving the chair, and works for
+every class.
+
+Vanilla's `AbilityResult` can't be reused for this: its client handler bails unless
+`Client.GetLocalPlayer():GetIsCommander()`, so it can never reach a field player — and it can't be
+hooked away either, since `Client.HookNetworkMessage` is handed the function by value at load, so
+redefining the global afterwards changes nothing.
+
+The resync recovers start times through the public `GetCooldownFraction` as
+`startTime = now - (1 - fraction) * duration`, since `gTechIdCooldowns` itself is file-local and
+unreachable. Duration is never sent — the client looks it up from TechData, as vanilla's own handler
+does.
+
+A team has at most one commander at a time no matter how many command structures it owns
+(`CommandStructure:GetIsPlayerValidForCommander` requires `not team:GetHasCommander()`), so there is
+no second-commander case to handle — only the rest of the team.
 
 This is the mod's only server-side code. It needs the server anyway (see [Servers](#servers)).
 
@@ -133,8 +147,10 @@ through one pair of functions:
 |---|---|---|
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
-| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for both commander classes |
-| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `OnProcessMove` to replay the team's live cooldowns to a commander on taking the chair |
+| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, so the whole team sees it |
+| `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's team-cooldown message in every VM |
+| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
+| `lua/NS2Gamerules.lua` | `ImprovedTooltips_CooldownJoin.lua` | **Server only.** Wraps `JoinTeam` to hand a joining player the current cooldowns |
 
 Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
 of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
@@ -154,7 +170,10 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua       (client)
     ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua (client)
     ImprovedTooltips_ClientUI.lua           post-hook on ClientUI.lua            (client)
+    ImprovedTooltips_NetworkMessages.lua    post-hook on NetworkMessages.lua     (shared)
+    ImprovedTooltips_CooldownState.lua      team cooldown table + server publish
     ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
+    ImprovedTooltips_CooldownJoin.lua       post-hook on NS2Gamerules.lua        (server)
     GUIImprovedTooltipsCooldowns.lua        the "In Cooldown" panel
 source/ui/bleu_tooltip_icons.dds            256x64 icon sheet, 4 cells of 64x64
 tools/build_icons.ps1                       regenerates the icon sheet
@@ -222,13 +241,16 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
-- Added the "In Cooldown" panel — a titled panel on the right of the commander's screen listing
-  team abilities currently on cooldown, with vanilla's rotating dial and the seconds left. Both
-  teams; abilities qualify at 5s or more by default.
-- Fixed the vanilla bug where a commander who took the chair while a team ability was on cooldown
-  never saw its dial. Server enforcement was always correct; only the display was blind. This also
-  repairs the vanilla button dial, not just the new panel.
-- The mod gains its first server-side file as a result. It already had to be installed server-side.
+- Added the "In Cooldown" panel — a titled panel on the right of the screen listing team abilities
+  currently on cooldown, with vanilla's rotating dial and the seconds left. Both teams; abilities
+  qualify at 5s or more by default.
+- Visible to **every player on the team**, not just the commander, and it persists when a commander
+  leaves the chair. This needed the mod to keep its own synced cooldown table: vanilla's lives only
+  on the casting commander's client, so field players had no data at all.
+- Fixed the underlying vanilla bug — nobody but the commander who personally cast an ability ever
+  saw its dial. Enforcement was always correct; only the display was blind.
+- Removed a hard-edged backing rectangle that showed through the alien panel's smoke.
+- The mod gains its first server-side code as a result. It already had to be installed server-side.
 
 **0.85**
 - Moved research time and cooldown out of vanilla's top-right icon row and into a single stat row

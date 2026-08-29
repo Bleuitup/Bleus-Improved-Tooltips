@@ -18,6 +18,7 @@
 
 Script.Load("lua/GUIDial.lua")
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_CooldownState.lua")
 
 local IT = ImprovedTooltips
 
@@ -212,11 +213,18 @@ function GUIImprovedTooltipsCooldowns:OnResolutionChanged()
 	self:Initialize()
 end
 
+-- Reads the mod's own team cooldown table, not Commander:GetCooldownFraction. The latter only
+-- exists on a Commander, and on a client is only ever populated for the player who cast - so the
+-- panel would be blank for field players and for a commander who just left the chair. See
+-- ImprovedTooltips_CooldownState.lua.
 local function GetActiveCooldowns(player)
 
 	local active = { }
 
-	if not player or not player.GetCooldownFraction or not player.GetIsCommander or not player:GetIsCommander() then
+	-- Ready room and unassigned players have no team cooldowns to show. ClientUI already keeps most
+	-- scripts out of the ready room, but a spectator can reach here.
+	local teamNumber = player and player.GetTeamNumber and player:GetTeamNumber()
+	if teamNumber ~= kTeam1Index and teamNumber ~= kTeam2Index then
 		return active
 	end
 
@@ -225,7 +233,7 @@ local function GetActiveCooldowns(player)
 	for i = 1, #techIds do
 
 		local techId = techIds[i]
-		local fraction = player:GetCooldownFraction(techId)
+		local fraction = IT.GetTeamCooldownFraction(techId)
 
 		if fraction and fraction > 0 then
 			local duration = LookupTechData(techId, kTechDataCooldown, 0)
@@ -249,6 +257,14 @@ function GUIImprovedTooltipsCooldowns:Update(deltaTime)
 	if not IT.kShowCooldownPanel then
 		self.background:SetIsVisible(false)
 		return
+	end
+
+	-- The panel is registered for Player, so it now survives class changes - including commander to
+	-- field player. That means it also survives a team switch, after which the cached team styling
+	-- (dial texture, tint, smoke) would be wrong. Rebuild when the team actually changes.
+	if PlayerUI_GetTeamType() ~= self.teamType then
+		self:Uninitialize()
+		self:Initialize()
 	end
 
 	local player = Client.GetLocalPlayer()
