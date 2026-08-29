@@ -134,6 +134,41 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   CompMod's `EnumUtils.AppendToEnum`), so iterating it needs a
   `type(v) == "number" and type(k) == "string"` guard, and must skip `Max`.
 
+## ARC targeting (researched 2026-08-29, nothing built yet)
+
+Explored improving the feedback between an ARC's range circle and what it can actually hit. Facts,
+so they are not re-derived:
+
+- **The range test is point-to-point, against `target:GetOrigin()`** — not model extents, not the
+  tech point's square. `ARC.lua:462`. So the hive's visual bulk is irrelevant; only its entity origin
+  is measured. `kARCRange = 26`, `kARCMinRange = 7` (`Balance.lua:350-351`).
+- **There are TWO different distance metrics**, and they disagree when there is height difference:
+  - `GetCanFireAtTargetActual:462` uses `GetLengthXZ()` — horizontal only, auto-acquisition.
+  - `ValidateTargetPosition:603` uses `GetLength()` — full 3D.
+  - `OnValidateOrder:630` applies **both** for a manual attack order. So a flat ground circle is
+    exactly right for auto-acquire but slightly optimistic for a manual order near the edge.
+- **No line of sight is required — ARCs fire through walls.** The only `Shared.TraceRay` in the ARC
+  code is `ARC_Server.lua:92`, tracing straight down as a ground check. Confirmed by the user.
+- **But two non-wall gates still block firing:** `GetIsSighted() or GetIsTargetDetected()`
+  (`ARC.lua:459`, team sighting rather than ARC vision), and **Shade Ink** —
+  `ValidateTargetPosition:598` refuses outright if enemy Ink clouds are within
+  `kShadeInkDisorientRadius` of the target. That is the mechanical basis for Ink deterring ARCs.
+- **The 7m minimum range is never drawn.** `kVisualRange` **accepts a table** and every entry gets
+  its own circle, for both placement ghosts (`Commander_Client.lua:477-495`) and selected units
+  (`536-556`, "draw them all") — the Shift already uses it for echo + energize. So
+  `[kVisualRange] = { ARC.kFireRange, ARC.kMinFireRange }` is a one-entry TechData change.
+- **The range circles are render decals** using `models/misc/circle/circle.material` and
+  `circle_alien.material`, shader `shaders/circle_emissive.surface_shader`. That shader tints by
+  `input.color` and declares a settable `hiddenAmount` float (opacity). `material:SetParameter` works
+  on decal materials (precedent at `Client.lua:1680`), but **nothing in NS2 calls `SetColor` on a
+  decal**, so recolouring likely needs a second `.material` + `.dds` rather than a tint call.
+
+Plan agreed with the user, not implemented: draw the min-range circle, plus a marker at each nearby
+target's origin whose prominence encodes the real answer (both distance rules), computed the same way
+`OnValidateOrder` does. Rejected: recolouring the big circle (says something is in range, not what)
+and highlighting the hive itself (requires overriding a material on an entity we do not own and
+undoing it on deselect/death — a leaked highlight would read as a mod bug).
+
 ## Environment constraints
 
 - **`python` on PATH is the Microsoft Store stub**, not a real interpreter — it fails with "Python
@@ -185,23 +220,13 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 
 ## Status
 
-> ### ⚠ `main` is AHEAD of the published build and UNTESTED
->
-> Everything after `v0.85` — the "In Cooldown" panel and the cooldown-sync fix — has **never been
-> run in game**. It is marked by the annotated tag **`pending-test/cooldown-panel`**, whose message
-> carries the full test checklist:
->
-> ```bash
-> git tag -l 'pending-test/*'
-> git show pending-test/cooldown-panel
-> ```
->
-> Tag namespaces: `v*` = published, `pending-test/*` = compiles but unverified. **Delete the
-> pending-test tag once the work is tested and released.** Do not publish to the Workshop while one
-> is outstanding without saying so explicitly.
+> Tag namespaces: `v*` = published and tested; `pending-test/*` = compiles but never run. If a
+> `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
+> tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- Version 0.85, tested in game by the user and published. (There is no published 0.81 — that was the
-  working version number while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
+- Version 0.86, tested in game (client and dedicated server) and published. (There is no published
+  0.81 — that was the working version number while the stat row was moved and the hourglass redrawn;
+  it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
 - `preview.jpg` is the user's own artwork (added 2026-08-26), replacing the generated placeholder.
   `tools/build_preview.ps1`, which produced that placeholder, has been deleted — do not recreate a
@@ -210,4 +235,11 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
   `mod.settings` names the file by extension, so a `.png` beside it does nothing.
 - **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
   re-propose `M:SS`. `kTimeFormat` keeps the other modes, but `"seconds"` is the decision.
-- Open: nothing, beyond testing the `pending-test/cooldown-panel` work above.
+- **The Workshop description does not mention the "In Cooldown" panel** — it was written before that
+  feature existed and lists only the tooltip work. Worth updating next time `mod.settings` is
+  touched, remembering Launch Pad must be fully closed and reopened first or it writes its stale
+  copy back.
+- Discussed but not built: ARC range feedback, settled on drawing the 7m minimum-range circle
+  (`[kVisualRange] = { ARC.kFireRange, ARC.kMinFireRange }`, since `kVisualRange` accepts a table)
+  plus an origin marker on nearby targets whose state encodes both distance rules. See the ARC notes
+  below.

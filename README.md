@@ -7,7 +7,7 @@ The tooltip work is entirely client-side. The "In Cooldown" panel additionally n
 which broadcasts team cooldowns that vanilla never sends to anyone but the commander who cast. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 0.85. Published to the Steam Workshop as
+Version 0.86. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -255,7 +255,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
-**Unreleased**
+**0.86**
 - Added the "In Cooldown" panel — a titled panel on the right of the screen listing team abilities
   currently on cooldown, with vanilla's rotating dial and the seconds left. Both teams; abilities
   qualify at 5s or more by default.
