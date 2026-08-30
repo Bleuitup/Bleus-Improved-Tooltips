@@ -319,11 +319,56 @@ already has, so it adds no information; set `kInheritUpgradeStats` false to turn
 off. `UpgradeToDualMinigun` and `UpgradeToDualRailgun` match by name but their products carry no
 health or armour, so nothing appears.
 
-**Health and armour only — speed is deliberately excluded.** Under CBM every Fortress structure
-computes its speed from live infestation charge (`Crag:GetMaxSpeed` returns
-`kMoveSpeed * (0.5 + 0.5 * infestationSpeedCharge / kMaxInfestationCharge)`, and Whip, Shade and
-Shift do the same), so there is no honest single number to print for a structure that does not exist
-yet. Printing the inherited constant would claim the speed is unchanged when in fact it drops.
+**Health, armour and speed.** Speed only says anything where the product has one to report — a
+vanilla hive type upgrade produces something that does not move, so nothing appears. For CBM's
+Fortress structures the number comes from the CBM compatibility module below, which is what makes it
+honest: the raw class constant would claim the speed is unchanged when it actually drops.
+
+### CBM compatibility
+
+`ImprovedTooltips_CBM.lua` is the one mod-specific file here, and a deliberate exception to the rule
+that nothing in this mod knows about any particular mod. Everything else works by asking TechData and
+the tech tree what they hold, which covers any mod adding tech the ordinary way. CBM does two things
+that cannot be reached that way, and CBM is common enough to be worth the exception.
+
+It is contained. Nothing outside that file mentions CBM, it detects CBM by the tech CBM adds rather
+than by a name or a version (`kTechId.FortressCrag` exists nowhere else), and when CBM is absent it
+registers nothing at all — vanilla and B2TP behave exactly as they did before it existed. Set
+`kEnableCBMCompat` false to remove it entirely.
+
+**Speed.** A CBM Crag, Shade, Shift or Whip does not hold a speed constant. `GetMaxSpeed` multiplies
+a base by 1.25 normally, by 0.5 when electrified, and for the Fortress variants by a factor that
+rises with how long the structure has stood on infestation:
+
+```lua
+if self:GetTechId() == kTechId.FortressCrag then
+    return Crag.kMoveSpeed * (0.5 + 0.5 * self.infestationSpeedCharge / Crag.kMaxInfestationCharge)
+end
+```
+
+That charge climbs at 2 per second on infestation and drains at 1 per second off it, so a structure
+sitting on infestation is at full charge. Alien structures are meant to be on infestation, so that is
+the speed quoted — the same convention as quoting an ARC's speed off infestation, which is where an
+ARC is meant to be. At full charge the multipliers are 1.25 for a plain Crag, Shade, Shift or Whip,
+1.0 for a Fortress Crag, Shade or Shift, and 1.25 for a Fortress Whip.
+
+So a Fortress Crag reads 2.9 against a plain Crag's 3.625 — the drop the upgrade actually costs you.
+A Fortress Whip matches a plain Whip and beats it in frenzy, which is why its number does not move.
+
+Without this the tooltip fell back to the raw base constant, which is neither the normal speed nor
+the Fortress one, and for a CBM Whip it showed nothing at all, since CBM keeps that base in a
+file-local and leaves no class field to read.
+
+**Biomass 5.** CBM's fourth `+1` research needs no support of its own — the hive HUD already draws one
+icon per biomass research and reads its art through `GetTextureCoordinatesForIcon`, so CBM's own icon
+appears unaided. What the module adds is the colour: CBM marks the biomass 5 hive out in purple, and
+the icon carries that so the HUD agrees with what the player sees standing in the room. Every other
+biomass icon stays untinted.
+
+The tint goes through `ImprovedTooltips.RegisterIconColor(techId, color)`, a public registry, rather
+than a branch inside the drawing code — so any mod can claim a colour for its own tech without this
+mod knowing it exists.
+
 
 ### Extending it from another mod
 
@@ -387,7 +432,8 @@ source/lua/entry/ImprovedTooltips.entry     mod entry, points at the FileHooks f
 source/lua/ImprovedTooltips/
     ImprovedTooltips_FileHooks.lua          registers the post-hooks
     ImprovedTooltips_Config.lua             display options (time format, tints, panel, tech map)
-    ImprovedTooltips_Values.lua             value resolution + the resolver registry
+    ImprovedTooltips_Values.lua             value resolution + the resolver and icon registries
+    ImprovedTooltips_CBM.lua                CBM compatibility (inert without CBM)
     ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua       (client)
     ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua (client)
     ImprovedTooltips_ClientUI.lua           post-hook on ClientUI.lua            (client)
@@ -438,8 +484,10 @@ and `mod.settings` names the file by extension.
 - `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
 - `kHiveBiomassIconColor` / `kHiveResearchRingColor` / `kHiveResearchDnaColor` — their tints (biomass
   is untinted by default, matching how vanilla draws the same art)
-- `kInheritUpgradeStats` — let an `UpgradeToX` button show the health and armour of the X it builds
-  (CBM's Fortress structures, vanilla's hive type upgrades)
+- `kInheritUpgradeStats` — let an `UpgradeToX` button show the health, armour and speed of the X it
+  builds (CBM's Fortress structures, vanilla's hive type upgrades)
+- `kEnableCBMCompat` — the CBM compatibility module; inert anyway when CBM is not loaded
+- `kColorCBMBiomassFive` / `kCBMBiomassFiveColor` — tint CBM's biomass 5 research icon, and the shade
 - `kUseTopBarSupplyIcon` — mark supply on the tooltip with the HUD top bar's icon instead of vanilla's
   MAC / Drifter
 - `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
@@ -487,14 +535,26 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- **A CBM compatibility module.** The one mod-specific file in the mod, and a deliberate exception:
+  CBM does two things that cannot be read from TechData, and is common enough to be worth it. It
+  detects CBM by the tech CBM adds rather than by a name, and registers nothing at all when CBM is
+  absent, so vanilla and B2TP are untouched.
 - **CBM's Fortress structure upgrades now show what they build.** `UpgradeToFortressCrag` and its
   siblings carry no stats of their own, so the buttons showed only a cost and a duration; they now
-  show the health and armour of the Fortress structure they produce, resolved from the enum name so
-  no CBM-specific code is involved. Vanilla's hive type upgrades and `UpgradeToInfestedTunnel` match
-  the same pattern and show what they build too.
-- **CBM's biomass 5 needed no code.** CBM enables `ResearchBioMassFour`, which the hive HUD already
-  listed, and assigns it its own atlas cell, so a hive that researches it shows a fourth icon in
-  CBM's own art automatically.
+  show the health, armour and speed of the Fortress structure they produce. The product is resolved
+  from the enum name, so vanilla's hive type upgrades and `UpgradeToInfestedTunnel` show what they
+  build too, with no mod-specific code involved.
+- **CBM structure speeds are now correct.** A CBM Crag, Shade, Shift or Whip computes its speed
+  rather than storing one, so the tooltip had been showing the raw base constant — neither the normal
+  speed nor the Fortress one — and for a CBM Whip it showed nothing at all. Speeds are now quoted on
+  infestation, where alien structures are meant to be, so a Fortress Crag reads 2.9 against a plain
+  Crag's 3.625: the drop the upgrade actually costs.
+- **CBM's biomass 5 icon is tinted purple** on the hive HUD, matching how CBM marks that hive out.
+  The research itself needed no code — the HUD already listed it and reads its art from the atlas, so
+  CBM's own icon appeared unaided. The tint goes through a new public `RegisterIconColor` registry
+  rather than a branch in the drawing code.
+- Fixed `RegisterResolver` raising an error rather than declining when handed a techId that does not
+  exist.
 - **Supply on the commander tooltip now uses the HUD top bar's icon** instead of a MAC or a Drifter.
   Both meant supply and looked nothing alike; the split is a leftover from the top bar replacing
   `GUIResourceDisplay`, whose create and destroy calls are now commented out, leaving the tooltip as

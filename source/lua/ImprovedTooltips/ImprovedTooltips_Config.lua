@@ -176,8 +176,30 @@ IT.kUseTopBarSupplyIcon = true
 -- that convention is picked up with no registration. Vanilla's own UpgradeToCragHive / ShadeHive /
 -- ShiftHive and UpgradeToInfestedTunnel match it too and start showing what they build.
 --
--- Health and armour only. Speed is deliberately left out: under CBM every one of these structures
--- computes its speed from live infestation charge rather than holding a constant, so there is no
--- honest single number to print on a button for a structure that does not exist yet. Printing the
--- inherited constant would claim the speed is unchanged when it is not.
+-- Health, armour and speed. Speed only says anything where the product has one to report: a vanilla
+-- hive type upgrade produces something that does not move, so nothing appears. For CBM's Fortress
+-- structures the number comes from the CBM compatibility module below, which is what makes it
+-- honest - the raw class constant would claim the speed is unchanged when it actually drops.
 IT.kInheritUpgradeStats = true
+
+------------------------------------------------------------------------------------------------
+-- CBM compatibility
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_CBM.lua. Everything in that file is inert unless CBM is actually loaded,
+-- detected by the tech it adds rather than by a name.
+
+-- Turn the whole CBM module off, restoring what the mod does with no knowledge of CBM at all.
+IT.kEnableCBMCompat = true
+
+-- Tint the biomass 5 research icon on the hive HUD, which CBM marks out in purple.
+IT.kColorCBMBiomassFive = true
+
+-- The shade to use. This is CBM's own UI purple - the colour it draws tech map and minimap
+-- connector lines in - chosen over sampling the hive model because this is a UI element sitting
+-- among other UI, and because it is a colour CBM picked deliberately rather than one averaged out
+-- of a texture.
+--
+-- If the model's own shade reads better in game, CBM's biomass 5 hive glows a deeper magenta,
+-- roughly Color(0.85, 0.25, 0.45, 1); swapping this line is the whole change.
+IT.kCBMBiomassFiveColor = Color(0.7, 0.3, 1, 1)

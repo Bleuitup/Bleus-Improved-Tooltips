@@ -117,7 +117,13 @@ function IT.RegisterResolver(field, techId, resolverFunction)
 		return false
 	end
 
+	-- A nil techId would blow up on the table write below. It happens when a mod strips tech out of
+	-- kTechId, and a registration for something that no longer exists is simply nothing to do.
+	if type(techId) ~= "number" then
+		return false
+	end
 	resolvers[field][techId] = resolverFunction
+
 	return true
 
 end
@@ -144,6 +150,60 @@ function IT.SuppressField(field, techId)
 
 	suppressed[field][techId] = true
 	return true
+
+end
+
+------------------------------------------------------------------------------------------------
+-- Icon tints, for mods that colour-code their own tech
+------------------------------------------------------------------------------------------------
+--
+-- A public registry rather than a branch inside the drawing code, so a mod can say "my tech is this
+-- colour" without this mod knowing anything about it. Used by the CBM compatibility module for the
+-- biomass 5 research, which CBM marks out in purple.
+
+IT._iconColors = IT._iconColors or { }
+local iconColors = IT._iconColors
+
+function IT.RegisterIconColor(techId, color)
+
+	if type(techId) ~= "number" or techId == kTechId.None then
+		return false
+	end
+
+	iconColors[techId] = color
+	return true
+
+end
+
+-- Returns nil when nothing has claimed this techId, so callers keep their own default.
+function IT.GetIconColor(techId)
+	return iconColors[techId]
+end
+
+------------------------------------------------------------------------------------------------
+-- Mod compatibility
+------------------------------------------------------------------------------------------------
+--
+-- Compatibility modules register themselves the first time anything is asked for rather than when
+-- they load, because the tech ids and classes they test for are still being assembled while files
+-- load - asking too early would decide "not present" about a mod that simply had not loaded yet.
+-- This is the same reason the cooldown enumeration is built lazily.
+--
+-- Each module is responsible for detecting its own mod and doing nothing at all when it is absent.
+
+local compatApplied = false
+
+function IT.ApplyCompatModules()
+
+	if compatApplied then
+		return
+	end
+
+	compatApplied = true
+
+	if IT.ApplyCBMCompat then
+		IT.ApplyCBMCompat()
+	end
 
 end
 
@@ -339,12 +399,23 @@ local function GetUpgradeTargetTechId(techId)
 
 end
 
--- Only the fields that describe the finished structure. Research time is deliberately absent: the
+-- The fields that describe the finished structure. Research time is deliberately absent: the
 -- upgrade has its own, and it is the duration of the upgrade rather than of anything the product
--- does. Speed is absent too - see the note in ImprovedTooltips_Config.lua on kInheritUpgradeStats.
-local kInheritedFields = { health = true, armor = true }
+-- does.
+--
+-- Speed is included, but it only says anything where the product actually has one to report. A
+-- vanilla hive type upgrade produces a structure that does not move, so nothing appears. CBM's
+-- Fortress structures compute speed from live state rather than storing it, and the CBM
+-- compatibility module is what turns that into a number worth printing - without it this would fall
+-- back to a base constant and claim the speed was unchanged when it drops.
+local kInheritedFields = { health = true, armor = true, speed = true }
 
 function IT.GetValue(field, techId)
+
+	-- Compatibility modules attach themselves on first use rather than at load time; see above.
+	-- Done here rather than in GetValues so every entry point gets them, including a mod calling
+	-- GetValue directly.
+	IT.ApplyCompatModules()
 
 	if not IsValidField(field) or suppressed[field][techId] then
 		return 0
@@ -379,6 +450,7 @@ function IT.GetValues(techId)
 	if not techId or techId == kTechId.None then
 		return nil
 	end
+
 
 	local values = {
 		-- Carried so the renderer can ask HasResolver and tell a meaningful zero from an absent
@@ -528,3 +600,15 @@ IT.RegisterResolver("health", kTechId.BoneWall, function(techId)
 	return base + level * perBioMass
 
 end)
+
+------------------------------------------------------------------------------------------------
+-- Mod compatibility modules
+------------------------------------------------------------------------------------------------
+--
+-- Loaded last, once everything above exists. They are loaded from here rather than from the file
+-- hooks so that every VM which has the value logic also has them, and they attach themselves
+-- through IT.ApplyCompatModules on first use rather than at load time.
+--
+-- The load is deliberately at the bottom of this file: a compatibility module needs the registry
+-- functions above, and if it were loaded at the top it would run before they were defined.
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_CBM.lua")

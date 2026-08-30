@@ -54,12 +54,14 @@ local kProgressRingCoords = { 256, 68, 256 + 128, 68 + 128 }
 -- reached unless a mod adds the research.
 local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "ResearchBioMassThree", "ResearchBioMassFour" }
 
-local kBiomassIconCoords = nil
+-- Each entry is { coords = ..., techId = ... }. The techId is kept so a compatibility module can
+-- claim a colour for it - CBM marks its biomass 5 research out in purple.
+local kBiomassIcons = nil
 local kDnaIconCoords = nil
 
 local function ResolveIcons()
 
-	if kBiomassIconCoords then
+	if kBiomassIcons then
 		return true
 	end
 
@@ -67,7 +69,11 @@ local function ResolveIcons()
 		return false
 	end
 
-	kBiomassIconCoords = { }
+	-- Compatibility modules attach themselves on first use, and one of them may want to colour an
+	-- icon built below.
+	IT.ApplyCompatModules()
+
+	kBiomassIcons = { }
 
 	-- Stop at the first one a mod has removed rather than closing the gap: the position in this list
 	-- IS which research the icon stands for.
@@ -76,7 +82,7 @@ local function ResolveIcons()
 		if not techId then
 			break
 		end
-		kBiomassIconCoords[i] = GetTextureCoordinatesForIcon(techId)
+		kBiomassIcons[i] = { coords = GetTextureCoordinatesForIcon(techId), techId = techId }
 	end
 
 	kDnaIconCoords = GetTextureCoordinatesForIcon(kTechId.LifeFormMenu)
@@ -102,7 +108,9 @@ local function CreateBiomassIcons(slot)
 
 	slot.itBiomassIcons = { }
 
-	for i = 1, #kBiomassIconCoords do
+	for i = 1, #kBiomassIcons do
+
+		local entry = kBiomassIcons[i]
 
 		local icon = GUIManager:CreateGraphicItem()
 		icon:SetSize(size)
@@ -110,8 +118,9 @@ local function CreateBiomassIcons(slot)
 		icon:SetPosition(Vector(origin.x + spacing * (i - 1), origin.y, 0))
 		icon:SetTexture(kBuildMenuTexture)
 		-- Each slot is simply the art of the research it stands for.
-		icon:SetTexturePixelCoordinates(GUIUnpackCoords(kBiomassIconCoords[i]))
-		icon:SetColor(IT.kHiveBiomassIconColor)
+		icon:SetTexturePixelCoordinates(GUIUnpackCoords(entry.coords))
+		-- Untinted unless a compatibility module has claimed a colour for this research.
+		icon:SetColor(IT.GetIconColor(entry.techId) or IT.kHiveBiomassIconColor)
 		icon:SetLayer(kGUILayerPlayerHUDForeground4)
 		icon:SetIsVisible(false)
 		slot.background:AddChild(icon)

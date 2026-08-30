@@ -541,3 +541,34 @@ guessing; several assumptions about CBM turned out to be wrong.
   constant to print, and the mod's static class lookup returns the raw `kMoveSpeed` -- which is
   neither the normal speed nor the Fortress range. **Speed is therefore excluded from upgrade-button
   stat inheritance**, and the wider inaccuracy under CBM is a known open issue.
+
+### The CBM compatibility module (1.0 work)
+
+`ImprovedTooltips_CBM.lua` is the **only** mod-specific file, added on the user's explicit call that
+CBM is prevalent enough to be worth the exception ("I believe having good CBM integration is
+paramount to having the developers whitelist the mod"). Keep it that way: new mod-specific behaviour
+goes in a module like this, never in the core files.
+
+- **Loaded from the BOTTOM of `ImprovedTooltips_Values.lua`**, not from the file hooks, because it
+  needs the registry functions defined above it. It must NOT `Script.Load` Values.lua back -- that is
+  a cycle, and it would run with `ImprovedTooltips` still empty.
+- **Attaches lazily** through `IT.ApplyCompatModules()`, called from `IT.GetValue` (not `GetValues`,
+  so every entry point including a direct API call gets it) and from the hive HUD's `ResolveIcons`.
+  Load-time registration would decide "CBM absent" about a mod that had simply not loaded yet.
+- **Detects CBM by `kTechId.FortressCrag`**, not by name or version, and gates the biomass 5 tint
+  additionally on `kCBMaddon == true` since that flag is what enables the research.
+- **Speed multipliers at full infestation charge**, derived from CBM's own `GetMaxSpeed`: 1.25 for a
+  plain Crag/Shade/Shift/Whip, 1.0 for FortressCrag/Shade/Shift, 1.25 for FortressWhip (1.75 while
+  frenzied, not quoted). The charge climbs +2/s on infestation and drains -1/s off it, so full charge
+  IS "on infestation" -- the convention the user chose, mirroring quoting an ARC off infestation.
+- **CBM's Whip base speed is a file-local** (`kWhipMoveSpeed = 2.9`) with no class field, which is
+  why the mod showed no whip speed at all under CBM. `Whip:OverrideRepositioningSpeed()` returns it
+  and touches no instance state, so it can be called statically -- that is how the base is read
+  without hardcoding.
+- **`IT.RegisterIconColor(techId, color)`** is the public registry the purple goes through. Any mod
+  can claim a colour for its own tech; the hive HUD asks `IT.GetIconColor(techId)` and falls back to
+  its own default.
+- The purple used is CBM's **UI** purple `Color(0.7, 0.3, 1, 1)` (its tech map and minimap connector
+  lines), not the hive model's. The model's emissive averages a deeper magenta, roughly
+  `Color(0.85, 0.25, 0.45)`; swapping `kCBMBiomassFiveColor` is the whole change if that reads
+  better.
