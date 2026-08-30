@@ -22,15 +22,12 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 local IT = ImprovedTooltips
 
--- Icons come from three places, because the mod ships only what the game does not already have.
+-- Icons come from two places.
 --
---   health, armor  - ui/{marine,alien}_commander_textures.dds, the same atlas the tooltip
---                    background uses, at the cells GUISelectionPanel draws when you click an
---                    existing structure (GUISelectionPanel.lua:54-55). Already coloured per team,
---                    so these are NOT tinted at runtime.
---   speed (alien)  - the Celerity icon in ui/buildmenu.dds, index 64 -> cell (4,5). Points right
---                    already; CBM uses the same index for SpurPassive.
---   the rest       - ui/bleu_tooltip_icons.dds, our own 192x64 sheet, white and tinted per team.
+--   speed (alien)  - the Celerity icon in ui/buildmenu.dds, index 64 -> cell (4,5), used straight
+--                    from vanilla. Points right already; CBM uses the same index for SpurPassive.
+--   everything else - ui/bleu_tooltip_icons.dds, the mod's own 320x64 sheet, all white and tinted
+--                    at runtime. Health and armour there are vanilla's own glyphs, resampled.
 --                    See tools/build_icons.ps1; keep the cell order in step with it.
 local kOwnIconTexture = "ui/bleu_tooltip_icons.dds"
 
@@ -165,9 +162,11 @@ local function CreateEntry(field, teamType, tint)
 	icon:SetSize(Vector(GUICommanderTooltip.kResourceIconSize, GUICommanderTooltip.kResourceIconSize, 0))
 	icon:SetTexture(texture)
 	icon:SetTexturePixelCoordinates(GUIUnpackCoords(coords))
-	-- Vanilla's health and armour art is already the team's colour, so it is left untinted;
-	-- multiplying it again would darken it.
-	icon:SetColor(iconTint or Color(1, 1, 1, 1))
+	-- Health and armour take their figure's colour; the rest take the team tint. Alien speed is the
+	-- one icon drawn from vanilla art rather than the mod's white sheet, so its tint compounds with
+	-- the source colour - acceptable, since the Celerity glyph is near-greyscale.
+	local iconColor = iconTint or Color(1, 1, 1, 1)
+	icon:SetColor(iconColor)
 	icon:SetIsVisible(false)
 
 	local text = GUIManager:CreateTextItem()
@@ -177,13 +176,16 @@ local function CreateEntry(field, teamType, tint)
 	text:SetTextAlignmentX(GUIItem.Align_Min)
 	text:SetTextAlignmentY(GUIItem.Align_Center)
 	text:SetPosition(Vector(kStatIconTextGap, GUICommanderTooltip.kResourceIconSize / 2, 0))
-	text:SetColor(GetTextColor(field, teamType))
+	local textColor = GetTextColor(field, teamType)
+	text:SetColor(textColor)
 	text:SetFontIsBold(true)
 	text:SetFontName(Fonts.kAgencyFB_Small)
 	GUIMakeFontScale(text)
 	icon:AddChild(text)
 
-	return { icon = icon, text = text }
+	-- The base colours are kept so a per-frame effect can be applied on top of them without
+	-- accumulating - the speed figure dims when its mobility cannot be confirmed.
+	return { icon = icon, text = text, iconColor = iconColor, textColor = textColor }
 
 end
 
@@ -279,6 +281,32 @@ local function GetDisplayValue(field, values)
 
 end
 
+-- Some structures carry a speed but only move under a condition their own mod defines - B2TP's Spur
+-- needs a Shift Hive, CBM's only needs to not be electrified - and that condition can only be
+-- answered by a live entity of that class. With none on the field there is nothing to ask, so the
+-- figure is dimmed rather than hidden or asserted: it states the speed without claiming it is
+-- usable yet. Everything else, including unconditional movers, draws at full opacity.
+local function GetEntryOpacity(field, values)
+
+	if field == "speed" and values.speedConfirmed == false and values.speed > 0 then
+		return IT.kUnconfirmedSpeedAlpha or 1
+	end
+
+	return 1
+
+end
+
+local function ApplyEntryOpacity(entry, opacity)
+
+	-- Rebuilt from the stored base colours each frame rather than multiplied into the live ones, so
+	-- repeated frames cannot compound the fade.
+	local icon = entry.iconColor
+	local text = entry.textColor
+	entry.icon:SetColor(Color(icon.r, icon.g, icon.b, icon.a * opacity))
+	entry.text:SetColor(Color(text.r, text.g, text.b, text.a * opacity))
+
+end
+
 local function LayoutStatRow(self, values)
 
 	local shown = false
@@ -296,6 +324,7 @@ local function LayoutStatRow(self, values)
 		if display then
 			entry.text:SetText(display)
 			entry.icon:SetPosition(Vector(x, y, 0))
+			ApplyEntryOpacity(entry, GetEntryOpacity(field, values))
 			x = x + GetEntryWidth(entry) + kStatEntryGap
 			shown = true
 		end

@@ -27,9 +27,16 @@ IT.kTimeFormat = "seconds"
 -- so a commander can tell "no armor" apart from "not measured".
 IT.kShowZeroArmor = true
 
--- Show movement speed for things that move: ARC 2.0, Shade 2.5, Shift 2.9, Whip 3.5, MAC 6,
--- Drifter 11. Read from the class's own kMoveSpeed rather than TechData, which has no key for it.
+-- Show movement speed for things that move: ARC 2.0, Shade 1.73, Crag 2.9, Shift 2.9, Whip 3.5,
+-- MAC 6, Drifter 11. Read from the class rather than TechData, which has no key for it.
 IT.kShowSpeed = true
+
+-- Opacity of the speed figure when the mod cannot confirm the structure can actually move right
+-- now. Some structures have a speed but only move under a condition their own mod defines - B2TP's
+-- Spur needs a Shift Hive, CBM's only needs to not be electrified - and that condition can only be
+-- answered by a live entity. With none on the field, the figure is dimmed rather than hidden: it
+-- states the speed without claiming it is usable yet. Set to 1 to stop dimming entirely.
+IT.kUnconfirmedSpeedAlpha = 0.45
 
 -- Icon tint. Applies to the mod's own icons only. Vanilla's health and armour art is already
 -- coloured per team and is left untinted.

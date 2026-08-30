@@ -24,7 +24,7 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
-IT.kVersion = "0.9"
+IT.kVersion = "0.91"
 
 -- The extra fields this mod can show. Used as keys throughout, including in the public API.
 IT.kFields = { "health", "armor", "researchTime", "cooldown", "speed" }
@@ -189,10 +189,13 @@ end
 -- Any instance reporting moveable counts, not just the first, so one momentarily blocked Whip or
 -- electrified Spur does not blink the figure off the whole team's tooltips.
 --
--- With no instance at all - hovering a build button before you own one - the answer is "hide". The
--- alternative is claiming mobility that cannot be verified, which is the bug this fixes. Classes
--- with no GetStructureMoveable at all (ARC, MAC, Drifter) are unconditional movers and skip this
--- entirely, so build-button speed for those is unaffected.
+-- With no instance at all - hovering a build button before you own one - there is nothing to ask.
+-- The figure is still shown, but the renderer dims it: stating the speed without asserting it is
+-- currently usable. Hiding it outright was tried first and threw away the number exactly when it is
+-- most wanted, on the button where you are deciding whether to build the thing.
+--
+-- Classes with no GetStructureMoveable at all (ARC, MAC, Drifter) are unconditional movers and skip
+-- this entirely, so they are never dimmed.
 local function GetIsClassMovementAllowed(className, class)
 
 	if type(class.GetStructureMoveable) ~= "function" then
@@ -228,9 +231,6 @@ local function LookupClassMoveSpeed(techId)
 		return 0
 	end
 
-	if not GetIsClassMovementAllowed(className, class) then
-		return 0
-	end
 
 	-- Ask the accessor, statically. Anything that needs a real instance throws and is skipped.
 	for _, accessor in ipairs({ "GetMaxSpeed", "GetMoveSpeed" }) do
@@ -254,6 +254,31 @@ local function LookupClassMoveSpeed(techId)
 end
 
 IT.GetClassMoveSpeed = LookupClassMoveSpeed
+
+-- Whether the speed shown for a techId is known to be usable right now, as opposed to merely
+-- existing as a number. Drives the dimming in the renderer.
+--
+-- A registered resolver counts as confirmed: whoever registered it made a deliberate statement,
+-- including ARC Deploy's explicit 0.
+function IT.GetIsMovementConfirmed(techId)
+
+	if IT.HasResolver("speed", techId) then
+		return true
+	end
+
+	local className = kTechId[techId]
+	if type(className) ~= "string" then
+		return false
+	end
+
+	local class = _G[className]
+	if type(class) ~= "table" then
+		return false
+	end
+
+	return GetIsClassMovementAllowed(className, class)
+
+end
 
 local kDefaultLookup = {
 	health       = function(techId) return LookupTechData(techId, kTechDataMaxHealth, 0) end,
@@ -294,6 +319,9 @@ function IT.GetValues(techId)
 		cooldown     = IT.GetValue("cooldown", techId),
 		speed        = IT.GetValue("speed", techId),
 	}
+
+	-- Not a field in kFields: it qualifies the speed rather than being a value of its own.
+	values.speedConfirmed = values.speed > 0 and IT.GetIsMovementConfirmed(techId) or false
 
 	for i = 1, #IT.kFields do
 		if values[IT.kFields[i]] > 0 then

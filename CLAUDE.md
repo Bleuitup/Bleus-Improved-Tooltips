@@ -206,9 +206,10 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   and lets whichever mod is loaded answer for itself. Any instance reporting moveable counts, so one
   blocked Whip does not blink the figure off. **Do not hardcode a ShiftHive check — it would be
   wrong under CBM.**
-- With **no instance** of a gated class, speed is hidden rather than guessed (user's call, issue #3).
-  Classes with no `GetStructureMoveable` — ARC, MAC, Drifter — are unconditional and skip the gate,
-  so their build-button speed is unaffected.
+- With **no instance** of a gated class the figure is DIMMED, not hidden and not asserted
+  (`kUnconfirmedSpeedAlpha`). Hiding was tried first in `d95b41e` and threw the number away exactly
+  where it is most wanted, on the build button. Classes with no `GetStructureMoveable` — ARC, MAC,
+  Drifter — are unconditional, skip the gate, and never dim.
 - **A zero speed means two different things.** The default 0 ("does not move") is hidden, or every
   structure would carry a pointless `0`; a 0 from a *registered resolver* is deliberate and is
   shown. `IT.HasResolver(field, techId)` distinguishes them. This is what puts `0` on ARC Deploy.

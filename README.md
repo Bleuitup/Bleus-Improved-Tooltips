@@ -7,7 +7,7 @@ The tooltip work is entirely client-side. The "In Cooldown" panel additionally n
 which broadcasts team cooldowns that vanilla never sends to anyone but the commander who cast. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 0.9. Published to the Steam Workshop as
+Version 0.91. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -135,8 +135,8 @@ Shift Hive, CBM's Spur only requires not being electrified, vanilla's Whip only 
 blocked. All three need a real entity to answer. So rather than encode any mod's rule, the mod asks
 the entities actually on your team and lets whichever mod is loaded answer for itself. Any instance
 reporting moveable counts, so one blocked Whip does not blink the figure off. With no instance at
-all, speed is hidden rather than guessed; unconditional movers (ARC, MAC, Drifter) skip the check
-entirely.
+all there is nothing to ask, so the figure is drawn dimmed - stating the speed without claiming it
+is usable yet. Unconditional movers (ARC, MAC, Drifter) skip the check entirely and never dim.
 
 ### Icons
 
@@ -264,6 +264,7 @@ and `mod.settings` names the file by extension.
 - `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
 - `kShowZeroArmor` — show an explicit `0` for armourless structures rather than hiding the icon
 - `kShowSpeed` — show movement speed for things that move
+- `kUnconfirmedSpeedAlpha` — opacity of a speed figure whose mobility cannot be confirmed (default 0.45; set to 1 to disable dimming)
 - `kTintSelectionPanelIcons` — also tint the icons on vanilla's selection panel to match
 - `kMarineIconColor` / `kAlienIconColor` — per-team tint, applied to the mod's own icons only
   (vanilla's health and armour art is already team-coloured and is left alone)
@@ -316,9 +317,11 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 **Unreleased**
 - Fixed the health and armour glyphs being oversized on vanilla's selection panel. They are now
   baked at vanilla's own proportion, with the tooltips magnifying by sampling a smaller window.
-- Speed is now hidden for structures whose movement is conditional until an entity on your team
-  actually reports it can move. B2TP's Spur needs a Shift Hive, CBM's Spur does not - the mod asks
-  the loaded mod rather than encoding either rule.
+- Speed is now **dimmed**, rather than stated as fact, for structures whose movement is conditional
+  and cannot currently be confirmed. B2TP's Spur needs a Shift Hive, CBM's Spur does not — the mod
+  asks the entities on your team and lets whichever mod is loaded answer, rather than encoding
+  either rule. Dimming rather than hiding keeps the number on the build button, where you are
+  deciding whether to build the thing in the first place.
 
 **0.9**
 - **Movement speed** added for things that move: ARC 2.0, Shade 1.73, Crag 2.9, Shift 2.9, Whip 3.5,
