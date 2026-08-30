@@ -510,3 +510,34 @@ ball, 175 = the dense cluster), so the progression is vanilla's, not the mod's.
 `bioMassLevel <= 3` -- and shares cell 112 with `Two`. It is kept so a mod adding the research works
 with no change here. The list stops at the first name missing from `kTechId` rather than closing the
 gap, because a position in that list IS which research the icon stands for.
+
+## CBM compatibility (1.0 work, 2026-08-30)
+
+Local copy at `G:\My Drive\[01] Martin\[07] Claude Code\CBM 3.5\CBM 3.5 Full`. Read it rather than
+guessing; several assumptions about CBM turned out to be wrong.
+
+- **`kCBMaddon = true`** (`Balance.lua:12`) is the switch for CBM's extra content: "AMAC, SPARC, SMG,
+  Adv Obs, Adv Gate, Bio 5, and Advanced Structures". The Core Toggle edition is the other folder.
+- **CBM's biomass 5 is `ResearchBioMassFour`**, enabled in `Hive:GetTechButtons` behind `kCBMaddon`,
+  taking a hive 4 -> 5. It needed **no code**: the hive HUD already lists that research, and CBM
+  gives it its own atlas cell (`kTechIdToMaterialOffset[kTechId.ResearchBioMassFour] = 206`, in a
+  960x1440 buildmenu.dds -- 18 rows against vanilla's 16). Reading offsets from
+  `GetTextureCoordinatesForIcon` rather than hardcoding is what made that free.
+- **CBM's advanced upgrades are the "Fortress" structures**: `UpgradeToFortressCrag` / `Whip` /
+  `Shade` / `Shift` -> `FortressCrag` etc. The upgrade tech carries only cost and research time; the
+  product carries `kTechDataMaxHealth` / `kTechDataMaxArmor` (`kFortressCragHealth = 800`,
+  `kFortressCragArmor = 300` in `BalanceHealth.lua`).
+- **CBM does NOT colour advanced upgrades purple or magenta.** Checked, because the user believed it
+  did. Cells 192-195 (Fortress) and 206 (Bio 5) average RGB 103,103,103 and 126,126,126 -- neutral
+  greyscale, same as vanilla's art. CBM's purple `Color(0.7, 0.3, 1)` is used only for tech map and
+  minimap *connector lines* (`GUITechMap.lua:29`, used at `:194`), and its magenta
+  `Color(1, 0.25, 1)` is the Plasma Launcher. `kTechMapIconColors` in CBM is identical to vanilla's.
+  **Do not add a purple tint on the belief that CBM has one.**
+- **CBM's `AlienTeam:UpdateBioMassLevel` has the identical single-node bug** and an identical
+  12-entry `kBioMassTechIds`, so the 0.92 fix works unchanged when post-hooked onto CBM's version.
+- **CBM makes structure speed instance-dependent.** `Crag:GetMaxSpeed` returns
+  `kMoveSpeed * (0.5 + 0.5 * infestationSpeedCharge / kMaxInfestationCharge)` for a FortressCrag,
+  `* 0.5` when electrified and `* 1.25` otherwise; Whip, Shade and Shift do the same. So there is no
+  constant to print, and the mod's static class lookup returns the raw `kMoveSpeed` -- which is
+  neither the normal speed nor the Fortress range. **Speed is therefore excluded from upgrade-button
+  stat inheritance**, and the wider inaccuracy under CBM is a known open issue.

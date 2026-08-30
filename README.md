@@ -300,6 +300,31 @@ spawn from the team's biomass level (`BoneWall:OnInitialized`), not stored in Te
 Biomass 9 the stored value of 100 is off by 800. The tooltip mirrors that calculation and tracks
 biomass as the round goes on.
 
+### Upgrade buttons
+
+An "upgrade this structure into that one" button carries only a cost and a research time of its own,
+because the stats belong to the thing it produces. CBM's Fortress structures are the case that
+prompted this: `UpgradeToFortressCrag` has no health or armour at all, while `FortressCrag` holds 800
+and 300 against a plain Crag's much lower pair — and that difference is the entire reason a commander
+would pay for the upgrade.
+
+The product is resolved from the enum name rather than from a table. `kTechId` is bidirectional, so a
+tech called `UpgradeToFortressCrag` names what it builds, and `kTechId.FortressCrag` is where the
+stats live. Any mod naming an upgrade that way is picked up with no registration here — the same
+trick the speed lookup uses to find a class from a techId.
+
+Vanilla's own `UpgradeToCragHive` / `ShadeHive` / `ShiftHive` and `UpgradeToInfestedTunnel` match the
+pattern too, so they start showing what they build. For the hive types that is the same health a Hive
+already has, so it adds no information; set `kInheritUpgradeStats` false to turn the whole behaviour
+off. `UpgradeToDualMinigun` and `UpgradeToDualRailgun` match by name but their products carry no
+health or armour, so nothing appears.
+
+**Health and armour only — speed is deliberately excluded.** Under CBM every Fortress structure
+computes its speed from live infestation charge (`Crag:GetMaxSpeed` returns
+`kMoveSpeed * (0.5 + 0.5 * infestationSpeedCharge / kMaxInfestationCharge)`, and Whip, Shade and
+Shift do the same), so there is no honest single number to print for a structure that does not exist
+yet. Printing the inherited constant would claim the speed is unchanged when in fact it drops.
+
 ### Extending it from another mod
 
 Register a resolver for anything your mod computes at runtime rather than storing in TechData:
@@ -413,6 +438,8 @@ and `mod.settings` names the file by extension.
 - `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
 - `kHiveBiomassIconColor` / `kHiveResearchRingColor` / `kHiveResearchDnaColor` — their tints (biomass
   is untinted by default, matching how vanilla draws the same art)
+- `kInheritUpgradeStats` — let an `UpgradeToX` button show the health and armour of the X it builds
+  (CBM's Fortress structures, vanilla's hive type upgrades)
 - `kUseTopBarSupplyIcon` — mark supply on the tooltip with the HUD top bar's icon instead of vanilla's
   MAC / Drifter
 - `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
@@ -430,9 +457,10 @@ block artefacts are very visible on hard-edged white glyphs.
 
 ## Servers
 
-The mod reads only client-side state and sends nothing, so it needs no server logic. It still has
-to be installed on the server, because of NS2's consistency check rather than anything this mod
-does:
+Most of the mod reads client-side state only. The exceptions are the team cooldown broadcast and the
+per-hive biomass and research the hive HUD needs, neither of which a client can read for itself. It
+has to be installed on the server regardless, because of NS2's consistency check rather than anything
+this mod does:
 
 - `ns2/lua/ServerConfig.lua` defaults `consistency_enabled = true` and
   `use_own_consistency_config = false`, so a stock server uses the built-in config.
@@ -459,6 +487,14 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- **CBM's Fortress structure upgrades now show what they build.** `UpgradeToFortressCrag` and its
+  siblings carry no stats of their own, so the buttons showed only a cost and a duration; they now
+  show the health and armour of the Fortress structure they produce, resolved from the enum name so
+  no CBM-specific code is involved. Vanilla's hive type upgrades and `UpgradeToInfestedTunnel` match
+  the same pattern and show what they build too.
+- **CBM's biomass 5 needed no code.** CBM enables `ResearchBioMassFour`, which the hive HUD already
+  listed, and assigns it its own atlas cell, so a hive that researches it shows a fourth icon in
+  CBM's own art automatically.
 - **Supply on the commander tooltip now uses the HUD top bar's icon** instead of a MAC or a Drifter.
   Both meant supply and looked nothing alike; the split is a leftover from the top bar replacing
   `GUIResourceDisplay`, whose create and destroy calls are now commented out, leaving the tooltip as

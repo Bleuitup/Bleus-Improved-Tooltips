@@ -288,6 +288,62 @@ local kDefaultLookup = {
 	speed        = LookupClassMoveSpeed,
 }
 
+------------------------------------------------------------------------------------------------
+-- Upgrade buttons describing what they produce
+------------------------------------------------------------------------------------------------
+--
+-- An "upgrade this structure into that one" button carries no stats of its own - only a cost and a
+-- research time - because the stats belong to the thing it produces. CBM's Fortress structures are
+-- the case that prompted this: UpgradeToFortressCrag has just cost and duration, while FortressCrag
+-- holds kTechDataMaxHealth 800 and kTechDataMaxArmor 300 against a plain Crag's much lower pair. A
+-- commander deciding whether to spend on the upgrade is asking exactly what those numbers are.
+--
+-- Resolved from the enum name rather than from a table: kTechId is bidirectional, so a tech called
+-- "UpgradeToFortressCrag" names its own product, and kTechId.FortressCrag is where the stats live.
+-- Any mod naming an upgrade that way is picked up with no registration here, which is the same
+-- trick the speed lookup uses to find a class from a techId.
+--
+-- Vanilla's own UpgradeToCragHive / ShadeHive / ShiftHive and UpgradeToInfestedTunnel match the
+-- pattern too and start showing what they build. UpgradeToDualMinigun and UpgradeToDualRailgun
+-- match by name but their products carry no health or armour, so nothing appears.
+--
+-- Built lazily, on the same reasoning as the cooldown enumeration: TechData and kTechId are both
+-- still being assembled during startup and mods add to them, so asking too early would miss
+-- whatever had not been added yet.
+local upgradeTargets = nil
+
+local function GetUpgradeTargetTechId(techId)
+
+	if not upgradeTargets then
+
+		upgradeTargets = { }
+
+		-- kTechId holds both [name] = value and [value] = name, so the pairs walk sees each entry
+		-- twice; only the name -> value direction is of interest.
+		for name, id in pairs(kTechId) do
+			if type(name) == "string" and type(id) == "number" then
+
+				local product = name:match("^UpgradeTo(.+)$")
+				local productId = product and kTechId[product]
+
+				if type(productId) == "number" and productId ~= id then
+					upgradeTargets[id] = productId
+				end
+
+			end
+		end
+
+	end
+
+	return upgradeTargets[techId]
+
+end
+
+-- Only the fields that describe the finished structure. Research time is deliberately absent: the
+-- upgrade has its own, and it is the duration of the upgrade rather than of anything the product
+-- does. Speed is absent too - see the note in ImprovedTooltips_Config.lua on kInheritUpgradeStats.
+local kInheritedFields = { health = true, armor = true }
+
 function IT.GetValue(field, techId)
 
 	if not IsValidField(field) or suppressed[field][techId] then
@@ -297,7 +353,22 @@ function IT.GetValue(field, techId)
 	local resolver = resolvers[field][techId] or kDefaultLookup[field]
 	local value = resolver(techId)
 
-	return (type(value) == "number" and value > 0) and value or 0
+	if type(value) == "number" and value > 0 then
+		return value
+	end
+
+	-- Nothing of its own. If this is an upgrade button, answer with what it produces, so the stats
+	-- of the finished structure are visible while deciding whether to pay for it. Recursion is one
+	-- level in practice - a product is not itself named UpgradeToSomething - and terminates anyway,
+	-- since each step must strip an "UpgradeTo" prefix off the name.
+	if IT.kInheritUpgradeStats and kInheritedFields[field] then
+		local productId = GetUpgradeTargetTechId(techId)
+		if productId then
+			return IT.GetValue(field, productId)
+		end
+	end
+
+	return 0
 
 end
 

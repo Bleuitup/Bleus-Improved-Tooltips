@@ -160,3 +160,24 @@ IT.kHiveResearchRotationDuration = 2
 --
 -- The MAC and Drifter icons are untouched wherever they stand for the units themselves.
 IT.kUseTopBarSupplyIcon = true
+
+------------------------------------------------------------------------------------------------
+-- Upgrade buttons
+------------------------------------------------------------------------------------------------
+
+-- Let an "upgrade this into that" button show the stats of what it produces.
+--
+-- Such a button carries only a cost and a research time of its own, because the stats belong to the
+-- product. CBM's Fortress structures are the case that prompted this: UpgradeToFortressCrag has no
+-- health or armour, while FortressCrag holds 800 and 300 against a plain Crag's much lower pair,
+-- and that difference is the whole reason a commander would pay for it.
+--
+-- Resolved from the enum name - "UpgradeToFortressCrag" names its product - so any mod following
+-- that convention is picked up with no registration. Vanilla's own UpgradeToCragHive / ShadeHive /
+-- ShiftHive and UpgradeToInfestedTunnel match it too and start showing what they build.
+--
+-- Health and armour only. Speed is deliberately left out: under CBM every one of these structures
+-- computes its speed from live infestation charge rather than holding a constant, so there is no
+-- honest single number to print on a button for a structure that does not exist yet. Printing the
+-- inherited constant would claim the speed is unchanged when it is not.
+IT.kInheritUpgradeStats = true
