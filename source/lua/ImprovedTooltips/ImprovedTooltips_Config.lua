@@ -116,8 +116,14 @@ IT.kShowHiveResearchIcon = true
 IT.kHiveBiomassIconOrigin = Vector(140, -13, 0)
 IT.kHiveBiomassIconSize = 18
 IT.kHiveBiomassIconSpacing = 19
-IT.kHiveResearchIconPosition = Vector(182, 12, 0)
-IT.kHiveResearchIconSize = 34
+--
+-- The ring is positioned by its top-left but is read as a disc, so it is easier to think in centres:
+-- this puts its centre at (168, 38), which is directly under the middle of the SECOND biomass icon
+-- (140 + 19 + 18/2 = 168) and low enough to clear the name plate. Change the size and the ring grows
+-- down and right from the same corner, so move the position by half the difference to keep it
+-- centred where it was.
+IT.kHiveResearchIconPosition = Vector(134, 4, 0)
+IT.kHiveResearchIconSize = 68
 
 -- The DNA glyph as a fraction of the ring it sits inside.
 IT.kHiveResearchDnaScale = 0.55

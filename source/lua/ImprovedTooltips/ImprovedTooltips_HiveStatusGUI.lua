@@ -125,11 +125,10 @@ local function CreateResearchIcon(slot)
 	slot.itResearchRing:SetColor(IT.kHiveResearchRingColor)
 	slot.itResearchRing:SetLayer(kGUILayerPlayerHUDForeground4)
 	slot.itResearchRing:SetIsVisible(false)
-	-- Spin about the middle rather than a corner. GUIUnitStatus gets away without saying so, but
-	-- saying it outright costs nothing and does not depend on what the engine defaults to.
-	if slot.itResearchRing.SetRotationOffsetNormalized then
-		slot.itResearchRing:SetRotationOffsetNormalized(Vector(0.5, 0.5, 0))
-	end
+	-- No rotation offset, deliberately. The engine already pivots about the item's own centre, which
+	-- is why GUIUnitStatus spins this same art in place without setting one. 0.93 set it to a
+	-- normalized (0.5, 0.5) on the theory that (0, 0) meant a corner; it does not, and that pushed
+	-- the pivot out to the edge and made the ring orbit a point outside itself.
 	slot.background:AddChild(slot.itResearchRing)
 
 	-- The DNA sits inside the ring and must not spin with it, so it is a sibling positioned to the

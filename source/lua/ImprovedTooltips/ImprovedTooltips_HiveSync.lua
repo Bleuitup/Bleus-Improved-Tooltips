@@ -23,23 +23,52 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_HiveState.lua")
 
 local IT = ImprovedTooltips
 
--- A hive counts as busy for any research: biomass, a lifeform ability off the DNA menu, or a hive
--- type upgrade. ResearchMixin only advances while GetIsUnitActive is true, so a hive that is still
--- building or is dying reports its researchingId but is not actually progressing - GetIsResearching
--- is the accessor that accounts for that, when it exists.
-local function GetIsHiveResearching(hive)
+-- A hive counts as busy for any research, but "the hive" is two entities, not one.
+--
+-- Biomass and hive type upgrades run on the Hive itself. Lifeform abilities - Leap, Metabolize,
+-- Umbra, Bone Shield and the rest off the DNA menu - do not: Hive:OnInitialized creates a separate
+-- "evolutionchamber" entity and hands it ownership (Hive.lua:159), and EvolutionChamber carries its
+-- own ResearchMixin. Its own comment says it "handles the life-form researches for the Hive". So
+-- asking only the Hive misses every ability research, which is exactly what 0.93 did.
+--
+-- The chamber is reached through the hive's public accessor, and Shared.GetEntity returns nil for
+-- the -1 the id is initialised to, so an unbuilt hive simply has none.
+local function GetIsEntityResearching(entity)
 
-	if hive.GetIsResearching then
-		local ok, researching = pcall(hive.GetIsResearching, hive)
+	if not entity then
+		return false
+	end
+
+	-- GetIsResearching accounts for a structure that holds a researchingId but is not actually
+	-- progressing, since ResearchMixin only advances while GetIsUnitActive is true.
+	if entity.GetIsResearching then
+		local ok, researching = pcall(entity.GetIsResearching, entity)
 		if ok then
 			return researching == true
 		end
 	end
 
-	if hive.GetResearchingId then
-		local ok, researchingId = pcall(hive.GetResearchingId, hive)
+	if entity.GetResearchingId then
+		local ok, researchingId = pcall(entity.GetResearchingId, entity)
 		if ok then
 			return researchingId ~= nil and researchingId ~= kTechId.None
+		end
+	end
+
+	return false
+
+end
+
+local function GetIsHiveResearching(hive)
+
+	if GetIsEntityResearching(hive) then
+		return true
+	end
+
+	if hive.GetEvolutionChamber then
+		local ok, evoChamber = pcall(hive.GetEvolutionChamber, hive)
+		if ok and GetIsEntityResearching(evoChamber) then
+			return true
 		end
 	end
 

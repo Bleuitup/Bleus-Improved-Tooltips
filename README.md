@@ -180,6 +180,18 @@ where the team cap of 12 comes from: three hives, each fully upgraded. `Research
 the plain ball with every `BioMassN` node, so the fourth icon is keyed off the research that grants
 the level rather than off the level itself.
 
+### "The hive" is two entities
+
+Asking a Hive whether it is researching misses more than half of what a hive researches. Biomass and
+hive type upgrades run on the Hive itself, but lifeform abilities — Leap, Metabolize, Umbra, Bone
+Shield and everything else off the DNA menu — do not. `Hive:OnInitialized` creates a separate
+`evolutionchamber` entity and hands it ownership (`Hive.lua:159`), and `EvolutionChamber` carries its
+own `ResearchMixin`; its own file comment says it "handles the life-form researches for the Hive".
+
+So the check asks the Hive and then its `GetEvolutionChamber()`. `Shared.GetEntity` returns nil for
+the `-1` that `evochamberid` is initialised to, so a hive that has not created one yet simply has
+none.
+
 ### Why this needs the server
 
 Both numbers are already on the Hive and both are already network vars — `bioMassLevel` in

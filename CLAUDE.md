@@ -421,3 +421,23 @@ Verified against a standalone Lua harness: appearance, no-change ticks staying s
 increments, research start, hive death publishing empty once then going quiet, an unbuilt hive
 publishing nothing at all, and the join resync replaying published state. Nothing has been run in
 game.
+
+### Hive HUD corrections after the first in-game test (0.93)
+
+- **`EvolutionChamber` is where lifeform abilities are researched, not the Hive.** `Hive:OnInitialized`
+  creates an `evolutionchamber` entity and calls `SetOwner` on it (`Hive.lua:159`); it has its own
+  `ResearchMixin` and its file comment says it "handles the life-form researches for the Hive".
+  `Hive:GetIsResearching()` is therefore **false** during Leap, Metabolize, Umbra and everything else
+  off the DNA menu, while being true for biomass and hive type upgrades. Reach it through
+  `hive:GetEvolutionChamber()`; `evochamberid` starts at -1, so `Shared.GetEntity` gives nil when
+  there is none.
+- **A GUIItem already rotates about its own centre.** Do NOT set a rotation offset to "make sure".
+  `SetRotationOffsetNormalized(Vector(0.5, 0.5, 0))` moves the pivot to the edge and the item visibly
+  orbits a point outside itself. `GUIUnitStatus` spins the same ring with no offset at all, which is
+  the thing to copy.
+- **Verify GUI placement against a rendered mockup before shipping it.** The vanilla textures
+  decompress with `utils/nvdecompress.exe` (it takes one argument, the dds, and writes a .tga beside
+  it -- no `-format` flag), and the row can be reassembled in PowerShell + System.Drawing from the
+  documented positions. Two PowerShell traps doing this: a bare negative literal like `-6` is parsed
+  as a parameter name, so wrap it in parentheses; and `[System.Drawing.Image]::FromFile` locks the
+  file, so read the bytes and use `FromStream`.
