@@ -172,10 +172,13 @@ speed, so the two read as one indicator rather than two.
 Every image is vanilla's own, addressed through `GetTextureCoordinatesForIcon` rather than by pixel,
 so a mod that moves an icon in the atlas moves ours with it. Nothing new was drawn.
 
-The naming around the fourth icon is worth stating because vanilla's is confusing: a hive at biomass
-3 clicks the button called `ResearchBioMassThree` to reach biomass 4, and that button carries the
-denser art. `ResearchBioMassFour` shares the plain ball with every `BioMassN` node, so the fourth
-icon is keyed off the button that grants the level rather than off the level itself.
+The vanilla naming is consistent once the scheme is clear: a research is named for how much it has
+added over the hive's base, not for the level it lands on. A hive contributes 1 biomass the moment it
+is built, and `ResearchBioMassOne` / `Two` / `Three` are the +1, +2 and +3 on top of that — so
+`ResearchBioMassThree` is the one that takes a hive to 4, and it carries the denser art. That is also
+where the team cap of 12 comes from: three hives, each fully upgraded. `ResearchBioMassFour` shares
+the plain ball with every `BioMassN` node, so the fourth icon is keyed off the research that grants
+the level rather than off the level itself.
 
 ### Why this needs the server
 

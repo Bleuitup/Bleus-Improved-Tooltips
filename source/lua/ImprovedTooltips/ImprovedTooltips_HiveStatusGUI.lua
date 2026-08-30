@@ -35,10 +35,15 @@ local kProgressRingCoords = { 256, 68, 256 + 128, 68 + 128 }
 -- Icon identities, resolved once on first use because kTechId and the offset table are both
 -- populated by files that may load after this one.
 --
--- The naming is vanilla's and it is confusing, so: a hive at biomass 3 clicks the button called
--- ResearchBioMassThree to reach biomass 4. That button carries the denser cluster art. The plain
--- ball is what every BioMassN node uses, and ResearchBioMassFour shares it, which is why the fourth
--- icon is keyed off the button rather than off the level.
+-- The vanilla naming is consistent once the scheme is clear: a research is named for how much it
+-- has added over the hive's base, not for the level it lands on. A hive contributes 1 biomass the
+-- moment it is built, and ResearchBioMassOne / Two / Three are the +1, +2 and +3 on top of that, so
+-- ResearchBioMassThree is the one that takes a hive to 4. Hence the team cap of 12: three hives,
+-- each fully upgraded.
+--
+-- That last research is the button carrying the denser cluster art. The plain ball is what every
+-- BioMassN node uses, and ResearchBioMassFour shares it, so the fourth icon is keyed off the
+-- research that grants the level rather than off the level itself.
 local kIconCoords = nil
 
 local function GetIconCoords()

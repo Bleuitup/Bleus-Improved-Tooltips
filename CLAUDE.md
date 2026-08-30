@@ -393,9 +393,16 @@ Facts established while building on it:
 - **Icon indices** (`ui/buildmenu.dds`, 12 columns of 80x80, `index % 12`, `floor(index / 12)`):
   plain biomass ball = 112 (shared by every `BioMassN` **and** `ResearchBioMassTwo`/`Four`), the
   dense cluster = 175 = `ResearchBioMassThree`, the DNA helix = 136 = `LifeFormMenu`. Confirmed by
-  extracting and looking at them, not by guessing. A hive at biomass 3 clicks the button *named*
-  `ResearchBioMassThree` to reach biomass **4**, which is why the fourth icon is keyed off that
-  button and not off `ResearchBioMassFour`.
+  extracting and looking at them, not by guessing. The fourth icon is keyed off
+  `ResearchBioMassThree` and not `ResearchBioMassFour` -- see the biomass numbering note below.
+- **Biomass numbering.** A research is named for how much it has added over the hive's base, not for
+  the level it lands on. A hive contributes 1 the moment it is built (`kTechId.Hive` carries
+  `kTechDataBioMass = kHiveBiomass`), and `ResearchBioMassOne` / `Two` / `Three` are the +1, +2 and
+  +3 on top of that, each granting 1 (`OnResearchComplete` does `bioMassLevel + 1`). So
+  `ResearchBioMassThree` takes a hive from 3 to **4**, and a hive maxes at 4. The team cap of 12 is
+  three fully upgraded hives -- `AlienTeam` adds 4 to `maxBioMassLevel` per active hive
+  (`AlienTeam.lua:301`) and clamps to 12 (`AlienTeam.lua:325`). The user gave this framing on
+  2026-08-30; it is the scheme, not a vanilla inconsistency.
 - **The world "researching" ring** is `ui/unitstatus_alien.dds` region `{256, 68, 384, 196}`, drawn
   by `GUIUnitStatus` with `SetRotation(Vector(0, 0, -2 * math.pi * t))` over
   `kResearchRotationDuration = 2` seconds. The mod reuses the same region and rate.
