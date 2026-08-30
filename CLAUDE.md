@@ -475,3 +475,22 @@ Verify after every rebuild, because a partial `output/` fails silently:
 - `lua/entry/ImprovedTooltips.entry` is present -- without it the mod is not a mod
 
 Note that `luac -p` passing proves nothing about `output/`; it only checks `source/`.
+
+### Supply and biomass icon consistency (0.93)
+
+- **`GUIResourceDisplay` is dead code.** `Commander_Client.lua:404` and `:731` have both its
+  `DestroyGUIScriptSingle` and `CreateGUIScriptSingle` calls commented out. It was superseded by the
+  `lua/Hud2` top bar. This matters because it used the same worker coords `{280, 363, 320, 411}` for
+  supply that `GUICommanderTooltip` still uses -- so after the hud2 migration the tooltip was the
+  only surviving place where a MAC or Drifter meant "supply". Do not "fix" GUIResourceDisplay; it
+  never runs.
+- **Top bar supply icons** live in `ui/hud2/team_info_atlas.dds` (100x250) and are declared in
+  `GUIHudSupply.kThemeData`: marine `{50, 100, 100, 150}`, alien `{0, 100, 50, 150}`. Read them from
+  that table rather than copying the numbers, so a mod re-theming the top bar re-themes the tooltip
+  too. Marine is blue cogs, alien is amber organic nodes -- both already team-coloured in the art,
+  so they are drawn untinted, exactly like the worker icons they replace.
+- **Vanilla draws biomass untinted.** `GUICommanderTooltip` builds its biomass icon from
+  `GetTextureCoordinatesForIcon(kTechId.Biomass)` and never calls `SetColor`. `kTechId.Biomass` and
+  `kTechId.BioMassOne` are both atlas index 112 (`TechTreeButtons.lua:341`, `:39`), i.e. the same
+  greyscale cell. `GUITechMap` is the exception, not the rule: it colours every icon by tech status,
+  so its warm yellow means "researched", not "biomass".

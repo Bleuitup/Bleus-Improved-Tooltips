@@ -188,6 +188,58 @@ local function CreateEntry(field, teamType, tint)
 	return { icon = icon, text = text, iconColor = iconColor, textColor = textColor }
 
 end
+------------------------------------------------------------------------------------------------
+-- Vanilla's supply icon
+------------------------------------------------------------------------------------------------
+--
+-- The supply figure on a tooltip is marked with the team's worker - a MAC for marines, a Drifter for
+-- aliens - while the supply readout on the HUD's top bar uses a dedicated pair of icons that look
+-- nothing like them. Two icons, one meaning.
+--
+-- The split is a leftover rather than a decision. The top bar (lua/Hud2) replaced GUIResourceDisplay,
+-- which used exactly these worker coordinates for its own supply counter; Commander_Client.lua now
+-- has both its create and its destroy call commented out, so that script is dead and the tooltip is
+-- the last place the worker icon still stands for supply.
+--
+-- Read out of GUIHudSupply.kThemeData rather than copied, so a mod that re-themes the top bar
+-- re-themes this with it. The literals are only a fallback for the theme table not being there.
+local kFallbackSupplyTexture = "ui/hud2/team_info_atlas.dds"
+local kFallbackSupplyCoords =
+{
+	[kMarineTeamType] = { 50, 100, 100, 150 },
+	[kAlienTeamType] = { 0, 100, 50, 150 },
+}
+
+local function GetTopBarSupplyIcon(teamType)
+
+	local theme = GUIHudSupply and GUIHudSupply.kThemeData
+	local teamTheme = theme and theme[teamType]
+
+	if theme and theme.icon and teamTheme and teamTheme.pxCoords then
+		return theme.icon, teamTheme.pxCoords
+	end
+
+	return kFallbackSupplyTexture, kFallbackSupplyCoords[teamType]
+
+end
+
+-- Only the texture and the region change. Size, position and the supply text parented to the icon
+-- are all left alone, so nothing about the tooltip's layout moves.
+local function ApplyTopBarSupplyIcon(tooltip, teamType)
+
+	if not tooltip.supplyIcon then
+		return
+	end
+
+	local texture, coords = GetTopBarSupplyIcon(teamType)
+
+	if texture and coords then
+		tooltip.supplyIcon:SetTexture(texture)
+		tooltip.supplyIcon:SetTexturePixelCoordinates(GUIUnpackCoords(coords))
+	end
+
+end
+
 
 local originalInitialize = GUICommanderTooltip.Initialize
 
@@ -201,6 +253,10 @@ function GUICommanderTooltip:Initialize()
 	-- else - no cleanup hook needed.
 	local teamType = CommanderUI_IsAlienCommander() and kAlienTeamType or kMarineTeamType
 	local tint = GetIconColor()
+
+	if IT.kUseTopBarSupplyIcon then
+		ApplyTopBarSupplyIcon(self, teamType)
+	end
 
 	self.itEntries = { }
 	for i = 1, #kRowOrder do

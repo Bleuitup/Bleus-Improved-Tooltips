@@ -128,10 +128,14 @@ IT.kHiveResearchIconSize = 68
 -- The DNA glyph as a fraction of the ring it sits inside.
 IT.kHiveResearchDnaScale = 0.55
 
--- Biomass icons take the tech map's own "researched" colour for aliens - GUITechMap's
--- kTechMapIconColors[kAlienTeamType][kTechStatus.Available] - so a biomass ball means the same
--- thing here as it does there.
-IT.kHiveBiomassIconColor = Color(1, 0.9, 0.4, 1)
+-- Biomass icons are drawn untinted, which is how vanilla draws this same art everywhere it means
+-- "biomass": the commander tooltip creates its biomass icon from GetTextureCoordinatesForIcon(
+-- kTechId.Biomass) and never calls SetColor, and the spectator view matches it. kTechId.Biomass and
+-- kTechId.BioMassOne share atlas index 112, so this is literally the same greyscale cell - tinting
+-- it here would have made the hive HUD the odd one out. The tech map is the exception rather than
+-- the rule: it colours EVERY icon by tech status, biomass included, so its warm yellow says
+-- "researched", not "biomass".
+IT.kHiveBiomassIconColor = Color(1, 1, 1, 1)
 
 -- The ring art is already amber, so it is drawn untinted. The DNA glyph is pale and takes the
 -- alien tooltip tint.
@@ -141,3 +145,17 @@ IT.kHiveResearchDnaColor = Color(1, 0.79, 0.3, 1)
 -- Seconds per full turn. Matches GUIUnitStatus.kResearchRotationDuration, so the HUD ring and the
 -- one on the hive itself spin together.
 IT.kHiveResearchRotationDuration = 2
+
+-- Use the HUD top bar's supply icons on the commander tooltip, in place of vanilla's MAC and
+-- Drifter.
+--
+-- Vanilla marks the supply figure on a tooltip with the team's worker, while the supply readout on
+-- the top bar uses a dedicated pair of icons. Both mean supply and they look nothing alike.
+--
+-- That split is a leftover, not a decision: the top bar (lua/Hud2) replaced GUIResourceDisplay,
+-- which used exactly the same worker coordinates for its own supply counter, and Commander_Client
+-- now has both its create and destroy calls commented out. The tooltip is simply the last place the
+-- worker icon survives standing for supply.
+--
+-- The MAC and Drifter icons are untouched wherever they stand for the units themselves.
+IT.kUseTopBarSupplyIcon = true

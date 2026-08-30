@@ -265,6 +265,10 @@ Only the hourglass and stopwatch are drawn from scratch. Everything else is vani
 | Health, armour | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
 | Marine speed | `marine_buildmenu_insight.dds` row 2 col 4, mirrored to point right and lifted off its button plate |
 | Hourglass, stopwatch | Drawn in `tools/build_icons.ps1` |
+| Biomass | `kTechId.BioMassOne` / `ResearchBioMassThree` in `ui/buildmenu.dds`, untinted, as vanilla draws it |
+| Researching ring | `ui/unitstatus_alien.dds` `{256, 68, 384, 196}`, the same region `GUIUnitStatus` spins on a busy hive |
+| DNA | `kTechId.LifeFormMenu` in `ui/buildmenu.dds` |
+| Supply | `ui/hud2/team_info_atlas.dds` via `GUIHudSupply.kThemeData`, replacing vanilla's MAC / Drifter |
 
 Health and armour are resampled rather than drawn from the vanilla atlas at runtime for three
 reasons: the source glyphs fill only ~29px of a 48px cell, so at icon size they came out smaller
@@ -404,7 +408,10 @@ and `mod.settings` names the file by extension.
 - `kShowHiveResearchIcon` — the rotating ring and DNA glyph on a hive that is researching
 - `kHiveBiomassIconOrigin` / `kHiveBiomassIconSize` / `kHiveBiomassIconSpacing` — placement of that row
 - `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
-- `kHiveBiomassIconColor` / `kHiveResearchRingColor` / `kHiveResearchDnaColor` — their tints
+- `kHiveBiomassIconColor` / `kHiveResearchRingColor` / `kHiveResearchDnaColor` — their tints (biomass
+  is untinted by default, matching how vanilla draws the same art)
+- `kUseTopBarSupplyIcon` — mark supply on the tooltip with the HUD top bar's icon instead of vanilla's
+  MAC / Drifter
 - `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
 
 ## Building the assets
@@ -449,6 +456,14 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- **Supply on the commander tooltip now uses the HUD top bar's icon** instead of a MAC or a Drifter.
+  Both meant supply and looked nothing alike; the split is a leftover from the top bar replacing
+  `GUIResourceDisplay`, whose create and destroy calls are now commented out, leaving the tooltip as
+  the last place the worker icon stood for supply. The MAC and Drifter icons are untouched wherever
+  they stand for the units themselves.
+- Hive biomass icons are drawn untinted, the way vanilla draws that same art in the commander
+  tooltip and in spectator view. They share atlas cell 112, so tinting them made the hive HUD the odd
+  one out.
 - **Biomass on the hive status HUD.** Each hive in the top-left panel now shows one icon per biomass
   level it has, beside its location name. The fourth uses the denser cluster art off the research
   button that grants it, so a maxed hive reads differently from one still climbing.
