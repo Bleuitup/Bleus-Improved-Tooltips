@@ -128,15 +128,23 @@ IT.kHiveResearchIconSize = 68
 
 -- The DNA glyph as a fraction of the ring it sits inside.
 IT.kHiveResearchDnaScale = 0.55
+-- The colour of every biomass icon the mod draws or reaches: the hive HUD row, the biomass icon on
+-- the commander tooltip, and the spectator top bar counter.
+--
+-- Vanilla leaves all three untinted, which is the same greyscale cell in each case - kTechId.Biomass
+-- and kTechId.BioMassOne are both atlas index 112. But nothing else in the tech tree or in a tooltip
+-- stays uncoloured, so untinted reads as unfinished rather than as deliberate. This is the tech
+-- map's own colour for alien tech that is researched and available -
+-- kTechMapIconColors[kAlienTeamType][kTechStatus.Available] in GUITechMap.lua - so a biomass icon
+-- means the same thing wherever it is seen.
+--
+-- A compatibility module can claim a different colour for one specific research; CBM's biomass 5
+-- takes CBM purple this way. See IT.RegisterIconColor.
+IT.kBiomassIconColor = Color(1, 0.9, 0.4, 1)
 
--- Biomass icons are drawn untinted, which is how vanilla draws this same art everywhere it means
--- "biomass": the commander tooltip creates its biomass icon from GetTextureCoordinatesForIcon(
--- kTechId.Biomass) and never calls SetColor, and the spectator view matches it. kTechId.Biomass and
--- kTechId.BioMassOne share atlas index 112, so this is literally the same greyscale cell - tinting
--- it here would have made the hive HUD the odd one out. The tech map is the exception rather than
--- the rule: it colours EVERY icon by tech status, biomass included, so its warm yellow says
--- "researched", not "biomass".
-IT.kHiveBiomassIconColor = Color(1, 1, 1, 1)
+-- Colour the spectator top bar's biomass counter too. Separate because reaching it takes more work
+-- than the others: see ImprovedTooltips_InsightTopBar.lua.
+IT.kColorSpectatorBiomass = true
 
 -- The ring art is already amber, so it is drawn untinted. The DNA glyph is pale and takes the
 -- alien tooltip tint.

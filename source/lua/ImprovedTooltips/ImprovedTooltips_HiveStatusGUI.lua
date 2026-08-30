@@ -120,7 +120,7 @@ local function CreateBiomassIcons(slot)
 		-- Each slot is simply the art of the research it stands for.
 		icon:SetTexturePixelCoordinates(GUIUnpackCoords(entry.coords))
 		-- Untinted unless a compatibility module has claimed a colour for this research.
-		icon:SetColor(IT.GetIconColor(entry.techId) or IT.kHiveBiomassIconColor)
+		icon:SetColor(IT.GetIconColor(entry.techId) or IT.kBiomassIconColor)
 		icon:SetLayer(kGUILayerPlayerHUDForeground4)
 		icon:SetIsVisible(false)
 		slot.background:AddChild(icon)

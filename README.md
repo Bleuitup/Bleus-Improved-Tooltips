@@ -268,7 +268,7 @@ Only the hourglass and stopwatch are drawn from scratch. Everything else is vani
 | Health, armour | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
 | Marine speed | `marine_buildmenu_insight.dds` row 2 col 4, mirrored to point right and lifted off its button plate |
 | Hourglass, stopwatch | Drawn in `tools/build_icons.ps1` |
-| Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, untinted, as vanilla draws it |
+| Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, tinted the tech map's researched-alien colour |
 | Researching ring | `ui/unitstatus_alien.dds` `{256, 68, 384, 196}`, the same region `GUIUnitStatus` spins on a busy hive |
 | DNA | `kTechId.LifeFormMenu` in `ui/buildmenu.dds` |
 | Supply | `ui/hud2/team_info_atlas.dds` via `GUIHudSupply.kThemeData`, replacing vanilla's MAC / Drifter |
@@ -408,6 +408,7 @@ through one pair of functions:
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
 | `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client only.** Wraps `CreateStatusContainer` / `UpdateStatusSlot` / `UninitializeStatusSlot` to add biomass icons and a researching ring to each hive row |
+| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightTopBar.lua` | **Client only.** Wraps `Initialize` to colour the spectator bar's biomass counter, catching the item as it is created since nothing in that file is reachable afterwards |
 | `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, so the whole team sees it |
 | `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health/armour icons to match their figures |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client only.** Wraps `OnInitialized` to replay synced cooldowns into vanilla's own table, fixing vanilla's button dial |
@@ -440,6 +441,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_SelectionPanel.lua     post-hook on GUISelectionPanel.lua   (client)
     ImprovedTooltips_CooldownDial.lua       post-hook on Commander.lua           (client)
     ImprovedTooltips_HiveStatusGUI.lua      post-hook on GUIHiveStatus.lua       (client)
+    ImprovedTooltips_InsightTopBar.lua      post-hook on GUIInsight_TopBar.lua   (client)
     ImprovedTooltips_NetworkMessages.lua    post-hook on NetworkMessages.lua     (shared)
     ImprovedTooltips_CooldownState.lua      team cooldown table + server publish
     ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
@@ -482,8 +484,10 @@ and `mod.settings` names the file by extension.
 - `kShowHiveResearchIcon` — the rotating ring and DNA glyph on a hive that is researching
 - `kHiveBiomassIconOrigin` / `kHiveBiomassIconSize` / `kHiveBiomassIconSpacing` — placement of that row
 - `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
-- `kHiveBiomassIconColor` / `kHiveResearchRingColor` / `kHiveResearchDnaColor` — their tints (biomass
-  is untinted by default, matching how vanilla draws the same art)
+- `kBiomassIconColor` — the colour of every biomass icon the mod draws or reaches: the hive HUD row,
+  the tooltip icon and the spectator counter
+- `kColorSpectatorBiomass` — include the spectator top bar counter in that
+- `kHiveResearchRingColor` / `kHiveResearchDnaColor` — tints for the researching indicator
 - `kInheritUpgradeStats` — let an `UpgradeToX` button show the health, armour and speed of the X it
   builds (CBM's Fortress structures, vanilla's hive type upgrades)
 - `kEnableCBMCompat` — the CBM compatibility module; inert anyway when CBM is not loaded
@@ -535,6 +539,11 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- **Biomass icons are coloured everywhere the mod can reach them** — the hive HUD row, the biomass
+  icon on the commander tooltip, and the spectator top bar counter — in the tech map's own colour for
+  researched alien tech. Vanilla leaves all three as the bare greyscale atlas cell, but nothing else
+  in a tooltip or in the tech tree stays uncoloured, so untinted read as unfinished rather than as
+  deliberate. CBM's biomass 5 keeps CBM purple.
 - **A CBM compatibility module.** The one mod-specific file in the mod, and a deliberate exception:
   CBM does two things that cannot be read from TechData, and is common enough to be worth it. It
   detects CBM by the tech CBM adds rather than by a name, and registers nothing at all when CBM is
@@ -563,8 +572,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - **Biomass on the hive status HUD.** Each hive in the top-left panel now shows one icon per +1
   biomass research it has completed, beside its location name. A fresh hive shows none, matching how
   it shows no hive type icon until it is upgraded, and each research adds its own button's art -
-  which get denser as they go, so the row reads as a progression. Drawn untinted, as vanilla draws
-  that art everywhere else.
+  which get denser as they go, so the row reads as a progression.
 - **A researching indicator on the same panel.** Vanilla's rotating ring plus the DNA glyph appear on
   any hive researching anything - biomass, a lifeform ability, or a hive type upgrade - at the same
   rotation speed as the ring the player sees on the hive itself.

@@ -572,3 +572,25 @@ goes in a module like this, never in the core files.
   lines), not the hive model's. The model's emissive averages a deeper magenta, roughly
   `Color(0.85, 0.25, 0.45)`; swapping `kCBMBiomassFiveColor` is the whole change if that reads
   better.
+
+### Colouring the spectator top bar's biomass counter (1.0 work)
+
+`GUIInsight_TopBar` (spectator view, created by `GUISpectator`) keeps **everything in file-locals**
+and stores **not one field on self** -- `background`, `alienBiomass` and the rest are unreachable
+from a post-hook, and its local `CreateIconTextItem` returns only the text item, not the icon. There
+is no handle to walk down from, so the usual "wrap a method and touch self.x" does not apply.
+
+`ImprovedTooltips_InsightTopBar.lua` catches the item as it is made instead: it wraps
+`GUIManager.CreateGraphicItem` for exactly the duration of `Initialize`, collects what is created,
+and restores the method -- on the error path too, re-raising afterwards. Lua is single threaded and
+`Initialize` is synchronous, so nothing else can be creating items in that window.
+
+Identification is exact, not positional: `"ui/buildmenu.dds"` appears **once** in that file, for the
+biomass icon; every other icon on the bar comes from the marine or alien insight sheets. So the one
+created item whose `GetTexture()` is the build menu atlas is the biomass icon.
+
+Verified with a harness covering both the normal path and an `Initialize` that raises: the right icon
+is tinted, the other four are untouched, and `GUIManager.CreateGraphicItem` is restored either way.
+
+If this ever needs revisiting, check first whether the file has gained a `self.` field -- that would
+make all of the above unnecessary.

@@ -258,6 +258,13 @@ function GUICommanderTooltip:Initialize()
 		ApplyTopBarSupplyIcon(self, teamType)
 	end
 
+	-- Vanilla builds this icon from GetTextureCoordinatesForIcon(kTechId.Biomass) and never calls
+	-- SetColor, so it draws as the bare greyscale cell while every other icon on the card is
+	-- coloured. Same shade as the hive HUD row, so a biomass icon means one thing everywhere.
+	if self.biomassIcon and IT.kBiomassIconColor then
+		self.biomassIcon:SetColor(IT.kBiomassIconColor)
+	end
+
 	self.itEntries = { }
 	for i = 1, #kRowOrder do
 		local field = kRowOrder[i]

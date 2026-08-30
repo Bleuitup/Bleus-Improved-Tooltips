@@ -28,6 +28,8 @@ if Client then
 	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownDial.lua", "post")
 	-- The alien hive status panel in the top-left corner: biomass icons and a researching ring.
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
+	-- The spectator top bar, for its biomass counter's colour.
+	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
