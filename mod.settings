@@ -44,23 +44,26 @@ Both are visible to every player on the team, not just the commander.
 [list]
 [*] [b]Simultaneous biomass research.[/b] With two hives researching biomass at once the tech map lit up only one icon between them, because the team collapses every hive into a single number before drawing. Two hives now light two icons, three light three.
 [*] [b]Supply icons.[/b] The supply figure on a tooltip was marked with a MAC or a Drifter while the HUD's top bar used a different pair of icons for the same thing. The tooltip now uses the top bar's. The MAC and Drifter icons are untouched wherever they stand for the units themselves.
+[*] [b]Uncoloured biomass icons.[/b] The biomass icon was drawn as bare greyscale art wherever it appeared: on the commander tooltip, on the spectator counter, and so on the hive panel too. Nothing else in a tooltip or in the tech tree stays uncoloured, so it read as unfinished rather than deliberate. All of them now take the tech map's own colour for researched alien tech.
 [/list]
 
 [h1]Live values[/h1]
 
 Numbers that change during a round are read live rather than printed from a table. Bone Wall's health scales with your biomass level, so at Biomass 9 the tooltip says 900, not 100.
 
-Speed works the same way. Some structures have a speed but can only use it under a condition, and that condition is not the same in every mod. Where the mod cannot confirm the thing is able to move right now, the speed is drawn [b]dimmed[/b] rather than stated as fact. ARC, MAC and Drifter always move, and never dim.
+Movement speed is the structure's own figure, read from the game rather than from a table, which is why it picks up whatever the loaded mods set it to.
 
 [h1]Works with other mods[/h1]
 
-Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here. Conditional movement is settled by asking the structures actually on your team rather than by encoding any one mod's rule, so mods that change when something is allowed to move keep working on their own terms.
+Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here.
+
+[b]Community Balance Mod[/b] is the one mod named anywhere in the code, in a single place: its biomass 5 research is tinted purple on the hive panel, matching the way CBM marks that hive out. Everything else about CBM tech, including its own icons for it, arrives through the same path as anything else.
 
 Modders can register their own value resolvers for anything they compute at runtime — see the README on GitHub.
 
 [h1]Servers[/h1]
 
-The mod does not change gameplay. It reads values your client already has, and the only thing it sends is the team cooldown list the panel is built from.
+The mod does not change gameplay. It reads values your client already has. The two things it does send are the team cooldown list the panel is built from, and each hive's biomass and research for the hive panel, neither of which a client can work out for itself.
 
 It does have to be installed on the server. NS2's default consistency check restricts which mod entry files a client is allowed to load, so on a server running stock settings the server needs this mod too. If you want it on a server you play on, ask the admin to add it.
 

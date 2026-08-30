@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 0.93. Published to the Steam Workshop as
+Version 1.0. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -489,7 +489,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
-**Unreleased**
+**1.0**
 - **Speed is stated plainly and never dimmed.** Structures whose movement is conditional used to be
   faded when no live one could confirm it — which caught far more than intended: a Whip can always
   move, and on its build button, before you own one, there was nothing to ask, so it faded. The
