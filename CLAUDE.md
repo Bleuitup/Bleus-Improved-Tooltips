@@ -686,7 +686,7 @@ Removed on 2026-08-30 at the user's direction. Do not reintroduce any of these w
 - **CBM speed corrections.** CBM's Crag, Shade, Shift and Whip compute speed from live infestation
   charge rather than storing a constant, so the plain class lookup is not their real figure — a CBM
   Crag reads 2.9 where it actually moves at 3.625, and a CBM Whip shows nothing at all, since CBM
-  keeps its base in a file-local with no class field. **This is known and accepted**, per the user:
+  keeps its base in a file-local with no class field. **Known and accepted**, tracked as issue #7, per the user:
   "just show the speed attribute of the vanilla unupgraded entity and leave it at that".
 
 What survives of the CBM module is the biomass 5 purple tint and nothing else. The user confirmed
