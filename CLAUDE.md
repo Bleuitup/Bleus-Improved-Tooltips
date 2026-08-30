@@ -594,3 +594,35 @@ is tinted, the other four are untouched, and `GUIManager.CreateGraphicItem` is r
 
 If this ever needs revisiting, check first whether the file has gained a `self.` field -- that would
 make all of the above unnecessary.
+
+## kTechId is an ENGINE enum, not a table -- it RAISES on unknown names
+
+Found in game on 2026-08-30, from `log.txt`:
+
+```
+Error: lua/ImprovedTooltips/ImprovedTooltips_Values.lua:387: Element 'DualMinigun' doesn't exist in the enum
+```
+
+`kTechId[name]` for a name the enum does not hold **raises a Lua error**; it does not return nil.
+There is no Lua-side `enum` implementation to read -- it is engine code -- so this is only
+discoverable by hitting it. Vanilla has `UpgradeToDualMinigun` and **no** `kTechId.DualMinigun`, so
+deriving a product name from an upgrade name and looking it up throws on a plain vanilla install.
+
+**Always use `IT.GetTechIdByName(name)`** for any name that might not exist: tech from a mod that may
+not be loaded, or a name derived from another name. It uses `rawget`, which reads the underlying
+table (where the entries actually live -- `pairs()` walks them) without going through the metamethod
+that raises. Reverse lookups `kTechId[someNumber]` use `rawget` for the same reason.
+
+Two things this cost, both from one error:
+
+- The error aborted the `pairs` walk that builds the upgrade-target cache. The cache had already been
+  assigned an empty table, so it was left **half built** and silently answered nil for everything not
+  yet reached -- which is why CBM's Fortress upgrade buttons showed only a research time. Caches are
+  now built into a local and published only once complete, so a throw leaves the cache nil and the
+  next call retries.
+- `GetIsCBMLoaded` tested `kTechId.FortressCrag ~= nil`, which would have raised on any non-CBM
+  install. It did not fire in that log only because CBM (dev) was in fact mounted.
+
+**Harness lesson:** the earlier harnesses used a plain Lua table for `kTechId`, which silently
+returns nil and so could never have caught this. `scratchpad/test_enum.lua` models the real thing
+with an `__index` that raises. Any future harness touching `kTechId` must do the same.

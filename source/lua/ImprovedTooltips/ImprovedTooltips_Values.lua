@@ -281,7 +281,7 @@ end
 
 local function LookupClassMoveSpeed(techId)
 
-	local className = kTechId[techId]
+	local className = rawget(kTechId, techId)
 	if type(className) ~= "string" then
 		return 0
 	end
@@ -326,7 +326,7 @@ function IT.GetIsMovementConfirmed(techId)
 		return true
 	end
 
-	local className = kTechId[techId]
+	local className = rawget(kTechId, techId)
 	if type(className) ~= "string" then
 		return false
 	end
@@ -348,6 +348,32 @@ local kDefaultLookup = {
 	speed        = LookupClassMoveSpeed,
 }
 
+-- Look a techId up by name without assuming the name exists.
+--
+-- kTechId is an ENGINE enum, not a plain table, and indexing it with a name it does not hold raises
+--
+--     Element 'DualMinigun' doesn't exist in the enum
+--
+-- rather than returning nil. That is easy to walk into: vanilla has UpgradeToDualMinigun but no
+-- DualMinigun, so deriving a name and looking it up throws on a perfectly ordinary install.
+--
+-- The entries themselves live directly in the underlying table - pairs() walks them - so rawget
+-- reads them without going through the metamethod that raises, and answers nil for a name that is
+-- not there. Use this for ANY name that might not exist: tech from a mod that may not be loaded,
+-- or a name derived from another name.
+function IT.GetTechIdByName(name)
+
+	if type(name) ~= "string" or type(kTechId) ~= "table" then
+		return nil
+	end
+
+	local techId = rawget(kTechId, name)
+
+	return type(techId) == "number" and techId or nil
+
+end
+
+
 ------------------------------------------------------------------------------------------------
 -- Upgrade buttons describing what they produce
 ------------------------------------------------------------------------------------------------
@@ -365,7 +391,8 @@ local kDefaultLookup = {
 --
 -- Vanilla's own UpgradeToCragHive / ShadeHive / ShiftHive and UpgradeToInfestedTunnel match the
 -- pattern too and start showing what they build. UpgradeToDualMinigun and UpgradeToDualRailgun
--- match by name but their products carry no health or armour, so nothing appears.
+-- match the naming but have no product techId at all, which is what makes the safe lookup above
+-- necessary rather than merely tidy.
 --
 -- Built lazily, on the same reasoning as the cooldown enumeration: TechData and kTechId are both
 -- still being assembled during startup and mods add to them, so asking too early would miss
@@ -376,7 +403,11 @@ local function GetUpgradeTargetTechId(techId)
 
 	if not upgradeTargets then
 
-		upgradeTargets = { }
+		-- Built into a local and published only once complete. If anything in the walk throws, the
+		-- cache stays nil and the next call retries, rather than being left half filled and
+		-- silently answering nil for everything that had not been reached yet - which is exactly
+		-- what happened when the kTechId lookup below could still raise.
+		local targets = { }
 
 		-- kTechId holds both [name] = value and [value] = name, so the pairs walk sees each entry
 		-- twice; only the name -> value direction is of interest.
@@ -384,14 +415,16 @@ local function GetUpgradeTargetTechId(techId)
 			if type(name) == "string" and type(id) == "number" then
 
 				local product = name:match("^UpgradeTo(.+)$")
-				local productId = product and kTechId[product]
+				local productId = product and IT.GetTechIdByName(product)
 
-				if type(productId) == "number" and productId ~= id then
-					upgradeTargets[id] = productId
+				if productId and productId ~= id then
+					targets[id] = productId
 				end
 
 			end
 		end
+
+		upgradeTargets = targets
 
 	end
 

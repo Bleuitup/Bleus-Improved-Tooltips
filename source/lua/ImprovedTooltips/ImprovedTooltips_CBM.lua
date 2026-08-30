@@ -37,7 +37,9 @@ local IT = ImprovedTooltips
 -- and a mod that happens to be called CBM but ships none of this is correctly left alone.
 
 local function GetIsCBMLoaded()
-	return type(kTechId) == "table" and kTechId.FortressCrag ~= nil
+	-- Through the safe lookup: under vanilla the name is absent, and indexing the enum with a name
+	-- it does not hold raises rather than answering nil.
+	return IT.GetTechIdByName("FortressCrag") ~= nil
 end
 
 ------------------------------------------------------------------------------------------------
@@ -119,7 +121,7 @@ local function RegisterSpeeds()
 
 	for name, multiplier in pairs(kSpeedMultipliers) do
 
-		local techId = kTechId[name]
+		local techId = IT.GetTechIdByName(name)
 
 		if techId then
 			-- Resolved inside the closure rather than now, so a mod loading after this one and
@@ -149,7 +151,9 @@ end
 -- them.
 local function RegisterBiomassFiveColor()
 
-	if not IT.kColorCBMBiomassFive or not kTechId.ResearchBioMassFour then
+	local techId = IT.GetTechIdByName("ResearchBioMassFour")
+
+	if not IT.kColorCBMBiomassFive or not techId then
 		return
 	end
 
@@ -159,7 +163,7 @@ local function RegisterBiomassFiveColor()
 		return
 	end
 
-	IT.RegisterIconColor(kTechId.ResearchBioMassFour, IT.kCBMBiomassFiveColor)
+	IT.RegisterIconColor(techId, IT.kCBMBiomassFiveColor)
 
 end
 

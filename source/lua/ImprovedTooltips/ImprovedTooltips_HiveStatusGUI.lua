@@ -78,7 +78,7 @@ local function ResolveIcons()
 	-- Stop at the first one a mod has removed rather than closing the gap: the position in this list
 	-- IS which research the icon stands for.
 	for i = 1, #kBiomassResearchNames do
-		local techId = kTechId[kBiomassResearchNames[i]]
+		local techId = IT.GetTechIdByName(kBiomassResearchNames[i])
 		if not techId then
 			break
 		end

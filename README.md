@@ -316,8 +316,8 @@ trick the speed lookup uses to find a class from a techId.
 Vanilla's own `UpgradeToCragHive` / `ShadeHive` / `ShiftHive` and `UpgradeToInfestedTunnel` match the
 pattern too, so they start showing what they build. For the hive types that is the same health a Hive
 already has, so it adds no information; set `kInheritUpgradeStats` false to turn the whole behaviour
-off. `UpgradeToDualMinigun` and `UpgradeToDualRailgun` match by name but their products carry no
-health or armour, so nothing appears.
+off. `UpgradeToDualMinigun` and `UpgradeToDualRailgun` match the naming but have no product techId at
+all — there is no `kTechId.DualMinigun` — so nothing appears for them.
 
 **Health, armour and speed.** Speed only says anything where the product has one to report — a
 vanilla hive type upgrade produces something that does not move, so nothing appears. For CBM's
@@ -539,6 +539,12 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- Fixed an error on every install, vanilla included: `Element 'DualMinigun' doesn't exist in the
+  enum`. `kTechId` is an engine enum that **raises** on a name it does not hold rather than answering
+  nil, and vanilla has `UpgradeToDualMinigun` but no `DualMinigun`. The throw also aborted the walk
+  that builds the upgrade-target cache, leaving it half built — which is why CBM's Fortress upgrade
+  buttons showed only a research time. Name lookups now go through `ImprovedTooltips.GetTechIdByName`,
+  and caches are published only once complete.
 - **Biomass icons are coloured everywhere the mod can reach them** — the hive HUD row, the biomass
   icon on the commander tooltip, and the spectator top bar counter — in the tech map's own colour for
   researched alien tech. Vanilla leaves all three as the bare greyscale atlas cell, but nothing else
