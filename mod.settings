@@ -28,6 +28,24 @@ This mod adds a panel on the right of the screen listing whatever your team has 
 
 [b]It also fixes a vanilla bug.[/b] In the base game, nobody but the commander who personally cast an ability ever saw its cooldown dial — not a commander who took the chair mid-cooldown, not one who had just left it, and no field player at all. Enforcement was always correct; only the display was blind. Vanilla marks the gap itself, with an empty "send message to commander to sync the cd" block sitting where the sync belongs. The dial on the commander button is now right whoever is in the chair.
 
+[h1]The alien hive panel[/h1]
+
+The hive status panel in the top-left corner (Advanced Options, UI, hive status) already shows each hive's health, eggs and type. Two things are added to every hive's row:
+
+[list]
+[*] [b]Biomass[/b] — one icon per +1 biomass research that hive has completed. A fresh hive shows none, the same way it shows no hive type icon until it is upgraded, and each research adds its own button's art.
+[*] [b]Researching[/b] — the game's own rotating "working" ring with the DNA glyph inside it, on any hive researching anything: biomass, a lifeform ability, or a hive type upgrade. The same pair you see in the world when you look at a busy hive.
+[/list]
+
+Both are visible to every player on the team, not just the commander.
+
+[h1]Fixes to vanilla display bugs[/h1]
+
+[list]
+[*] [b]Simultaneous biomass research.[/b] With two hives researching biomass at once the tech map lit up only one icon between them, because the team collapses every hive into a single number before drawing. Two hives now light two icons, three light three.
+[*] [b]Supply icons.[/b] The supply figure on a tooltip was marked with a MAC or a Drifter while the HUD's top bar used a different pair of icons for the same thing. The tooltip now uses the top bar's. The MAC and Drifter icons are untouched wherever they stand for the units themselves.
+[/list]
+
 [h1]Live values[/h1]
 
 Numbers that change during a round are read live rather than printed from a table. Bone Wall's health scales with your biomass level, so at Biomass 9 the tooltip says 900, not 100.
