@@ -441,3 +441,37 @@ game.
   documented positions. Two PowerShell traps doing this: a bare negative literal like `-6` is parsed
   as a parameter name, so wrap it in parentheses; and `[System.Drawing.Image]::FromFile` locks the
   file, so read the bytes and use `FromStream`.
+
+## Building output/ (read before rebuilding)
+
+`output/` is what Launch Pad ships and what the game actually loads. It is git-ignored, so if it is
+missing or stale **nothing in git will tell you** -- the repo looks perfectly clean while the mod
+does nothing in game. That is exactly the failure seen on 2026-08-30: the user launched from Launch
+Pad and saw none of the mod, because `output/` had been deleted.
+
+Rebuild with:
+
+```bash
+mkdir -p output && cp -r source/. output/
+```
+
+**Do not use `rm -rf output && cp -r source output`.** This repo lives on `G:\My Drive`, a Google
+Drive mount, and deleting a whole directory tree and recreating it at the same path in the same
+instant is exactly the pattern Drive's sync can reconcile badly -- the delete propagates, the
+recreate does not. The command above never removes the directory itself.
+
+If a file is renamed or deleted in `source/`, that copy leaves the old one behind in `output/`, so
+after a rename check for strays:
+
+```bash
+diff -r source output
+```
+
+Verify after every rebuild, because a partial `output/` fails silently:
+
+- `diff -r source output` reports no differences
+- every `SetupFileHook` target in `ImprovedTooltips_FileHooks.lua` resolves to a file that exists
+- every `Script.Load("lua/ImprovedTooltips/...")` target exists
+- `lua/entry/ImprovedTooltips.entry` is present -- without it the mod is not a mod
+
+Note that `luac -p` passing proves nothing about `output/`; it only checks `source/`.

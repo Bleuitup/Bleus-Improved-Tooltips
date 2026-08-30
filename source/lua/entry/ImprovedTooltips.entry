@@ -1,7 +1,8 @@
 -- Bleu's Improved Tooltips
 --
--- Client-side in the sense that all the work happens there: every value shown is already readable
--- on the client (TechData is shared, the tech tree is networked), and nothing is sent anywhere.
+-- Most of the work happens on the client: nearly every value shown is already readable there
+-- (TechData is shared, the tech tree is networked). Three things are not, and the server sends
+-- them: team ability cooldowns, and per-hive biomass and research for the hive status HUD.
 --
 -- That does NOT mean it runs on any server. NS2's default consistency config restricts
 -- "lua/entry/*.entry" (core/lua/ConsistencyConfig.lua) and ships with consistency_enabled = true,
