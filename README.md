@@ -3,11 +3,12 @@
 An NS2 mod that puts the numbers a commander actually needs into the commander tooltips: research
 times, ability cooldowns, and structure health and armour.
 
-The tooltip work is entirely client-side. The "In Cooldown" panel additionally needs the server,
-which broadcasts team cooldowns that vanilla never sends to anyone but the commander who cast. Note
+The tooltip work is entirely client-side. Two things additionally need the server: the "In Cooldown"
+panel, which broadcasts team cooldowns that vanilla never sends to anyone but the commander who
+cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 0.91. Published to the Steam Workshop as
+Version 0.92. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -101,8 +102,58 @@ a commander is exactly the moment vanilla's table is empty and the mod's is not,
 `Commander:OnInitialized` replays ours into vanilla's through the public `SetTechCooldown`. The
 network handler does the same for live updates while commanding, so the two views cannot drift.
 
-The broadcast and the join resync are the mod's only server-side code; everything else, including
+The broadcast and the join resync are server-side; everything else in the cooldown work, including
 this dial bridge, is client-side. It needs the server anyway (see [Servers](#servers)).
+
+## Biomass in the tech map
+
+Open the tech map with two hives both researching biomass and only one biomass level lights up. With
+two hives at biomass 1 each — team biomass 2, both researching — vanilla shows BioMassThree in
+progress and leaves BioMassFour dark, even though it is just as much on its way.
+
+The data is not missing, it is discarded one step before it would have been sent. Every hive tracks
+its own `biomassResearchFraction`; `AlienTeam:UpdateBioMassLevel` then collapses all of them into
+one scalar and writes it to exactly one node:
+
+```lua
+if bioMassAdd > progress then
+    progress = bioMassAdd            -- max across every hive
+end
+...
+local techNodeProgress = i == self.bioMassLevel + 1 and progress or 0   -- one node, rest zeroed
+```
+
+The mod post-hooks that function and re-spreads the fractions across consecutive nodes, so two hives
+researching light two icons and three light three.
+
+This is display only. Nothing gates on node research progress — availability runs off `GetHasTech` /
+`GetAvailable` / `GetResearched`, and the per-hive research is driven by `ResearchMixin` against the
+`ResearchBioMassN` nodes, which are untouched. Fixing it on the server rather than in the GUI means
+it travels out through vanilla's own `TechNodeUpdate` message, so the tech map, spectators and
+anything else reading the nodes all agree, with no GUI code involved.
+
+### Which level gets which bar
+
+Entries are sorted by **time remaining, not by fraction**. Biomass researches are not the same
+length — 25, 40, 60 and 80 seconds for levels one through four — so the hive that is furthest along
+is not necessarily the one that finishes first, and it is the first to finish that takes the team to
+the next level. A hive 20% into a 25 second research (20s left) reaches its level before one 50%
+into a 60 second research (30s left), so it takes the nearer icon.
+
+Ordering by time is also stable. Every remaining time counts down at one second per second, so two
+entries can never swap places; ordering by fraction, a short research overtakes a long one part way
+through and the bars trade icons underneath the cursor.
+
+The cost is that bars are no longer monotonic left to right: the nearer level can show a lower bar
+than the one past it. That is honest rather than tidy — it is what the underlying researches
+actually look like.
+
+A hive still under construction is ordered the same way, off its build time. A hive with no usable
+estimate sorts last, rather than having a number invented for it.
+
+With zero or one thing in flight the hook returns immediately, so the common case stays byte-for-byte
+vanilla.
+
 
 ## Design
 
@@ -219,6 +270,7 @@ through one pair of functions:
 | `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's team-cooldown message in every VM |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
 | `lua/NS2Gamerules.lua` | `ImprovedTooltips_CooldownJoin.lua` | **Server only.** Wraps `JoinTeam` to hand a joining player the current cooldowns |
+| `lua/AlienTeam.lua` | `ImprovedTooltips_BiomassProgress.lua` | **Server only.** Wraps `UpdateBioMassLevel` to spread in-progress biomass across every level being worked on |
 
 Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
 of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
@@ -233,7 +285,7 @@ that order, so a low number means these hooks run last and wrap whatever else lo
 source/lua/entry/ImprovedTooltips.entry     mod entry, points at the FileHooks file
 source/lua/ImprovedTooltips/
     ImprovedTooltips_FileHooks.lua          registers the post-hooks
-    ImprovedTooltips_Config.lua             display options (time format, tints, panel)
+    ImprovedTooltips_Config.lua             display options (time format, tints, panel, tech map)
     ImprovedTooltips_Values.lua             value resolution + the resolver registry
     ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua       (client)
     ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua (client)
@@ -244,6 +296,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_CooldownState.lua      team cooldown table + server publish
     ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
     ImprovedTooltips_CooldownJoin.lua       post-hook on NS2Gamerules.lua        (server)
+    ImprovedTooltips_BiomassProgress.lua    post-hook on AlienTeam.lua           (server)
     GUIImprovedTooltipsCooldowns.lua        the "In Cooldown" panel
 source/ui/bleu_tooltip_icons.dds            320x64 icon sheet, 5 cells of 64x64
 tools/build_icons.ps1                       regenerates the icon sheet
@@ -272,6 +325,8 @@ and `mod.settings` names the file by extension.
 - `kCooldownPanelMinDuration` — minimum cooldown, in seconds, to earn a panel entry (default 5)
 - `kCooldownPanelOffset` — panel position, offset from the right edge / vertical middle
 - `kCooldownPanelShowSeconds` — show the remaining seconds under each icon
+- `kSpreadBiomassProgress` — show every biomass level in progress on the tech map, not just the next
+  one. The only server-side option; false restores vanilla exactly
 
 ## Building the assets
 
@@ -315,6 +370,14 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- **Every biomass level in progress now shows on the tech map.** With two hives researching biomass
+  at once, vanilla lit up one icon between them: `AlienTeam:UpdateBioMassLevel` takes the maximum
+  fraction across all hives and writes it to a single node, zeroing the rest. Two hives now light two
+  icons, three light three.
+- Entries are ordered by time remaining rather than by fraction, because biomass researches run 25,
+  40, 60 and 80 seconds and the hive furthest along is not necessarily the one that finishes first.
+
+**0.91**
 - Fixed the health and armour glyphs being oversized on vanilla's selection panel. They are now
   baked at vanilla's own proportion, with the tooltips magnifying by sampling a smaller window.
 - Speed is now **dimmed**, rather than stated as fact, for structures whose movement is conditional

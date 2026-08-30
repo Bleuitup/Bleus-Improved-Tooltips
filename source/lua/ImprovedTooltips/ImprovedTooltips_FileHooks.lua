@@ -32,17 +32,21 @@ end
 -- NetworkMessages.lua loads in all of them.
 ModLoader.SetupFileHook("lua/NetworkMessages.lua", "lua/ImprovedTooltips/ImprovedTooltips_NetworkMessages.lua", "post")
 
--- Two server hooks rather than one, because each wraps a method on a different class and neither
--- file can assume the other's class has loaded yet:
+-- Three server hooks rather than one, because each wraps a method on a different class and no
+-- file can assume another's class has loaded yet:
 --
 --   Commander.lua    - Commander:SetTechCooldown, to broadcast a new cooldown to the team.
 --                      Hooked here and not on Commander_Server.lua, which Commander.lua loads at
 --                      its line 69, long before the method is defined further down.
 --   NS2Gamerules.lua - NS2Gamerules:JoinTeam, to hand a joining player the current cooldowns.
+--   AlienTeam.lua    - AlienTeam:UpdateBioMassLevel, to show every biomass level in progress.
 --
--- The helpers they share live in ImprovedTooltips_CooldownState.lua, which depends on no class.
--- Both hook files guard on Server themselves.
+-- The helpers the two cooldown hooks share live in ImprovedTooltips_CooldownState.lua, which
+-- depends on no class. Each hook file guards on Server itself.
 if Server then
 	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownSync.lua", "post")
 	ModLoader.SetupFileHook("lua/NS2Gamerules.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownJoin.lua", "post")
+	-- AlienTeam.lua is loaded by Server.lua alone, so the class only exists in this VM. Spreads
+	-- in-progress biomass across every level being worked on instead of only the next one.
+	ModLoader.SetupFileHook("lua/AlienTeam.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassProgress.lua", "post")
 end

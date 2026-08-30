@@ -78,3 +78,18 @@ IT.kCooldownPanelMarineBackgroundAlpha = 0
 -- existing structure - to match their own figures. Vanilla colours the two numbers differently but
 -- draws both icons in one flat team colour.
 IT.kTintSelectionPanelIcons = true
+
+------------------------------------------------------------------------------------------------
+-- Tech map
+------------------------------------------------------------------------------------------------
+
+-- Show EVERY biomass level currently on its way, rather than only the next one.
+--
+-- Vanilla collapses all hives into a single number and writes it to one tech node, so two hives
+-- researching biomass at once light up one icon between them. See
+-- ImprovedTooltips_BiomassProgress.lua for the detail.
+--
+-- This is the mod's only server-side display option: AlienTeam lives in the server VM, and the
+-- corrected progress reaches clients through vanilla's own tech node update. Setting it false
+-- restores vanilla's behaviour exactly.
+IT.kSpreadBiomassProgress = true

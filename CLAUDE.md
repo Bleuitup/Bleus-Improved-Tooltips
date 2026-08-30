@@ -330,3 +330,42 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
   (`[kVisualRange] = { ARC.kFireRange, ARC.kMinFireRange }`, since `kVisualRange` accepts a table)
   plus an origin marker on nearby targets whose state encodes both distance rules. See the ARC notes
   below.
+
+## Biomass tech map (0.92)
+
+`AlienTeam:UpdateBioMassLevel` (`ns2/lua/AlienTeam.lua:227`) is the whole bug. It reduces every
+hive to one scalar with `if bioMassAdd > progress then progress = bioMassAdd end` — a max — and
+then writes it to exactly one node with `local techNodeProgress = i == self.bioMassLevel + 1 and
+progress or 0`. Every other biomass node is explicitly zeroed, so two hives researching light one
+icon.
+
+Facts established while fixing it, so they do not need re-deriving:
+
+- **`AlienTeam.lua` is server-only.** `Server.lua:22` is its sole loader; the class does not exist
+  in the client VM. The fix is therefore a server hook, and reaches clients through vanilla's own
+  `TechNodeUpdate` message with no GUI code.
+- **Each hive has its own `bioMassLevel`** (1..4 in vanilla, via `ResearchBioMassOne/Two/Three` on
+  button slot 2). Team biomass is the sum. `kHiveBiomass = 1` (`Balance.lua:861`).
+- **`hive.biomassResearchFraction`** is a plain server field, written only in `Hive:UpdateResearch`
+  and only while the researching id is a biomass research, zeroed on complete and on cancel. So
+  non-zero means "part way through a biomass research" and `GetResearchingId()` names which.
+- **`kBioMassTechIds` in AlienTeam.lua is file-local**, so the mod mirrors it. The index IS the team
+  biomass level, so the mirror must stay positional — never close a gap.
+- **Node research progress is display-only.** Gating runs off `GetHasTech` / `GetAvailable` /
+  `GetResearched`; `researching` is a separate flag that `SetResearchProgress` does not touch.
+  `GUIProduction` builds its list from `TeamInfo:GetRelevantTech()` bitmasks, not node progress, so
+  filling extra nodes adds no production-queue rows.
+- **`TechNode.instances` exists** for per-entity progress, but `GetTechIdIsInstanced`
+  (`TechTree.lua:386`) lists only AdvancedArmoryUpgrade, UpgradeRoboticsFactory and the three hive
+  type upgrades. Biomass is not instanced, so its node is last-writer-wins.
+- **Biomass research times differ**: 25 / 40 / 60 / 80 seconds (`Balance.lua:160-166`), all under
+  `kTechDataResearchTimeKey`. Hence ordering by time remaining rather than by fraction — the hive
+  furthest along is not necessarily the one that finishes first. Remaining times all count down at
+  one second per second, so that ordering is stable and entries never swap icons.
+- `SendTechTreeUpdates` builds each message from the node's **current** state and `techNodesChanged`
+  is a `unique_set`, so vanilla zeroing a node and the mod re-filling it in the same tick sends one
+  message with the final value. No flicker.
+
+Verified against a standalone Lua harness covering the user's case, single-hive, idle, the
+divergent-ordering case, three hives, a hive under construction, a dead hive, and overflow past
+BioMassTwelve. Nothing has been run in game.
