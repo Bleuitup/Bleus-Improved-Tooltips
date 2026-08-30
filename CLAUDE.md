@@ -369,3 +369,48 @@ Facts established while fixing it, so they do not need re-deriving:
 Verified against a standalone Lua harness covering the user's case, single-hive, idle, the
 divergent-ordering case, three hives, a hive under construction, a dead hive, and overflow past
 BioMassTwelve. Nothing has been run in game.
+
+## Hive status HUD (0.93)
+
+`GUIHiveStatus` is the alien panel in the top-left corner, gated on Advanced Options ->
+`CHUD_HiveStatus` and registered in `ClientUI.lua`'s `kShowAsClass["Alien"]` -- **field aliens only**,
+not the commander and not spectators. Its `TODO` header says using it for the Khamm was never done.
+
+Facts established while building on it:
+
+- **A Hive is NOT relevant to a client across the map.** `ScriptActor` sets
+  `SetRelevancyDistance(kMaxRelevancyDistance)` = 40m (`Globals.lua:348`), and `Hive` only adds
+  `kRelevantToTeam2Commander`. So `bioMassLevel` and `researchingId`, both real network vars, are
+  unreadable on a field alien's client for the hives this panel is about. That is why vanilla feeds
+  the panel from `AlienTeamInfo` instead. **Do not "simplify" the mod's network message away.**
+- **`AlienTeamInfo` per-location fields are** eggCount, eggInCombat, hiveHealthScalar, hiveMaxHealth,
+  hiveBuiltFraction, hiveFlag, hiveInCombat, locationId. No biomass, no research. Its `networkVars`
+  are file-local and `Shared.LinkClassToMap` runs at the end of the file, so a post-hook cannot
+  extend them without re-linking the class.
+- **`locationId` is `Shared.GetStringIndex(locationName)`** (`ScriptActor_Server.lua:180`), an
+  integer, NOT an entity id -- `AlienTeamInfo` declaring `location1Id = "entityid"` is vanilla being
+  loose. `ScriptActor` initialises it to 0, so 0 is the safe "none" sentinel.
+- **Icon indices** (`ui/buildmenu.dds`, 12 columns of 80x80, `index % 12`, `floor(index / 12)`):
+  plain biomass ball = 112 (shared by every `BioMassN` **and** `ResearchBioMassTwo`/`Four`), the
+  dense cluster = 175 = `ResearchBioMassThree`, the DNA helix = 136 = `LifeFormMenu`. Confirmed by
+  extracting and looking at them, not by guessing. A hive at biomass 3 clicks the button *named*
+  `ResearchBioMassThree` to reach biomass **4**, which is why the fourth icon is keyed off that
+  button and not off `ResearchBioMassFour`.
+- **The world "researching" ring** is `ui/unitstatus_alien.dds` region `{256, 68, 384, 196}`, drawn
+  by `GUIUnitStatus` with `SetRotation(Vector(0, 0, -2 * math.pi * t))` over
+  `kResearchRotationDuration = 2` seconds. The mod reuses the same region and rate.
+- **Alien tech map "researched" colour** is `Color(1, 0.9, 0.4, 1)` --
+  `kTechMapIconColors[kAlienTeamType][kTechStatus.Available]` in `GUITechMap.lua:39`.
+- **Row geometry** (unscaled, relative to a slot's `background`): row 228x50, location name plate
+  141x24 at (-6, -13.2), hive icon 75x72 at (69, 6), hive type 39x36 at (52, 7), eggs 39x36 at
+  (24, 30), commander icon 35x32 at (112, 4). The free space is to the right of the name plate and
+  below it on the right-hand side, which is where the mod's items go.
+- **Slot lifecycle**: `ClearStatusSlot` only hides `slot.background`, so children hide with it;
+  `UninitializeStatusSlot` destroys each item explicitly. The mod's items are children of
+  `slot.background` and are destroyed in its hook **before** calling the original, since the original
+  destroys their parent.
+
+Verified against a standalone Lua harness: appearance, no-change ticks staying silent, biomass
+increments, research start, hive death publishing empty once then going quiet, an unbuilt hive
+publishing nothing at all, and the join resync replaying published state. Nothing has been run in
+game.

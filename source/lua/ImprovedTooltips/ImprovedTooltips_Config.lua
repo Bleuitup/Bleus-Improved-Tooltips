@@ -93,3 +93,45 @@ IT.kTintSelectionPanelIcons = true
 -- corrected progress reaches clients through vanilla's own tech node update. Setting it false
 -- restores vanilla's behaviour exactly.
 IT.kSpreadBiomassProgress = true
+
+------------------------------------------------------------------------------------------------
+-- Alien hive status HUD (top-left corner)
+------------------------------------------------------------------------------------------------
+--
+-- Requires the vanilla panel to be on: Advanced Options -> UI -> hive status. Both of these need
+-- the server, because a Hive is only relevant to players within 40m and the whole point of that
+-- panel is hives across the map. See ImprovedTooltips_HiveState.lua.
+
+-- One icon per biomass level, beside the hive's location name. Biomass 1 shows one, 4 shows four,
+-- and the fourth uses the denser cluster art off the research button that grants it.
+IT.kShowHiveBiomassIcons = true
+
+-- Vanilla's rotating "working" ring plus the DNA glyph on any hive that is researching anything -
+-- biomass, a lifeform ability, or a hive type upgrade.
+IT.kShowHiveResearchIcon = true
+
+-- Placement, all pre-GUIScale and all relative to the top-left of a hive's row in the panel. The
+-- row is 228x50 with the location name plate running from x -6 to 135, so these sit in the space
+-- to its right. Nudge them if a resolution or another mod moves things.
+IT.kHiveBiomassIconOrigin = Vector(140, -13, 0)
+IT.kHiveBiomassIconSize = 18
+IT.kHiveBiomassIconSpacing = 19
+IT.kHiveResearchIconPosition = Vector(182, 12, 0)
+IT.kHiveResearchIconSize = 34
+
+-- The DNA glyph as a fraction of the ring it sits inside.
+IT.kHiveResearchDnaScale = 0.55
+
+-- Biomass icons take the tech map's own "researched" colour for aliens - GUITechMap's
+-- kTechMapIconColors[kAlienTeamType][kTechStatus.Available] - so a biomass ball means the same
+-- thing here as it does there.
+IT.kHiveBiomassIconColor = Color(1, 0.9, 0.4, 1)
+
+-- The ring art is already amber, so it is drawn untinted. The DNA glyph is pale and takes the
+-- alien tooltip tint.
+IT.kHiveResearchRingColor = Color(1, 1, 1, 1)
+IT.kHiveResearchDnaColor = Color(1, 0.79, 0.3, 1)
+
+-- Seconds per full turn. Matches GUIUnitStatus.kResearchRotationDuration, so the HUD ring and the
+-- one on the hive itself spin together.
+IT.kHiveResearchRotationDuration = 2

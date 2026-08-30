@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 0.92. Published to the Steam Workshop as
+Version 0.93. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -154,6 +154,57 @@ estimate sorts last, rather than having a number invented for it.
 With zero or one thing in flight the hook returns immediately, so the common case stays byte-for-byte
 vanilla.
 
+## Hive status HUD
+
+The alien hive panel in the top-left corner (Advanced Options → UI → hive status) already shows each
+hive's health, egg count and type. Two things are added to each row.
+
+**Biomass** — one icon per biomass level that hive has, beside its location name. A hive is biomass 1
+the moment it finishes building and gains one more per research, so the row is a count you can read
+without doing arithmetic. The fourth and last uses a denser cluster icon, so a maxed hive is
+distinguishable at a glance from one still climbing.
+
+**Researching** — vanilla's rotating "working" ring with the DNA glyph inside it, on any hive that is
+researching anything: biomass, a lifeform ability off the DNA menu, or a hive type upgrade. It is the
+same pair a player already sees in the world when they look at a busy hive, at the same rotation
+speed, so the two read as one indicator rather than two.
+
+Every image is vanilla's own, addressed through `GetTextureCoordinatesForIcon` rather than by pixel,
+so a mod that moves an icon in the atlas moves ours with it. Nothing new was drawn.
+
+The naming around the fourth icon is worth stating because vanilla's is confusing: a hive at biomass
+3 clicks the button called `ResearchBioMassThree` to reach biomass 4, and that button carries the
+denser art. `ResearchBioMassFour` shares the plain ball with every `BioMassN` node, so the fourth
+icon is keyed off the button that grants the level rather than off the level itself.
+
+### Why this needs the server
+
+Both numbers are already on the Hive and both are already network vars — `bioMassLevel` in
+`Hive.lua`, `researchingId` from `ResearchMixin`. They still cannot simply be read on the client.
+
+A Hive is only relevant to players within `kMaxRelevancyDistance`, 40 metres, plus the team's own
+commander (`Hive:SetIncludeRelevancyMask`, `Globals.lua:348`). This panel is shown to field aliens
+and its entire purpose is reporting on hives across the map — exactly the case where the client does
+not have the entity. That is why vanilla feeds it from `AlienTeamInfo`, a team-wide always-relevant
+entity, rather than from the hives.
+
+`AlienTeamInfo` carries eggs, health, built fraction and hive type per location, but not biomass and
+not research. Its `networkVars` are file-local and the class is linked by the time a post-hook could
+run, so extending them would mean re-linking the whole class — brittle, and it would fight any other
+mod doing the same. The mod sends its own message instead, the same approach the cooldown panel
+already uses.
+
+Nothing is sent per frame. `AlienTeamInfo:UpdateAllLocationsSlotData` already walks the team's hives
+every update; the hook walks the same hives in the same tick, diffs against what was last published,
+and sends only what moved. Biomass changes a handful of times a round and research starts and stops,
+so this is a few small messages per game. A hive still under construction is biomass 0 with nothing
+researching, which is deliberately never published — otherwise it would send the same "nothing" every
+tick for the whole build.
+
+Location ids are `Shared.GetStringIndex(locationName)` (`ScriptActor_Server.lua:180`), not entity ids.
+`AlienTeamInfo` declares its own as `"entityid"` and gets away with it; the mod's message calls it an
+integer, which is what it is.
+
 
 ## Design
 
@@ -264,13 +315,16 @@ through one pair of functions:
 |---|---|---|
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
+| `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client only.** Wraps `CreateStatusContainer` / `UpdateStatusSlot` / `UninitializeStatusSlot` to add biomass icons and a researching ring to each hive row |
 | `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, so the whole team sees it |
 | `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health/armour icons to match their figures |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client only.** Wraps `OnInitialized` to replay synced cooldowns into vanilla's own table, fixing vanilla's button dial |
-| `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's team-cooldown message in every VM |
+| `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's cooldown and hive-state messages in every VM |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
 | `lua/NS2Gamerules.lua` | `ImprovedTooltips_CooldownJoin.lua` | **Server only.** Wraps `JoinTeam` to hand a joining player the current cooldowns |
 | `lua/AlienTeam.lua` | `ImprovedTooltips_BiomassProgress.lua` | **Server only.** Wraps `UpdateBioMassLevel` to spread in-progress biomass across every level being worked on |
+| `lua/AlienTeamInfo.lua` | `ImprovedTooltips_HiveSync.lua` | **Server only.** Wraps `UpdateAllLocationsSlotData` to publish per-hive biomass and research to the team |
+| `lua/NS2Gamerules.lua` | `ImprovedTooltips_HiveJoin.lua` | **Server only.** Wraps `JoinTeam` to hand a joining player the current hive state |
 
 Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
 of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
@@ -292,11 +346,15 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_ClientUI.lua           post-hook on ClientUI.lua            (client)
     ImprovedTooltips_SelectionPanel.lua     post-hook on GUISelectionPanel.lua   (client)
     ImprovedTooltips_CooldownDial.lua       post-hook on Commander.lua           (client)
+    ImprovedTooltips_HiveStatusGUI.lua      post-hook on GUIHiveStatus.lua       (client)
     ImprovedTooltips_NetworkMessages.lua    post-hook on NetworkMessages.lua     (shared)
     ImprovedTooltips_CooldownState.lua      team cooldown table + server publish
     ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
     ImprovedTooltips_CooldownJoin.lua       post-hook on NS2Gamerules.lua        (server)
     ImprovedTooltips_BiomassProgress.lua    post-hook on AlienTeam.lua           (server)
+    ImprovedTooltips_HiveState.lua          per-hive biomass + research + server publish
+    ImprovedTooltips_HiveSync.lua           post-hook on AlienTeamInfo.lua       (server)
+    ImprovedTooltips_HiveJoin.lua           post-hook on NS2Gamerules.lua        (server)
     GUIImprovedTooltipsCooldowns.lua        the "In Cooldown" panel
 source/ui/bleu_tooltip_icons.dds            320x64 icon sheet, 5 cells of 64x64
 tools/build_icons.ps1                       regenerates the icon sheet
@@ -326,7 +384,13 @@ and `mod.settings` names the file by extension.
 - `kCooldownPanelOffset` — panel position, offset from the right edge / vertical middle
 - `kCooldownPanelShowSeconds` — show the remaining seconds under each icon
 - `kSpreadBiomassProgress` — show every biomass level in progress on the tech map, not just the next
-  one. The only server-side option; false restores vanilla exactly
+  one. Server-side, like the two hive HUD toggles below; false restores vanilla exactly
+- `kShowHiveBiomassIcons` — biomass icons beside each hive name on the hive status HUD
+- `kShowHiveResearchIcon` — the rotating ring and DNA glyph on a hive that is researching
+- `kHiveBiomassIconOrigin` / `kHiveBiomassIconSize` / `kHiveBiomassIconSpacing` — placement of that row
+- `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
+- `kHiveBiomassIconColor` / `kHiveResearchRingColor` / `kHiveResearchDnaColor` — their tints
+- `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
 
 ## Building the assets
 
@@ -370,6 +434,17 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- **Biomass on the hive status HUD.** Each hive in the top-left panel now shows one icon per biomass
+  level it has, beside its location name. The fourth uses the denser cluster art off the research
+  button that grants it, so a maxed hive reads differently from one still climbing.
+- **A researching indicator on the same panel.** Vanilla's rotating ring plus the DNA glyph appear on
+  any hive researching anything - biomass, a lifeform ability, or a hive type upgrade - at the same
+  rotation speed as the ring the player sees on the hive itself.
+- Both are drawn entirely from vanilla art, addressed by techId rather than by pixel. Neither number
+  is readable on the client, because a Hive is only relevant within 40m and this panel is about hives
+  across the map, so the mod publishes them the same way it publishes cooldowns.
+
+**0.92**
 - **Every biomass level in progress now shows on the tech map.** With two hives researching biomass
   at once, vanilla lit up one icon between them: `AlienTeam:UpdateBioMassLevel` takes the maximum
   fraction across all hives and writes it to a single node, zeroing the rest. Two hives now light two

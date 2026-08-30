@@ -63,3 +63,58 @@ if Client then
 	Client.HookNetworkMessage("ImprovedTooltipsCooldown", OnCooldownMessage)
 
 end
+
+------------------------------------------------------------------------------------------------
+-- Hive state, for the alien hive status HUD
+------------------------------------------------------------------------------------------------
+--
+-- Keyed by location rather than by hive entity, because that is what GUIHiveStatus works in: its
+-- slots are created per locationId and vanilla's own data for them comes from AlienTeamInfo keyed
+-- the same way. See ImprovedTooltips_HiveState.lua for why this cannot be read off the Hive.
+
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_HiveState.lua")
+
+local kHiveStateMessage =
+{
+	-- A location id is Shared.GetStringIndex(locationName) (ScriptActor_Server.lua:180), not an
+	-- entity id. AlienTeamInfo declares its own as "entityid" and gets away with it, but an integer
+	-- is what this actually is, and 0 is what ScriptActor initialises it to.
+	locationId = "integer",
+	-- Matches Hive.lua's own network var range.
+	biomass = "integer (0 to 6)",
+	-- Any research at all: biomass, a lifeform ability, or a hive type upgrade. Deliberately not
+	-- which one, and not a progress fraction - the HUD only shows that the hive is busy.
+	researching = "boolean",
+	-- Set on the first message of a full resync (team join) so the client drops anything stale
+	-- from a previous team or round.
+	clear = "boolean",
+}
+
+function BuildImprovedTooltipsHiveStateMessage(locationId, biomass, researching, clear)
+
+	return {
+		locationId = locationId or 0,
+		biomass = math.max(0, math.min(6, biomass or 0)),
+		researching = researching == true,
+		clear = clear == true,
+	}
+
+end
+
+Shared.RegisterNetworkMessage("ImprovedTooltipsHiveState", kHiveStateMessage)
+
+if Client then
+
+	local function OnHiveStateMessage(msg)
+
+		if msg.clear then
+			IT.ClearHiveState()
+		end
+
+		IT.SetHiveState(msg.locationId, msg.biomass, msg.researching)
+
+	end
+
+	Client.HookNetworkMessage("ImprovedTooltipsHiveState", OnHiveStateMessage)
+
+end
