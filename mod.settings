@@ -1,31 +1,50 @@
 name        = "Bleu's Improved Tooltips"
 source_dir  = "source"
 output_dir  = "output"
-description = [=[[b]Puts the numbers a commander actually needs into the commander tooltips.[/b] Research times, ability cooldowns, and structure health and armour, on the tooltip you are already looking at - no alt-tabbing to a wiki mid-round.
+description = [=[mod id 3790290682
 
-[h1]What it adds[/h1]
+[b]Puts the numbers a commander actually needs into the commander tooltips.[/b] Research times, ability cooldowns, structure health and armour, and movement speed, on the tooltip you are already looking at — no alt-tabbing to a wiki mid-round.
+
+[h1]What it adds to tooltips[/h1]
 
 [list]
-[*] [b]Research time[/b] - an hourglass and a number on every research and upgrade. Armour 3 reads "40 res, 120 seconds" instead of just "40 res".
-[*] [b]Cooldown[/b] - a stopwatch on commander abilities: Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst, and the rest.
-[*] [b]Health and armour[/b] - for anything you drop or build, on both teams.
+[*] [b]Research time[/b] — an hourglass and a number on every research and upgrade. Armour 3 reads "40 res, 120 seconds" instead of just "40 res".
+[*] [b]Cooldown[/b] — a stopwatch on commander abilities: Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst, and the rest.
+[*] [b]Health and armour[/b] — for anything you drop, build or manufacture, on both teams.
+[*] [b]Movement speed[/b] — for the things that move: ARC, MAC, Drifter, Whip, Shade, Shift, Crag.
 [/list]
 
 All of it sits in one row under the tooltip title, above the description. The card grows to fit, and tooltips with nothing extra to show look exactly as they always did.
+
+Health and armour take the game's own selection-panel colours, so a number means the same thing in the tooltip as it does when you click a structure that already exists. Vanilla's selection panel is brought in line too, where it coloured the two figures differently but drew both icons in one flat team colour.
+
+[b]ARC stances.[/b] The Deploy and Undeploy buttons describe the state they put the ARC into, so Deploy shows armour dropping to 0 and speed to 0 — the cost of deploying, visible while you are choosing it.
+
+[h1]The "In Cooldown" panel[/h1]
+
+Commander ability cooldowns in NS2 are [b]team-global[/b]: they are not per-structure and not per-commander. A Shade Ink puts every Shade on cooldown, so three Shades cannot alternate Ink to keep ARCs suppressed.
+
+This mod adds a panel on the right of the screen listing whatever your team has on cooldown right now, using the game's own rotating dial plus the seconds remaining. It is visible to [b]every player on the team[/b], not just the commander. Shade Ink being down is as useful to a field alien deciding whether to push as it is to the commander.
+
+[b]It also fixes a vanilla bug.[/b] In the base game, nobody but the commander who personally cast an ability ever saw its cooldown dial — not a commander who took the chair mid-cooldown, not one who had just left it, and no field player at all. Enforcement was always correct; only the display was blind. Vanilla marks the gap itself, with an empty "send message to commander to sync the cd" block sitting where the sync belongs. The dial on the commander button is now right whoever is in the chair.
 
 [h1]Live values[/h1]
 
 Numbers that change during a round are read live rather than printed from a table. Bone Wall's health scales with your biomass level, so at Biomass 9 the tooltip says 900, not 100.
 
+Speed works the same way. Some structures have a speed but can only use it under a condition, and that condition is not the same in every mod. Where the mod cannot confirm the thing is able to move right now, the speed is drawn [b]dimmed[/b] rather than stated as fact. ARC, MAC and Drifter always move, and never dim.
+
 [h1]Works with other mods[/h1]
 
-Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here. Modders can register their own value resolvers for anything they compute at runtime - see the README on GitHub.
+Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here. Conditional movement is settled by asking the structures actually on your team rather than by encoding any one mod's rule, so mods that change when something is allowed to move keep working on their own terms.
+
+Modders can register their own value resolvers for anything they compute at runtime — see the README on GitHub.
 
 [h1]Servers[/h1]
 
-The mod is purely visual. It only reads values your own client already has, it sends nothing, and it does not change gameplay in any way.
+The mod does not change gameplay. It reads values your client already has, and the only thing it sends is the team cooldown list the panel is built from.
 
-Even so, NS2's default consistency check restricts which mod entry files a client is allowed to load, so on a server running stock settings the server needs to have this mod too. If you want it on a server you play on, ask the admin to add it.
+It does have to be installed on the server. NS2's default consistency check restricts which mod entry files a client is allowed to load, so on a server running stock settings the server needs this mod too. If you want it on a server you play on, ask the admin to add it.
 
 Source: https://github.com/Bleuitup/Bleus-Improved-Tooltips]=]
 image       = "preview.jpg"
