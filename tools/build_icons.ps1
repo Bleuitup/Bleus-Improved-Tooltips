@@ -75,6 +75,49 @@ function RoundRect($x, $y, $w, $h, $r) {
     return $p
 }
 
+# Draws a canvas into its cell scaled so the glyph's own bounding box ends up $TARGET pixels across,
+# centred. Used for the two glyphs drawn from scratch here.
+#
+# Why they need it and the vanilla art does not: the health cross and armour shield are baked at 39
+# of the 64px cell and the tooltip samples a centred 48px window of it, so they render at 39/48 =
+# 81% of the icon box. The hourglass and stopwatch are sampled over the WHOLE cell, so to match that
+# 81% their glyph has to be 0.8125 * 64 = 52px. Drawn as-is they came out 57 tall, which is why they
+# looked bigger than everything beside them.
+#
+# Measuring the result rather than hand-tuning every coordinate means the drawing code stays free to
+# change without the sizes drifting apart again.
+$TARGET = 52
+
+function Measure-Glyph($bmp) {
+    $w = $bmp.Width; $h = $bmp.Height
+    $rect = New-Object System.Drawing.Rectangle 0,0,$w,$h
+    $data = $bmp.LockBits($rect, [System.Drawing.Imaging.ImageLockMode]::ReadOnly, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $bytes = New-Object byte[] ($w*$h*4)
+    [System.Runtime.InteropServices.Marshal]::Copy($data.Scan0, $bytes, 0, $bytes.Length)
+    $bmp.UnlockBits($data)
+    $minX=$w; $maxX=-1; $minY=$h; $maxY=-1
+    for ($y=0; $y -lt $h; $y++) {
+        $row = $y*$w*4
+        for ($x=0; $x -lt $w; $x++) {
+            if ($bytes[$row + $x*4 + 3] -gt 8) {
+                if ($x -lt $minX){$minX=$x}; if ($x -gt $maxX){$maxX=$x}
+                if ($y -lt $minY){$minY=$y}; if ($y -gt $maxY){$maxY=$y}
+            }
+        }
+    }
+    return @($minX, $minY, ($maxX-$minX+1), ($maxY-$minY+1))
+}
+
+function CommitFitted($bmp, $slot) {
+    $m = Measure-Glyph $bmp
+    if ($m[2] -le 0) { Commit $bmp $slot; return }
+    $scale = $TARGET / [Math]::Max($m[2], $m[3])
+    $dw = $m[2] * $scale; $dh = $m[3] * $scale
+    $dst = New-Object System.Drawing.RectangleF (($slot*$CELL) + ($CELL-$dw)/2), (($CELL-$dh)/2), $dw, $dh
+    $src = New-Object System.Drawing.RectangleF $m[0], $m[1], $m[2], $m[3]
+    $ag.DrawImage($bmp, $dst, $src, [System.Drawing.GraphicsUnit]::Pixel)
+    $bmp.Dispose()
+}
 $white = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
 
 # 0 - research time: hourglass. Rounded caps, concave glass drawn as an outline, upper bulb solid
@@ -107,7 +150,7 @@ $mound.AddBezier((Pt 45 51.5), (Pt 41 44.5), (Pt 35 42), (Pt 32 42))
 $mound.AddBezier((Pt 32 42), (Pt 29 42), (Pt 23 44.5), (Pt 19 51.5))
 $g.FillPath($white, $mound)
 $g.FillRectangle($white, (Rct 31.25 30 1.5 11))    # falling stream
-$g.Dispose(); Commit $b 0
+$g.Dispose(); CommitFitted $b 0
 
 # 1 - cooldown: stopwatch, ring plus stem plus two hands.
 $r = New-Canvas; $b = $r[0]; $g = $r[1]
@@ -119,7 +162,7 @@ $handPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
 $handPen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Round
 $g.DrawLine($handPen, (Pt 32 36), (Pt 32 22))
 $g.DrawLine($handPen, (Pt 32 36), (Pt 43 36))
-$g.Dispose(); Commit $b 1
+$g.Dispose(); CommitFitted $b 1
 
 # 2 - speed, marine: the double chevron from ui/marine_buildmenu_insight.dds row 2 column 4
 # (12 columns of 80px, so x 240-320, y 80-160). Vanilla's points left, so it is mirrored.

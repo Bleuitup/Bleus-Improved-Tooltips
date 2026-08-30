@@ -626,3 +626,41 @@ Two things this cost, both from one error:
 **Harness lesson:** the earlier harnesses used a plain Lua table for `kTechId`, which silently
 returns nil and so could never have caught this. `scratchpad/test_enum.lua` models the real thing
 with an `__index` that raises. Any future harness touching `kTechId` must do the same.
+
+### Upgrade buttons show differences, not absolutes (1.0 work)
+
+Settled with the user on 2026-08-30 after seeing hive type upgrades report 4000 health -- which is
+simply what a Hive already has, and reads as though the upgrade granted it. Buttons now show the
+**change**: signed, and a zero difference is omitted entirely, so the hive type upgrades fall silent
+again while CBM's Fortress upgrades read `+100` / `+200` / `-0.7`.
+
+- **The source structure is the tech node's first prerequisite.** `AddUpgradeNode(upgrade, prereq1)`
+  already carries it -- CBM registers `UpgradeToFortressCrag` with `kTechId.Crag`, vanilla registers
+  `UpgradeToCragHive` with `kTechId.Hive` -- and it must be declared for the button to appear at all.
+  Nothing is paired up by hand. `TechNode:GetPrereq1()` is the accessor.
+- Values may now be **negative or zero**, so `GetValue` returns the delta straight rather than
+  through the positive-only path, `GetValues` tests `~= 0` instead of `> 0`, and the renderer formats
+  the magnitude and prefixes the sign so `-` and `+` occupy the same space.
+- `IT.GetIsUpgradeDelta(techId)` is what tells the renderer to sign. It is per-techId rather than
+  per-field because an upgrade carries no stats of its own at all -- every field it shows arrived the
+  same way.
+- **`GetIsMovementConfirmed` must follow the product.** Asking about the upgrade techId always failed
+  (no `UpgradeToFortressShift` class exists), which dimmed every Fortress upgrade's speed as though
+  its movement were unconfirmed. It reaches the lookup through `IT.GetUpgradeProductTechId` rather
+  than the file-local, since the local is declared further down the file.
+
+### Glyph sizing in build_icons.ps1
+
+The hourglass and stopwatch are drawn from scratch and were 57px tall in the 64px cell. The tooltip
+samples their **whole cell**, so they rendered at 57/64 = 89% of the icon, while the vanilla health
+and armour glyphs -- baked at 39px and sampled through a centred 48px window -- render at 39/48 =
+81%. That 8-point gap is what the user spotted by drawing lines across a screenshot.
+
+`CommitFitted` measures the drawn glyph's alpha bounding box and scales it into a 52px box centred in
+the cell (52/64 = 81.25%). Measuring rather than hand-tuning coordinates means the drawing code can
+change without the sizes drifting apart again. Slot 2 (the chevron) still uses plain `Commit`; it is
+lifted vanilla art and was never out of step.
+
+Aspect is preserved rather than forced: the hourglass is 0.77 and the stopwatch 0.88 against the
+vanilla glyphs' 1.00. Stretching them to literal squares would oval the hourglass's round caps. If
+true 1:1 is ever wanted, widen the drawing coordinates rather than the fit.

@@ -267,7 +267,7 @@ Only the hourglass and stopwatch are drawn from scratch. Everything else is vani
 | Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds`, used straight from vanilla — CBM assigns the same index to `SpurPassive` |
 | Health, armour | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
 | Marine speed | `marine_buildmenu_insight.dds` row 2 col 4, mirrored to point right and lifted off its button plate |
-| Hourglass, stopwatch | Drawn in `tools/build_icons.ps1` |
+| Hourglass, stopwatch | Drawn in `tools/build_icons.ps1`, then measured and fitted to the same 81% of the icon the vanilla glyphs fill |
 | Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, tinted the tech map's researched-alien colour |
 | Researching ring | `ui/unitstatus_alien.dds` `{256, 68, 384, 196}`, the same region `GUIUnitStatus` spins on a busy hive |
 | DNA | `kTechId.LifeFormMenu` in `ui/buildmenu.dds` |
@@ -303,26 +303,39 @@ biomass as the round goes on.
 ### Upgrade buttons
 
 An "upgrade this structure into that one" button carries only a cost and a research time of its own,
-because the stats belong to the thing it produces. CBM's Fortress structures are the case that
-prompted this: `UpgradeToFortressCrag` has no health or armour at all, while `FortressCrag` holds 800
-and 300 against a plain Crag's much lower pair — and that difference is the entire reason a commander
-would pay for the upgrade.
+because the stats belong to the thing it produces. What is worth showing is not those stats but the
+**difference** they make, which is the reason a commander would pay for the upgrade.
 
-The product is resolved from the enum name rather than from a table. `kTechId` is bidirectional, so a
-tech called `UpgradeToFortressCrag` names what it builds, and `kTechId.FortressCrag` is where the
-stats live. Any mod naming an upgrade that way is picked up with no registration here — the same
-trick the speed lookup uses to find a class from a techId.
+Both halves come out of data the game already holds, so no pairs are maintained here:
 
-Vanilla's own `UpgradeToCragHive` / `ShadeHive` / `ShiftHive` and `UpgradeToInfestedTunnel` match the
-pattern too, so they start showing what they build. For the hive types that is the same health a Hive
-already has, so it adds no information; set `kInheritUpgradeStats` false to turn the whole behaviour
-off. `UpgradeToDualMinigun` and `UpgradeToDualRailgun` match the naming but have no product techId at
-all — there is no `kTechId.DualMinigun` — so nothing appears for them.
+- **What it produces** comes from the enum name. `kTechId` is bidirectional, so a tech called
+  `UpgradeToFortressCrag` names what it builds and `kTechId.FortressCrag` is where the stats live.
+- **What it starts from** is the tech node's first prerequisite. `AddUpgradeNode` already takes it —
+  CBM registers `UpgradeToFortressCrag` with `kTechId.Crag`, vanilla registers `UpgradeToCragHive`
+  with `kTechId.Hive` — and it has to be declared for the button to work at all.
+
+So CBM's Fortress Crag reads `+100` health, `+200` armour, `-0.7` speed: what the upgrade actually
+buys, and what it costs. Increases are signed `+`, decreases `-`, and a difference of **zero is left
+out entirely**.
+
+That last part matters for vanilla. The hive type upgrades match the pattern, and showing their
+product's absolute figures reported 4000 health — simply what a Hive already has, reading as though
+the upgrade granted it. As differences they are zero on both counts, so those buttons go back to
+showing only their research time. `UpgradeToDualMinigun` and `UpgradeToDualRailgun` match the naming
+but have no product techId at all — there is no `kTechId.DualMinigun` — so nothing appears for them.
+
+Set `kInheritUpgradeStats` false to turn the whole behaviour off.
+
+With no prerequisite declared, the absolute value is shown instead and left unsigned — at least true,
+and honest about being an absolute.
+
 
 **Health, armour and speed.** Speed only says anything where the product has one to report — a
 vanilla hive type upgrade produces something that does not move, so nothing appears. For CBM's
 Fortress structures the number comes from the CBM compatibility module below, which is what makes it
-honest: the raw class constant would claim the speed is unchanged when it actually drops.
+honest: the raw class constant would claim the speed is unchanged when it actually drops. The
+mobility check follows the product too, so a Fortress upgrade is not dimmed for having no class of
+its own to ask about.
 
 ### CBM compatibility
 
@@ -539,6 +552,19 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
+- **Upgrade buttons now show what the upgrade CHANGES**, signed, instead of the product's absolute
+  figures. CBM's Fortress Crag reads `+100` health, `+200` armour, `-0.7` speed. A difference of zero
+  is left out, so vanilla's hive type upgrades — which showed 4000 health, simply what a Hive already
+  has, reading as though the upgrade granted it — go back to showing only their research time. The
+  structure being upgraded from comes from the tech node's first prerequisite, which `AddUpgradeNode`
+  already has to be given.
+- Fixed the speed on an upgrade button being drawn dimmed. The mobility check was asking about the
+  upgrade techId, which has no class of its own to look up, rather than about the product; every
+  Fortress upgrade was faded as though its movement were in doubt.
+- **The hourglass and stopwatch now match the vanilla glyphs in size.** Both were drawn 57px tall in
+  a 64px cell and sampled whole, so they rendered at 89% of the icon against the health and armour
+  glyphs' 81% and visibly overhung them. They are now measured after drawing and fitted to the same
+  81%, which also keeps them in step if the drawing code changes.
 - Fixed an error on every install, vanilla included: `Element 'DualMinigun' doesn't exist in the
   enum`. `kTechId` is an engine enum that **raises** on a name it does not hold rather than answering
   nil, and vanilla has `UpgradeToDualMinigun` but no `DualMinigun`. The throw also aborted the walk

@@ -322,6 +322,16 @@ IT.GetClassMoveSpeed = LookupClassMoveSpeed
 -- including ARC Deploy's explicit 0.
 function IT.GetIsMovementConfirmed(techId)
 
+	-- An upgrade button reports the product's speed, so it is the PRODUCT whose mobility has to be
+	-- confirmed. Asking about the upgrade techId itself always failed - there is no
+	-- "UpgradeToFortressShift" class to look up - which dimmed every Fortress upgrade as though its
+	-- movement were in doubt. Reached through the table rather than the local, which is declared
+	-- further down this file.
+	local productId = IT.kInheritUpgradeStats and IT.GetUpgradeProductTechId and IT.GetUpgradeProductTechId(techId)
+	if productId then
+		techId = productId
+	end
+
 	if IT.HasResolver("speed", techId) then
 		return true
 	end
@@ -432,6 +442,64 @@ local function GetUpgradeTargetTechId(techId)
 
 end
 
+-- Public so a mod can ask what an upgrade builds, and so code defined earlier in this file can
+-- reach it - a plain local declared here would be invisible to anything above.
+IT.GetUpgradeProductTechId = GetUpgradeTargetTechId
+
+-- The structure an upgrade STARTS from, which is what makes the difference worth showing rather
+-- than the finished figure.
+--
+-- AddUpgradeNode's first prerequisite is exactly that structure, and the tech tree already holds it:
+-- CBM registers UpgradeToFortressCrag with kTechId.Crag, vanilla registers UpgradeToCragHive with
+-- kTechId.Hive. So nothing has to be paired up by hand, and a mod adding its own upgrade is covered
+-- as long as it declares the prerequisite it already has to declare for the button to work.
+local function GetUpgradeSourceTechId(upgradeTechId)
+
+	local techTree = GetTechTree and GetTechTree()
+	local node = techTree and techTree.GetTechNode and techTree:GetTechNode(upgradeTechId)
+	local sourceId = node and node.GetPrereq1 and node:GetPrereq1()
+
+	if type(sourceId) == "number" and sourceId ~= kTechId.None then
+		return sourceId
+	end
+
+	return nil
+
+end
+
+-- True when this techId's stats are being reported as a change rather than as an absolute, which is
+-- what tells the renderer to sign them and to hide the ones that come out at zero.
+function IT.GetIsUpgradeDelta(techId)
+
+	if not IT.kInheritUpgradeStats then
+		return false
+	end
+
+	return GetUpgradeTargetTechId(techId) ~= nil and GetUpgradeSourceTechId(techId) ~= nil
+
+end
+
+-- What the upgrade actually changes. Showing the product's absolute figures was confusing: a hive
+-- type upgrade would report 4000 health, which is simply what a Hive already has, and reads as
+-- though the upgrade granted it. A difference of zero says nothing and is left out entirely, so the
+-- hive type buttons go back to showing only their research time while CBM's Fortress upgrades show
+-- what they are actually buying.
+--
+-- With no source to compare against - a mod that declared no prerequisite - the absolute value is
+-- reported instead, which is at least true, and IT.GetIsUpgradeDelta agrees so it is not signed.
+local function GetUpgradeValue(field, upgradeTechId, productId)
+
+	local after = IT.GetValue(field, productId)
+	local sourceId = GetUpgradeSourceTechId(upgradeTechId)
+
+	if not sourceId then
+		return after
+	end
+
+	return after - IT.GetValue(field, sourceId)
+
+end
+
 -- The fields that describe the finished structure. Research time is deliberately absent: the
 -- upgrade has its own, and it is the duration of the upgrade rather than of anything the product
 -- does.
@@ -461,14 +529,18 @@ function IT.GetValue(field, techId)
 		return value
 	end
 
-	-- Nothing of its own. If this is an upgrade button, answer with what it produces, so the stats
-	-- of the finished structure are visible while deciding whether to pay for it. Recursion is one
-	-- level in practice - a product is not itself named UpgradeToSomething - and terminates anyway,
-	-- since each step must strip an "UpgradeTo" prefix off the name.
+	-- Nothing of its own. If this is an upgrade button, answer with what the upgrade CHANGES, so
+	-- the tooltip says what is being bought rather than what the result happens to be. Recursion is
+	-- one level in practice - a product is not itself named UpgradeToSomething - and terminates
+	-- anyway, since each step must strip an "UpgradeTo" prefix off the name.
+	--
+	-- The result may be negative (CBM's Fortress structures trade speed for durability) or zero (a
+	-- hive type upgrade changes neither health nor armour), which is why it is returned straight
+	-- rather than through the positive-only path above.
 	if IT.kInheritUpgradeStats and kInheritedFields[field] then
 		local productId = GetUpgradeTargetTechId(techId)
 		if productId then
-			return IT.GetValue(field, productId)
+			return GetUpgradeValue(field, techId, productId)
 		end
 	end
 
@@ -484,7 +556,6 @@ function IT.GetValues(techId)
 		return nil
 	end
 
-
 	local values = {
 		-- Carried so the renderer can ask HasResolver and tell a meaningful zero from an absent
 		-- one. Not a field in kFields, so it does not affect the "anything to show?" test below.
@@ -496,11 +567,18 @@ function IT.GetValues(techId)
 		speed        = IT.GetValue("speed", techId),
 	}
 
-	-- Not a field in kFields: it qualifies the speed rather than being a value of its own.
-	values.speedConfirmed = values.speed > 0 and IT.GetIsMovementConfirmed(techId) or false
+	-- Neither is a field in kFields: they qualify the values rather than being values themselves.
+	--
+	-- isDelta says the figures are changes rather than absolutes, so the renderer signs them. It is
+	-- a property of the techId rather than of one field, because an upgrade button carries no stats
+	-- of its own at all - every field it shows came the same way.
+	values.isDelta = IT.GetIsUpgradeDelta(techId)
+	values.speedConfirmed = values.speed ~= 0 and IT.GetIsMovementConfirmed(techId) or false
 
+	-- Not "> 0": a change can be a decrease, and a Fortress upgrade that only costs speed still has
+	-- something to say.
 	for i = 1, #IT.kFields do
-		if values[IT.kFields[i]] > 0 then
+		if values[IT.kFields[i]] ~= 0 then
 			return values
 		end
 	end

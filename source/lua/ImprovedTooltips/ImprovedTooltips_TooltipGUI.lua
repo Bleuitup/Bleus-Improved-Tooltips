@@ -300,42 +300,79 @@ local function ShiftBlock(item, dy)
 
 end
 
+
+-- A change is written with its sign, so "+200" reads as armour gained and "-0.7" as speed given up.
+-- The magnitude is formatted first and the sign put in front, rather than formatting a negative
+-- number, so the minus is the same glyph and spacing as the plus.
+local function Signed(text, value, isDelta)
+
+	if not isDelta then
+		return text
+	end
+
+	return (value < 0 and "-" or "+") .. text
+
+end
+
+local function FormatWhole(value)
+	return ToString(math.floor(math.abs(value) + 0.5))
+end
+
+-- Speeds are small and fractional (ARC 2.0, Shade 1.73, Shift 2.9, Whip 3.5), so a whole number
+-- would collapse Shade and Shift onto the same figure. One decimal, trimmed when it is a round
+-- number so MAC reads "6" rather than "6.0".
+local function FormatSpeed(value)
+
+	local speed = math.abs(value)
+
+	if math.abs(speed - math.floor(speed + 0.5)) < 0.05 then
+		return ToString(math.floor(speed + 0.5))
+	end
+
+	return string.format("%.1f", speed)
+
+end
+
 local function GetDisplayValue(field, values)
 
+	local isDelta = values.isDelta == true
+
 	if field == "health" then
-		return values.health > 0 and ToString(math.floor(values.health + 0.5)) or nil
+		-- A zero is nothing to report either way: no health on this tech, or an upgrade that does
+		-- not change it.
+		return values.health ~= 0 and Signed(FormatWhole(values.health), values.health, isDelta) or nil
+
 	elseif field == "armor" then
+		if values.armor ~= 0 then
+			return Signed(FormatWhole(values.armor), values.armor, isDelta)
+		end
 		-- An explicit 0 tells a commander "no armour" rather than "not measured", but only
-		-- alongside a health figure - a lone "0" would be meaningless.
-		if values.armor > 0 then
-			return ToString(math.floor(values.armor + 0.5))
-		elseif values.health > 0 and IT.kShowZeroArmor then
+		-- alongside a health figure - a lone "0" would be meaningless. Never for a change, where a
+		-- zero means "this upgrade does not touch armour" and belongs left out.
+		if not isDelta and values.health > 0 and IT.kShowZeroArmor then
 			return "0"
 		end
 		return nil
+
 	elseif field == "speed" then
 		if not IT.kShowSpeed then
 			return nil
 		end
+		if values.speed ~= 0 then
+			return Signed(FormatSpeed(values.speed), values.speed, isDelta)
+		end
 		-- A speed of 0 is normally hidden, or every static structure in the game would carry a
 		-- pointless "0". It IS shown when something registered that zero deliberately - ARC Deploy,
-		-- where losing all movement is the whole point of the button.
-		if values.speed <= 0 then
-			if values.techId and IT.HasResolver("speed", values.techId) then
-				return "0"
-			end
-			return nil
+		-- where losing all movement is the whole point of the button. Not for a change, where zero
+		-- means the upgrade leaves the speed alone.
+		if not isDelta and values.techId and IT.HasResolver("speed", values.techId) then
+			return "0"
 		end
-		-- Speeds are small and fractional (ARC 2.0, Shade 2.5, Shift 2.9, Whip 3.5), so a whole
-		-- number would collapse Shade and Shift onto the same figure. One decimal, trimmed when it
-		-- is a round number so MAC reads "6" rather than "6.0".
-		local speed = values.speed
-		if math.abs(speed - math.floor(speed + 0.5)) < 0.05 then
-			return ToString(math.floor(speed + 0.5))
-		end
-		return string.format("%.1f", speed)
+		return nil
+
 	elseif field == "research" then
 		return values.researchTime > 0 and FormatDuration(values.researchTime) or nil
+
 	elseif field == "cooldown" then
 		return values.cooldown > 0 and FormatDuration(values.cooldown) or nil
 	end
@@ -351,7 +388,7 @@ end
 -- usable yet. Everything else, including unconditional movers, draws at full opacity.
 local function GetEntryOpacity(field, values)
 
-	if field == "speed" and values.speedConfirmed == false and values.speed > 0 then
+	if field == "speed" and values.speedConfirmed == false and values.speed ~= 0 then
 		return IT.kUnconfirmedSpeedAlpha or 1
 	end
 
