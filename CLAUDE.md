@@ -321,10 +321,11 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
   `mod.settings` names the file by extension, so a `.png` beside it does nothing.
 - **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
   re-propose `M:SS`. `kTimeFormat` keeps the other modes, but `"seconds"` is the decision.
-- **The Workshop description does not mention the "In Cooldown" panel** — it was written before that
-  feature existed and lists only the tooltip work. Worth updating next time `mod.settings` is
-  touched, remembering Launch Pad must be fully closed and reopened first or it writes its stale
-  copy back.
+- **The Workshop description was brought current with 0.91** (2026-08-30, `83ec3fa`) — it now covers
+  the "In Cooldown" panel, speed and its dimming, health/armour colour matching and ARC stances, and
+  no longer claims the mod "sends nothing", which stopped being true in 0.86. When editing it,
+  remember Launch Pad must be fully closed and reopened first or it writes its stale copy back, and
+  keep `mod.settings` CRLF — it is the one CRLF file in the repo.
 - Discussed but not built: ARC range feedback, settled on drawing the 7m minimum-range circle
   (`[kVisualRange] = { ARC.kFireRange, ARC.kMinFireRange }`, since `kVisualRange` accepts a table)
   plus an origin marker on nearby targets whose state encodes both distance rules. See the ARC notes
