@@ -664,3 +664,30 @@ lifted vanilla art and was never out of step.
 Aspect is preserved rather than forced: the hourglass is 0.77 and the stopwatch 0.88 against the
 vanilla glyphs' 1.00. Stretching them to literal squares would oval the hourglass's round caps. If
 true 1:1 is ever wanted, widen the drawing coordinates rather than the fit.
+
+## SHELVED for 1.0: upgrade stats, speed dimming, CBM speed corrections
+
+Removed on 2026-08-30 at the user's direction. Do not reintroduce any of these without asking.
+
+- **Upgrade buttons showing stats (absolute or incremental).** Both were built and both worked; the
+  incremental version showed `+100` / `+200` / `-0.7` on CBM's Fortress upgrades and correctly fell
+  silent on vanilla's hive type upgrades. It was shelved because **the tooltip is not wide enough**
+  for some structures and the row overflowed. The upgrade tech's own description ("triples HP, moves
+  slower") already conveys it. If it is ever revived, the machinery to rebuild is: product from the
+  enum name (`UpgradeToX` -> `X`), source from `TechNode:GetPrereq1()`, and values allowed to be
+  negative or zero throughout the plumbing and the renderer.
+- **Speed dimming** (`kUnconfirmedSpeedAlpha`, `GetIsMovementConfirmed`, `GetIsClassMovementAllowed`).
+  It asked the live structures on the team whether movement was possible and faded the figure when
+  none could confirm. It caught far more than intended: vanilla's `Whip:GetStructureMoveable` returns
+  `GetIsUnblocked()`, a transient rooting check rather than a capability gate, so a Whip faded on its
+  own build button before you owned one. One rule genuinely cannot separate that from B2TP's Spur,
+  which uses the same hook for a real `GetHasTech(self, kTechId.ShiftHive)` gate. The mod now states
+  the plain class speed and never dims.
+- **CBM speed corrections.** CBM's Crag, Shade, Shift and Whip compute speed from live infestation
+  charge rather than storing a constant, so the plain class lookup is not their real figure — a CBM
+  Crag reads 2.9 where it actually moves at 3.625, and a CBM Whip shows nothing at all, since CBM
+  keeps its base in a file-local with no class field. **This is known and accepted**, per the user:
+  "just show the speed attribute of the vanilla unupgraded entity and leave it at that".
+
+What survives of the CBM module is the biomass 5 purple tint and nothing else. The user confirmed
+that one in game and explicitly kept it when the rest was rolled back.

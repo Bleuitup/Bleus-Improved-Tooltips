@@ -232,53 +232,6 @@ end
 -- returns, so they answer correctly with no instance - but MAC's reads self.rolloutSourceFactory
 -- and self:GetIsInCombat(), which throws on a nil self. pcall contains that, and the constant is
 -- the fallback, which is the right base value for MAC anyway.
--- Having a speed is not the same as being able to use it.
---
--- A class that defines GetStructureMoveable is saying its movement is conditional, and the condition
--- is NOT the same between mods - so it cannot be hardcoded:
---
---   B2TP Spur   built and active and GetHasTech(self, kTechId.ShiftHive)
---   CBM Spur    not self.electrified - no tech gate at all, it moves from the start
---   Whip        GetIsUnblocked() - transient, no tech gate
---
--- Every one of those needs a real entity; GetHasTech(self, ...) cannot even work out the team
--- without one. So rather than encode any mod's rule, ask the entities on the field: whatever mod is
--- loaded, its own code answers. B2TP hides the Spur's speed until Shift Hive is in, CBM shows it
--- throughout, and Whip shows it - each because that mod said so.
---
--- Any instance reporting moveable counts, not just the first, so one momentarily blocked Whip or
--- electrified Spur does not blink the figure off the whole team's tooltips.
---
--- With no instance at all - hovering a build button before you own one - there is nothing to ask.
--- The figure is still shown, but the renderer dims it: stating the speed without asserting it is
--- currently usable. Hiding it outright was tried first and threw away the number exactly when it is
--- most wanted, on the button where you are deciding whether to build the thing.
---
--- Classes with no GetStructureMoveable at all (ARC, MAC, Drifter) are unconditional movers and skip
--- this entirely, so they are never dimmed.
-local function GetIsClassMovementAllowed(className, class)
-
-	if type(class.GetStructureMoveable) ~= "function" then
-		return true
-	end
-
-	local player = Client and Client.GetLocalPlayer and Client.GetLocalPlayer()
-	local teamNumber = player and player.GetTeamNumber and player:GetTeamNumber()
-	if not teamNumber then
-		return false
-	end
-
-	for _, entity in ipairs(GetEntitiesForTeam(className, teamNumber)) do
-		local ok, moveable = pcall(entity.GetStructureMoveable, entity)
-		if ok and moveable then
-			return true
-		end
-	end
-
-	return false
-
-end
-
 local function LookupClassMoveSpeed(techId)
 
 	local className = rawget(kTechId, techId)
@@ -315,41 +268,6 @@ end
 
 IT.GetClassMoveSpeed = LookupClassMoveSpeed
 
--- Whether the speed shown for a techId is known to be usable right now, as opposed to merely
--- existing as a number. Drives the dimming in the renderer.
---
--- A registered resolver counts as confirmed: whoever registered it made a deliberate statement,
--- including ARC Deploy's explicit 0.
-function IT.GetIsMovementConfirmed(techId)
-
-	-- An upgrade button reports the product's speed, so it is the PRODUCT whose mobility has to be
-	-- confirmed. Asking about the upgrade techId itself always failed - there is no
-	-- "UpgradeToFortressShift" class to look up - which dimmed every Fortress upgrade as though its
-	-- movement were in doubt. Reached through the table rather than the local, which is declared
-	-- further down this file.
-	local productId = IT.kInheritUpgradeStats and IT.GetUpgradeProductTechId and IT.GetUpgradeProductTechId(techId)
-	if productId then
-		techId = productId
-	end
-
-	if IT.HasResolver("speed", techId) then
-		return true
-	end
-
-	local className = rawget(kTechId, techId)
-	if type(className) ~= "string" then
-		return false
-	end
-
-	local class = _G[className]
-	if type(class) ~= "table" then
-		return false
-	end
-
-	return GetIsClassMovementAllowed(className, class)
-
-end
-
 local kDefaultLookup = {
 	health       = function(techId) return LookupTechData(techId, kTechDataMaxHealth, 0) end,
 	armor        = function(techId) return LookupTechData(techId, kTechDataMaxArmor, 0) end,
@@ -383,134 +301,6 @@ function IT.GetTechIdByName(name)
 
 end
 
-
-------------------------------------------------------------------------------------------------
--- Upgrade buttons describing what they produce
-------------------------------------------------------------------------------------------------
---
--- An "upgrade this structure into that one" button carries no stats of its own - only a cost and a
--- research time - because the stats belong to the thing it produces. CBM's Fortress structures are
--- the case that prompted this: UpgradeToFortressCrag has just cost and duration, while FortressCrag
--- holds kTechDataMaxHealth 800 and kTechDataMaxArmor 300 against a plain Crag's much lower pair. A
--- commander deciding whether to spend on the upgrade is asking exactly what those numbers are.
---
--- Resolved from the enum name rather than from a table: kTechId is bidirectional, so a tech called
--- "UpgradeToFortressCrag" names its own product, and kTechId.FortressCrag is where the stats live.
--- Any mod naming an upgrade that way is picked up with no registration here, which is the same
--- trick the speed lookup uses to find a class from a techId.
---
--- Vanilla's own UpgradeToCragHive / ShadeHive / ShiftHive and UpgradeToInfestedTunnel match the
--- pattern too and start showing what they build. UpgradeToDualMinigun and UpgradeToDualRailgun
--- match the naming but have no product techId at all, which is what makes the safe lookup above
--- necessary rather than merely tidy.
---
--- Built lazily, on the same reasoning as the cooldown enumeration: TechData and kTechId are both
--- still being assembled during startup and mods add to them, so asking too early would miss
--- whatever had not been added yet.
-local upgradeTargets = nil
-
-local function GetUpgradeTargetTechId(techId)
-
-	if not upgradeTargets then
-
-		-- Built into a local and published only once complete. If anything in the walk throws, the
-		-- cache stays nil and the next call retries, rather than being left half filled and
-		-- silently answering nil for everything that had not been reached yet - which is exactly
-		-- what happened when the kTechId lookup below could still raise.
-		local targets = { }
-
-		-- kTechId holds both [name] = value and [value] = name, so the pairs walk sees each entry
-		-- twice; only the name -> value direction is of interest.
-		for name, id in pairs(kTechId) do
-			if type(name) == "string" and type(id) == "number" then
-
-				local product = name:match("^UpgradeTo(.+)$")
-				local productId = product and IT.GetTechIdByName(product)
-
-				if productId and productId ~= id then
-					targets[id] = productId
-				end
-
-			end
-		end
-
-		upgradeTargets = targets
-
-	end
-
-	return upgradeTargets[techId]
-
-end
-
--- Public so a mod can ask what an upgrade builds, and so code defined earlier in this file can
--- reach it - a plain local declared here would be invisible to anything above.
-IT.GetUpgradeProductTechId = GetUpgradeTargetTechId
-
--- The structure an upgrade STARTS from, which is what makes the difference worth showing rather
--- than the finished figure.
---
--- AddUpgradeNode's first prerequisite is exactly that structure, and the tech tree already holds it:
--- CBM registers UpgradeToFortressCrag with kTechId.Crag, vanilla registers UpgradeToCragHive with
--- kTechId.Hive. So nothing has to be paired up by hand, and a mod adding its own upgrade is covered
--- as long as it declares the prerequisite it already has to declare for the button to work.
-local function GetUpgradeSourceTechId(upgradeTechId)
-
-	local techTree = GetTechTree and GetTechTree()
-	local node = techTree and techTree.GetTechNode and techTree:GetTechNode(upgradeTechId)
-	local sourceId = node and node.GetPrereq1 and node:GetPrereq1()
-
-	if type(sourceId) == "number" and sourceId ~= kTechId.None then
-		return sourceId
-	end
-
-	return nil
-
-end
-
--- True when this techId's stats are being reported as a change rather than as an absolute, which is
--- what tells the renderer to sign them and to hide the ones that come out at zero.
-function IT.GetIsUpgradeDelta(techId)
-
-	if not IT.kInheritUpgradeStats then
-		return false
-	end
-
-	return GetUpgradeTargetTechId(techId) ~= nil and GetUpgradeSourceTechId(techId) ~= nil
-
-end
-
--- What the upgrade actually changes. Showing the product's absolute figures was confusing: a hive
--- type upgrade would report 4000 health, which is simply what a Hive already has, and reads as
--- though the upgrade granted it. A difference of zero says nothing and is left out entirely, so the
--- hive type buttons go back to showing only their research time while CBM's Fortress upgrades show
--- what they are actually buying.
---
--- With no source to compare against - a mod that declared no prerequisite - the absolute value is
--- reported instead, which is at least true, and IT.GetIsUpgradeDelta agrees so it is not signed.
-local function GetUpgradeValue(field, upgradeTechId, productId)
-
-	local after = IT.GetValue(field, productId)
-	local sourceId = GetUpgradeSourceTechId(upgradeTechId)
-
-	if not sourceId then
-		return after
-	end
-
-	return after - IT.GetValue(field, sourceId)
-
-end
-
--- The fields that describe the finished structure. Research time is deliberately absent: the
--- upgrade has its own, and it is the duration of the upgrade rather than of anything the product
--- does.
---
--- Speed is included, but it only says anything where the product actually has one to report. A
--- vanilla hive type upgrade produces a structure that does not move, so nothing appears. CBM's
--- Fortress structures compute speed from live state rather than storing it, and the CBM
--- compatibility module is what turns that into a number worth printing - without it this would fall
--- back to a base constant and claim the speed was unchanged when it drops.
-local kInheritedFields = { health = true, armor = true, speed = true }
-
 function IT.GetValue(field, techId)
 
 	-- Compatibility modules attach themselves on first use rather than at load time; see above.
@@ -525,26 +315,7 @@ function IT.GetValue(field, techId)
 	local resolver = resolvers[field][techId] or kDefaultLookup[field]
 	local value = resolver(techId)
 
-	if type(value) == "number" and value > 0 then
-		return value
-	end
-
-	-- Nothing of its own. If this is an upgrade button, answer with what the upgrade CHANGES, so
-	-- the tooltip says what is being bought rather than what the result happens to be. Recursion is
-	-- one level in practice - a product is not itself named UpgradeToSomething - and terminates
-	-- anyway, since each step must strip an "UpgradeTo" prefix off the name.
-	--
-	-- The result may be negative (CBM's Fortress structures trade speed for durability) or zero (a
-	-- hive type upgrade changes neither health nor armour), which is why it is returned straight
-	-- rather than through the positive-only path above.
-	if IT.kInheritUpgradeStats and kInheritedFields[field] then
-		local productId = GetUpgradeTargetTechId(techId)
-		if productId then
-			return GetUpgradeValue(field, techId, productId)
-		end
-	end
-
-	return 0
+	return (type(value) == "number" and value > 0) and value or 0
 
 end
 
@@ -567,18 +338,8 @@ function IT.GetValues(techId)
 		speed        = IT.GetValue("speed", techId),
 	}
 
-	-- Neither is a field in kFields: they qualify the values rather than being values themselves.
-	--
-	-- isDelta says the figures are changes rather than absolutes, so the renderer signs them. It is
-	-- a property of the techId rather than of one field, because an upgrade button carries no stats
-	-- of its own at all - every field it shows came the same way.
-	values.isDelta = IT.GetIsUpgradeDelta(techId)
-	values.speedConfirmed = values.speed ~= 0 and IT.GetIsMovementConfirmed(techId) or false
-
-	-- Not "> 0": a change can be a decrease, and a Fortress upgrade that only costs speed still has
-	-- something to say.
 	for i = 1, #IT.kFields do
-		if values[IT.kFields[i]] ~= 0 then
+		if values[IT.kFields[i]] > 0 then
 			return values
 		end
 	end

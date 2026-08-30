@@ -249,14 +249,15 @@ there vestigially, read by nothing. So the accessor is asked first, statically -
 constant returns, and the one that needs a real instance (MAC) throws and falls back to the constant,
 which is its correct base value anyway.
 
-**Having a speed is not the same as being able to use it.** A class defining `GetStructureMoveable`
-has conditional movement, and the condition is not the same between mods — B2TP's Spur requires a
-Shift Hive, CBM's Spur only requires not being electrified, vanilla's Whip only requires not being
-blocked. All three need a real entity to answer. So rather than encode any mod's rule, the mod asks
-the entities actually on your team and lets whichever mod is loaded answer for itself. Any instance
-reporting moveable counts, so one blocked Whip does not blink the figure off. With no instance at
-all there is nothing to ask, so the figure is drawn dimmed - stating the speed without claiming it
-is usable yet. Unconditional movers (ARC, MAC, Drifter) skip the check entirely and never dim.
+**Having a speed is not the same as being able to use it, and the mod no longer tries to say which.**
+A class defining `GetStructureMoveable` has conditional movement, and the condition differs between
+mods — B2TP's Spur requires a Shift Hive, CBM's only requires not being electrified, vanilla's Whip
+only requires not being mid-root. An earlier version asked the live structures on your team and
+dimmed the figure when none could confirm it. That dimmed far more than it should: a Whip can always
+move, and on its build button — before you own one — there was nothing to ask, so it faded. The plain
+class speed is stated instead. The cost is that B2TP's Spur shows a speed before its Shift Hive is
+in; the gain is that everything else is right and nothing is faded for a question that could not be
+answered.
 
 ### Icons
 
@@ -300,83 +301,23 @@ spawn from the team's biomass level (`BoneWall:OnInitialized`), not stored in Te
 Biomass 9 the stored value of 100 is off by 800. The tooltip mirrors that calculation and tracks
 biomass as the round goes on.
 
-### Upgrade buttons
-
-An "upgrade this structure into that one" button carries only a cost and a research time of its own,
-because the stats belong to the thing it produces. What is worth showing is not those stats but the
-**difference** they make, which is the reason a commander would pay for the upgrade.
-
-Both halves come out of data the game already holds, so no pairs are maintained here:
-
-- **What it produces** comes from the enum name. `kTechId` is bidirectional, so a tech called
-  `UpgradeToFortressCrag` names what it builds and `kTechId.FortressCrag` is where the stats live.
-- **What it starts from** is the tech node's first prerequisite. `AddUpgradeNode` already takes it —
-  CBM registers `UpgradeToFortressCrag` with `kTechId.Crag`, vanilla registers `UpgradeToCragHive`
-  with `kTechId.Hive` — and it has to be declared for the button to work at all.
-
-So CBM's Fortress Crag reads `+100` health, `+200` armour, `-0.7` speed: what the upgrade actually
-buys, and what it costs. Increases are signed `+`, decreases `-`, and a difference of **zero is left
-out entirely**.
-
-That last part matters for vanilla. The hive type upgrades match the pattern, and showing their
-product's absolute figures reported 4000 health — simply what a Hive already has, reading as though
-the upgrade granted it. As differences they are zero on both counts, so those buttons go back to
-showing only their research time. `UpgradeToDualMinigun` and `UpgradeToDualRailgun` match the naming
-but have no product techId at all — there is no `kTechId.DualMinigun` — so nothing appears for them.
-
-Set `kInheritUpgradeStats` false to turn the whole behaviour off.
-
-With no prerequisite declared, the absolute value is shown instead and left unsigned — at least true,
-and honest about being an absolute.
-
-
-**Health, armour and speed.** Speed only says anything where the product has one to report — a
-vanilla hive type upgrade produces something that does not move, so nothing appears. For CBM's
-Fortress structures the number comes from the CBM compatibility module below, which is what makes it
-honest: the raw class constant would claim the speed is unchanged when it actually drops. The
-mobility check follows the product too, so a Fortress upgrade is not dimmed for having no class of
-its own to ask about.
-
 ### CBM compatibility
 
 `ImprovedTooltips_CBM.lua` is the one mod-specific file here, and a deliberate exception to the rule
 that nothing in this mod knows about any particular mod. Everything else works by asking TechData and
-the tech tree what they hold, which covers any mod adding tech the ordinary way. CBM does two things
-that cannot be reached that way, and CBM is common enough to be worth the exception.
+the tech tree what they hold, which covers any mod adding tech the ordinary way. One thing cannot be
+reached that way, and CBM is common enough to be worth the exception.
 
 It is contained. Nothing outside that file mentions CBM, it detects CBM by the tech CBM adds rather
 than by a name or a version (`kTechId.FortressCrag` exists nowhere else), and when CBM is absent it
 registers nothing at all — vanilla and B2TP behave exactly as they did before it existed. Set
 `kEnableCBMCompat` false to remove it entirely.
 
-**Speed.** A CBM Crag, Shade, Shift or Whip does not hold a speed constant. `GetMaxSpeed` multiplies
-a base by 1.25 normally, by 0.5 when electrified, and for the Fortress variants by a factor that
-rises with how long the structure has stood on infestation:
-
-```lua
-if self:GetTechId() == kTechId.FortressCrag then
-    return Crag.kMoveSpeed * (0.5 + 0.5 * self.infestationSpeedCharge / Crag.kMaxInfestationCharge)
-end
-```
-
-That charge climbs at 2 per second on infestation and drains at 1 per second off it, so a structure
-sitting on infestation is at full charge. Alien structures are meant to be on infestation, so that is
-the speed quoted — the same convention as quoting an ARC's speed off infestation, which is where an
-ARC is meant to be. At full charge the multipliers are 1.25 for a plain Crag, Shade, Shift or Whip,
-1.0 for a Fortress Crag, Shade or Shift, and 1.25 for a Fortress Whip.
-
-So a Fortress Crag reads 2.9 against a plain Crag's 3.625 — the drop the upgrade actually costs you.
-A Fortress Whip matches a plain Whip and beats it in frenzy, which is why its number does not move.
-
-Without this the tooltip fell back to the raw base constant, which is neither the normal speed nor
-the Fortress one, and for a CBM Whip it showed nothing at all, since CBM keeps that base in a
-file-local and leaves no class field to read.
-
 **Biomass 5.** CBM's fourth `+1` research needs no support of its own — the hive HUD already draws one
 icon per biomass research and reads its art through `GetTextureCoordinatesForIcon`, so CBM's own icon
 appears unaided. What the module adds is the colour: CBM marks the biomass 5 hive out in purple, and
 the icon carries that so the HUD agrees with what the player sees standing in the room. Every other
-biomass icon stays untinted.
+biomass icon keeps the shared colour.
 
 The tint goes through `ImprovedTooltips.RegisterIconColor(techId, color)`, a public registry, rather
 than a branch inside the drawing code — so any mod can claim a colour for its own tech without this
@@ -483,7 +424,6 @@ and `mod.settings` names the file by extension.
 - `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
 - `kShowZeroArmor` — show an explicit `0` for armourless structures rather than hiding the icon
 - `kShowSpeed` — show movement speed for things that move
-- `kUnconfirmedSpeedAlpha` — opacity of a speed figure whose mobility cannot be confirmed (default 0.45; set to 1 to disable dimming)
 - `kTintSelectionPanelIcons` — also tint the icons on vanilla's selection panel to match
 - `kMarineIconColor` / `kAlienIconColor` — per-team tint, applied to the mod's own icons only
   (vanilla's health and armour art is already team-coloured and is left alone)
@@ -501,8 +441,6 @@ and `mod.settings` names the file by extension.
   the tooltip icon and the spectator counter
 - `kColorSpectatorBiomass` — include the spectator top bar counter in that
 - `kHiveResearchRingColor` / `kHiveResearchDnaColor` — tints for the researching indicator
-- `kInheritUpgradeStats` — let an `UpgradeToX` button show the health, armour and speed of the X it
-  builds (CBM's Fortress structures, vanilla's hive type upgrades)
 - `kEnableCBMCompat` — the CBM compatibility module; inert anyway when CBM is not loaded
 - `kColorCBMBiomassFive` / `kCBMBiomassFiveColor` — tint CBM's biomass 5 research icon, and the shade
 - `kUseTopBarSupplyIcon` — mark supply on the tooltip with the HUD top bar's icon instead of vanilla's
@@ -552,44 +490,27 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased**
-- **Upgrade buttons now show what the upgrade CHANGES**, signed, instead of the product's absolute
-  figures. CBM's Fortress Crag reads `+100` health, `+200` armour, `-0.7` speed. A difference of zero
-  is left out, so vanilla's hive type upgrades — which showed 4000 health, simply what a Hive already
-  has, reading as though the upgrade granted it — go back to showing only their research time. The
-  structure being upgraded from comes from the tech node's first prerequisite, which `AddUpgradeNode`
-  already has to be given.
-- Fixed the speed on an upgrade button being drawn dimmed. The mobility check was asking about the
-  upgrade techId, which has no class of its own to look up, rather than about the product; every
-  Fortress upgrade was faded as though its movement were in doubt.
+- **Speed is stated plainly and never dimmed.** Structures whose movement is conditional used to be
+  faded when no live one could confirm it — which caught far more than intended: a Whip can always
+  move, and on its build button, before you own one, there was nothing to ask, so it faded. The
+  class's own speed is shown instead. B2TP's Spur shows a speed before its Shift Hive is in, which is
+  the one thing given up for everything else being right.
 - **The hourglass and stopwatch now match the vanilla glyphs in size.** Both were drawn 57px tall in
   a 64px cell and sampled whole, so they rendered at 89% of the icon against the health and armour
   glyphs' 81% and visibly overhung them. They are now measured after drawing and fitted to the same
   81%, which also keeps them in step if the drawing code changes.
-- Fixed an error on every install, vanilla included: `Element 'DualMinigun' doesn't exist in the
-  enum`. `kTechId` is an engine enum that **raises** on a name it does not hold rather than answering
-  nil, and vanilla has `UpgradeToDualMinigun` but no `DualMinigun`. The throw also aborted the walk
-  that builds the upgrade-target cache, leaving it half built — which is why CBM's Fortress upgrade
-  buttons showed only a research time. Name lookups now go through `ImprovedTooltips.GetTechIdByName`,
-  and caches are published only once complete.
+- Fixed an error seen on a plain install: `Element 'DualMinigun' doesn't exist in the enum`. `kTechId` is
+  an engine enum that **raises** on a name it does not hold rather than answering nil. Every lookup
+  by name now goes through `ImprovedTooltips.GetTechIdByName`, which reads the underlying table and
+  answers nil for a name that is not there.
 - **Biomass icons are coloured everywhere the mod can reach them** — the hive HUD row, the biomass
   icon on the commander tooltip, and the spectator top bar counter — in the tech map's own colour for
   researched alien tech. Vanilla leaves all three as the bare greyscale atlas cell, but nothing else
   in a tooltip or in the tech tree stays uncoloured, so untinted read as unfinished rather than as
   deliberate. CBM's biomass 5 keeps CBM purple.
-- **A CBM compatibility module.** The one mod-specific file in the mod, and a deliberate exception:
-  CBM does two things that cannot be read from TechData, and is common enough to be worth it. It
-  detects CBM by the tech CBM adds rather than by a name, and registers nothing at all when CBM is
-  absent, so vanilla and B2TP are untouched.
-- **CBM's Fortress structure upgrades now show what they build.** `UpgradeToFortressCrag` and its
-  siblings carry no stats of their own, so the buttons showed only a cost and a duration; they now
-  show the health, armour and speed of the Fortress structure they produce. The product is resolved
-  from the enum name, so vanilla's hive type upgrades and `UpgradeToInfestedTunnel` show what they
-  build too, with no mod-specific code involved.
-- **CBM structure speeds are now correct.** A CBM Crag, Shade, Shift or Whip computes its speed
-  rather than storing one, so the tooltip had been showing the raw base constant — neither the normal
-  speed nor the Fortress one — and for a CBM Whip it showed nothing at all. Speeds are now quoted on
-  infestation, where alien structures are meant to be, so a Fortress Crag reads 2.9 against a plain
-  Crag's 3.625: the drop the upgrade actually costs.
+- **A CBM compatibility module**, the one mod-specific file in the mod and a deliberate exception:
+  CBM colour-codes its own tech in a way nothing can be read from. It detects CBM by the tech CBM
+  adds rather than by a name, and registers nothing at all when CBM is absent.
 - **CBM's biomass 5 icon is tinted purple** on the hive HUD, matching how CBM marks that hive out.
   The research itself needed no code — the HUD already listed it and reads its art from the atlas, so
   CBM's own icon appeared unaided. The tint goes through a new public `RegisterIconColor` registry

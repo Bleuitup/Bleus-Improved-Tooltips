@@ -29,14 +29,13 @@ IT.kShowZeroArmor = true
 
 -- Show movement speed for things that move: ARC 2.0, Shade 1.73, Crag 2.9, Shift 2.9, Whip 3.5,
 -- MAC 6, Drifter 11. Read from the class rather than TechData, which has no key for it.
+--
+-- What is shown is the structure's own speed constant, with no attempt to say whether it can use it
+-- right now. Some mods gate movement behind an upgrade - B2TP's Spur needs a Shift Hive - and an
+-- earlier version dimmed the figure whenever that could not be confirmed from a live entity. It
+-- dimmed far more than it should have, including vanilla's Whip, which can always move and only
+-- reports otherwise mid-root. Stating the plain speed is the simpler and more often correct answer.
 IT.kShowSpeed = true
-
--- Opacity of the speed figure when the mod cannot confirm the structure can actually move right
--- now. Some structures have a speed but only move under a condition their own mod defines - B2TP's
--- Spur needs a Shift Hive, CBM's only needs to not be electrified - and that condition can only be
--- answered by a live entity. With none on the field, the figure is dimmed rather than hidden: it
--- states the speed without claiming it is usable yet. Set to 1 to stop dimming entirely.
-IT.kUnconfirmedSpeedAlpha = 0.45
 
 -- Icon tint. Applies to the mod's own icons only. Vanilla's health and armour art is already
 -- coloured per team and is left untinted.
@@ -168,27 +167,6 @@ IT.kHiveResearchRotationDuration = 2
 --
 -- The MAC and Drifter icons are untouched wherever they stand for the units themselves.
 IT.kUseTopBarSupplyIcon = true
-
-------------------------------------------------------------------------------------------------
--- Upgrade buttons
-------------------------------------------------------------------------------------------------
-
--- Let an "upgrade this into that" button show the stats of what it produces.
---
--- Such a button carries only a cost and a research time of its own, because the stats belong to the
--- product. CBM's Fortress structures are the case that prompted this: UpgradeToFortressCrag has no
--- health or armour, while FortressCrag holds 800 and 300 against a plain Crag's much lower pair,
--- and that difference is the whole reason a commander would pay for it.
---
--- Resolved from the enum name - "UpgradeToFortressCrag" names its product - so any mod following
--- that convention is picked up with no registration. Vanilla's own UpgradeToCragHive / ShadeHive /
--- ShiftHive and UpgradeToInfestedTunnel match it too and start showing what they build.
---
--- Health, armour and speed. Speed only says anything where the product has one to report: a vanilla
--- hive type upgrade produces something that does not move, so nothing appears. For CBM's Fortress
--- structures the number comes from the CBM compatibility module below, which is what makes it
--- honest - the raw class constant would claim the speed is unchanged when it actually drops.
-IT.kInheritUpgradeStats = true
 
 ------------------------------------------------------------------------------------------------
 -- CBM compatibility

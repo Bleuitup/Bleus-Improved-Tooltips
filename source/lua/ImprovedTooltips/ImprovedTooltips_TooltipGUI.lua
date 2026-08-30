@@ -183,11 +183,10 @@ local function CreateEntry(field, teamType, tint)
 	GUIMakeFontScale(text)
 	icon:AddChild(text)
 
-	-- The base colours are kept so a per-frame effect can be applied on top of them without
-	-- accumulating - the speed figure dims when its mobility cannot be confirmed.
-	return { icon = icon, text = text, iconColor = iconColor, textColor = textColor }
+	return { icon = icon, text = text }
 
 end
+
 ------------------------------------------------------------------------------------------------
 -- Vanilla's supply icon
 ------------------------------------------------------------------------------------------------
@@ -301,21 +300,8 @@ local function ShiftBlock(item, dy)
 end
 
 
--- A change is written with its sign, so "+200" reads as armour gained and "-0.7" as speed given up.
--- The magnitude is formatted first and the sign put in front, rather than formatting a negative
--- number, so the minus is the same glyph and spacing as the plus.
-local function Signed(text, value, isDelta)
-
-	if not isDelta then
-		return text
-	end
-
-	return (value < 0 and "-" or "+") .. text
-
-end
-
 local function FormatWhole(value)
-	return ToString(math.floor(math.abs(value) + 0.5))
+	return ToString(math.floor(value + 0.5))
 end
 
 -- Speeds are small and fractional (ARC 2.0, Shade 1.73, Shift 2.9, Whip 3.5), so a whole number
@@ -323,7 +309,7 @@ end
 -- number so MAC reads "6" rather than "6.0".
 local function FormatSpeed(value)
 
-	local speed = math.abs(value)
+	local speed = value
 
 	if math.abs(speed - math.floor(speed + 0.5)) < 0.05 then
 		return ToString(math.floor(speed + 0.5))
@@ -335,21 +321,16 @@ end
 
 local function GetDisplayValue(field, values)
 
-	local isDelta = values.isDelta == true
-
 	if field == "health" then
-		-- A zero is nothing to report either way: no health on this tech, or an upgrade that does
-		-- not change it.
-		return values.health ~= 0 and Signed(FormatWhole(values.health), values.health, isDelta) or nil
+		return values.health > 0 and FormatWhole(values.health) or nil
 
 	elseif field == "armor" then
-		if values.armor ~= 0 then
-			return Signed(FormatWhole(values.armor), values.armor, isDelta)
+		if values.armor > 0 then
+			return FormatWhole(values.armor)
 		end
 		-- An explicit 0 tells a commander "no armour" rather than "not measured", but only
-		-- alongside a health figure - a lone "0" would be meaningless. Never for a change, where a
-		-- zero means "this upgrade does not touch armour" and belongs left out.
-		if not isDelta and values.health > 0 and IT.kShowZeroArmor then
+		-- alongside a health figure - a lone "0" would be meaningless.
+		if values.health > 0 and IT.kShowZeroArmor then
 			return "0"
 		end
 		return nil
@@ -358,14 +339,13 @@ local function GetDisplayValue(field, values)
 		if not IT.kShowSpeed then
 			return nil
 		end
-		if values.speed ~= 0 then
-			return Signed(FormatSpeed(values.speed), values.speed, isDelta)
+		if values.speed > 0 then
+			return FormatSpeed(values.speed)
 		end
 		-- A speed of 0 is normally hidden, or every static structure in the game would carry a
 		-- pointless "0". It IS shown when something registered that zero deliberately - ARC Deploy,
-		-- where losing all movement is the whole point of the button. Not for a change, where zero
-		-- means the upgrade leaves the speed alone.
-		if not isDelta and values.techId and IT.HasResolver("speed", values.techId) then
+		-- where losing all movement is the whole point of the button.
+		if values.techId and IT.HasResolver("speed", values.techId) then
 			return "0"
 		end
 		return nil
@@ -378,32 +358,6 @@ local function GetDisplayValue(field, values)
 	end
 
 	return nil
-
-end
-
--- Some structures carry a speed but only move under a condition their own mod defines - B2TP's Spur
--- needs a Shift Hive, CBM's only needs to not be electrified - and that condition can only be
--- answered by a live entity of that class. With none on the field there is nothing to ask, so the
--- figure is dimmed rather than hidden or asserted: it states the speed without claiming it is
--- usable yet. Everything else, including unconditional movers, draws at full opacity.
-local function GetEntryOpacity(field, values)
-
-	if field == "speed" and values.speedConfirmed == false and values.speed ~= 0 then
-		return IT.kUnconfirmedSpeedAlpha or 1
-	end
-
-	return 1
-
-end
-
-local function ApplyEntryOpacity(entry, opacity)
-
-	-- Rebuilt from the stored base colours each frame rather than multiplied into the live ones, so
-	-- repeated frames cannot compound the fade.
-	local icon = entry.iconColor
-	local text = entry.textColor
-	entry.icon:SetColor(Color(icon.r, icon.g, icon.b, icon.a * opacity))
-	entry.text:SetColor(Color(text.r, text.g, text.b, text.a * opacity))
 
 end
 
@@ -424,7 +378,6 @@ local function LayoutStatRow(self, values)
 		if display then
 			entry.text:SetText(display)
 			entry.icon:SetPosition(Vector(x, y, 0))
-			ApplyEntryOpacity(entry, GetEntryOpacity(field, values))
 			x = x + GetEntryWidth(entry) + kStatEntryGap
 			shown = true
 		end
