@@ -4,10 +4,9 @@
 -- Post-hook on lua/GUIHiveStatus.lua, the alien hive panel in the top-left corner (Advanced
 -- Options -> UI -> hive status, option "CHUD_HiveStatus"). Adds two things to each hive's row:
 --
---   Biomass       - one icon per biomass level that hive has, beside the location name. A fresh
---                   hive is biomass 1 and shows one; each +1 research adds another. The fourth and
---                   last uses the denser icon off the research button that grants it, so a maxed
---                   hive reads differently at a glance from one still climbing.
+--   Biomass       - one icon per +1 biomass research that hive has completed, beside the location
+--                   name. A fresh hive shows none, the same way it shows no hive type icon until it
+--                   is upgraded; each research then adds its own button's art, in order.
 --
 --   Researching   - vanilla's rotating "working" ring with the DNA glyph inside it, on any hive
 --                   that is researching anything: biomass, a lifeform ability, or a hive type.
@@ -35,39 +34,57 @@ local kProgressRingCoords = { 256, 68, 256 + 128, 68 + 128 }
 -- Icon identities, resolved once on first use because kTechId and the offset table are both
 -- populated by files that may load after this one.
 --
--- The vanilla naming is consistent once the scheme is clear: a research is named for how much it
--- has added over the hive's base, not for the level it lands on. A hive contributes 1 biomass the
--- moment it is built, and ResearchBioMassOne / Two / Three are the +1, +2 and +3 on top of that, so
--- ResearchBioMassThree is the one that takes a hive to 4. Hence the team cap of 12: three hives,
--- each fully upgraded.
+-- The row shows the RESEARCHES a hive has completed, not the biomass it holds. A fresh hive already
+-- contributes 1 biomass, but it shows nothing, the same way it shows no hive type icon until it is
+-- upgraded to a Crag, Shade or Shift. Each +1 research then adds its own button's icon, in order.
+-- That the hive is worth 1 on its own is already legible from the biomass bar, the map's upgrade
+-- summary and the tech tree.
 --
--- That last research is the button carrying the denser cluster art. The plain ball is what every
--- BioMassN node uses, and ResearchBioMassFour shares it, so the fourth icon is keyed off the
--- research that grants the level rather than off the level itself.
-local kIconCoords = nil
+-- Vanilla's naming is consistent once the scheme is clear: a research is named for how much it has
+-- added over the hive's base, not for the level it lands on. So ResearchBioMassOne / Two / Three are
+-- the +1, +2 and +3, ResearchBioMassThree is the one that takes a hive to 4, and the team cap of 12
+-- is three hives each fully upgraded.
+--
+-- Keying the icons off the researches rather than off the level means each is simply its own
+-- button's art, with no special case for the last one - the denser cluster belongs to
+-- ResearchBioMassThree and arrives with it.
+--
+-- ResearchBioMassFour has no button in vanilla (Hive:GetTechButtons stops at bioMassLevel <= 3) but
+-- the node and its icon exist, and bioMassLevel networks up to 6, so it is listed and simply never
+-- reached unless a mod adds the research.
+local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "ResearchBioMassThree", "ResearchBioMassFour" }
 
-local function GetIconCoords()
+local kBiomassIconCoords = nil
+local kDnaIconCoords = nil
 
-	if kIconCoords then
-		return kIconCoords
+local function ResolveIcons()
+
+	if kBiomassIconCoords then
+		return true
 	end
 
 	if not GetTextureCoordinatesForIcon then
-		return nil
+		return false
 	end
 
-	kIconCoords =
-	{
-		ball = GetTextureCoordinatesForIcon(kTechId.BioMassOne),
-		dense = GetTextureCoordinatesForIcon(kTechId.ResearchBioMassThree),
-		dna = GetTextureCoordinatesForIcon(kTechId.LifeFormMenu),
-	}
+	kBiomassIconCoords = { }
 
-	return kIconCoords
+	-- Stop at the first one a mod has removed rather than closing the gap: the position in this list
+	-- IS which research the icon stands for.
+	for i = 1, #kBiomassResearchNames do
+		local techId = kTechId[kBiomassResearchNames[i]]
+		if not techId then
+			break
+		end
+		kBiomassIconCoords[i] = GetTextureCoordinatesForIcon(techId)
+	end
+
+	kDnaIconCoords = GetTextureCoordinatesForIcon(kTechId.LifeFormMenu)
+
+	return true
 
 end
 
-local kMaxBiomassIcons = 4
 
 ------------------------------------------------------------------------------------------------
 -- Building the extra items
@@ -75,8 +92,7 @@ local kMaxBiomassIcons = 4
 
 local function CreateBiomassIcons(slot)
 
-	local coords = GetIconCoords()
-	if not coords then
+	if not ResolveIcons() then
 		return
 	end
 
@@ -86,15 +102,15 @@ local function CreateBiomassIcons(slot)
 
 	slot.itBiomassIcons = { }
 
-	for i = 1, kMaxBiomassIcons do
+	for i = 1, #kBiomassIconCoords do
 
 		local icon = GUIManager:CreateGraphicItem()
 		icon:SetSize(size)
 		icon:SetAnchor(GUIItem.Left, GUIItem.Top)
 		icon:SetPosition(Vector(origin.x + spacing * (i - 1), origin.y, 0))
 		icon:SetTexture(kBuildMenuTexture)
-		-- The last slot is the denser cluster; the first three are the plain ball.
-		icon:SetTexturePixelCoordinates(GUIUnpackCoords(i < kMaxBiomassIcons and coords.ball or coords.dense))
+		-- Each slot is simply the art of the research it stands for.
+		icon:SetTexturePixelCoordinates(GUIUnpackCoords(kBiomassIconCoords[i]))
 		icon:SetColor(IT.kHiveBiomassIconColor)
 		icon:SetLayer(kGUILayerPlayerHUDForeground4)
 		icon:SetIsVisible(false)
@@ -108,8 +124,7 @@ end
 
 local function CreateResearchIcon(slot)
 
-	local coords = GetIconCoords()
-	if not coords then
+	if not ResolveIcons() then
 		return
 	end
 
@@ -141,7 +156,7 @@ local function CreateResearchIcon(slot)
 	slot.itResearchDna:SetAnchor(GUIItem.Left, GUIItem.Top)
 	slot.itResearchDna:SetPosition(position + inset)
 	slot.itResearchDna:SetTexture(kBuildMenuTexture)
-	slot.itResearchDna:SetTexturePixelCoordinates(GUIUnpackCoords(coords.dna))
+	slot.itResearchDna:SetTexturePixelCoordinates(GUIUnpackCoords(kDnaIconCoords))
 	slot.itResearchDna:SetColor(IT.kHiveResearchDnaColor)
 	slot.itResearchDna:SetLayer(kGUILayerPlayerHUDForeground4)
 	slot.itResearchDna:SetIsVisible(false)
@@ -222,8 +237,11 @@ function GUIHiveStatus:UpdateStatusSlot(slotIdx, slotData)
 	local visible = self.visible == true
 
 	if slot.itBiomassIcons then
+		-- One icon per RESEARCH completed, so a fresh hive at biomass 1 shows none. Icon i stands
+		-- for the i-th +1, which is why the count is one less than the level.
+		local researches = state.biomass - 1
 		for i = 1, #slot.itBiomassIcons do
-			slot.itBiomassIcons[i]:SetIsVisible(visible and i <= state.biomass)
+			slot.itBiomassIcons[i]:SetIsVisible(visible and i <= researches)
 		end
 	end
 

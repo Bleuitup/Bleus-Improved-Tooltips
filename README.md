@@ -159,10 +159,10 @@ vanilla.
 The alien hive panel in the top-left corner (Advanced Options → UI → hive status) already shows each
 hive's health, egg count and type. Two things are added to each row.
 
-**Biomass** — one icon per biomass level that hive has, beside its location name. A hive is biomass 1
-the moment it finishes building and gains one more per research, so the row is a count you can read
-without doing arithmetic. The fourth and last uses a denser cluster icon, so a maxed hive is
-distinguishable at a glance from one still climbing.
+**Biomass** — one icon per +1 biomass research that hive has completed, beside its location name. A
+fresh hive shows none, the same way it shows no hive type icon until it is upgraded to a Crag, Shade
+or Shift; each research then adds its own button's art. That the hive is worth 1 on its own is
+already legible from the biomass bar, the map's upgrade summary and the tech tree.
 
 **Researching** — vanilla's rotating "working" ring with the DNA glyph inside it, on any hive that is
 researching anything: biomass, a lifeform ability off the DNA menu, or a hive type upgrade. It is the
@@ -172,13 +172,16 @@ speed, so the two read as one indicator rather than two.
 Every image is vanilla's own, addressed through `GetTextureCoordinatesForIcon` rather than by pixel,
 so a mod that moves an icon in the atlas moves ours with it. Nothing new was drawn.
 
-The vanilla naming is consistent once the scheme is clear: a research is named for how much it has
-added over the hive's base, not for the level it lands on. A hive contributes 1 biomass the moment it
-is built, and `ResearchBioMassOne` / `Two` / `Three` are the +1, +2 and +3 on top of that — so
-`ResearchBioMassThree` is the one that takes a hive to 4, and it carries the denser art. That is also
-where the team cap of 12 comes from: three hives, each fully upgraded. `ResearchBioMassFour` shares
-the plain ball with every `BioMassN` node, so the fourth icon is keyed off the research that grants
-the level rather than off the level itself.
+Each icon is simply the art of the research it stands for, which needs no special cases: the
+researches are strictly sequential, and their buttons already get denser as they go, so the row
+reads as a progression on its own.
+
+Vanilla's naming is consistent once the scheme is clear: a research is named for how much it has
+added over the hive's base, not for the level it lands on. `ResearchBioMassOne` / `Two` / `Three` are
+the +1, +2 and +3, so `ResearchBioMassThree` is the one that takes a hive to 4 — and that is where
+the team cap of 12 comes from, three hives each fully upgraded. `ResearchBioMassFour` has no button
+in vanilla but its node and icon exist, so it is listed and simply never reached unless a mod adds
+the research.
 
 ### "The hive" is two entities
 
@@ -265,7 +268,7 @@ Only the hourglass and stopwatch are drawn from scratch. Everything else is vani
 | Health, armour | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
 | Marine speed | `marine_buildmenu_insight.dds` row 2 col 4, mirrored to point right and lifted off its button plate |
 | Hourglass, stopwatch | Drawn in `tools/build_icons.ps1` |
-| Biomass | `kTechId.BioMassOne` / `ResearchBioMassThree` in `ui/buildmenu.dds`, untinted, as vanilla draws it |
+| Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, untinted, as vanilla draws it |
 | Researching ring | `ui/unitstatus_alien.dds` `{256, 68, 384, 196}`, the same region `GUIUnitStatus` spins on a busy hive |
 | DNA | `kTechId.LifeFormMenu` in `ui/buildmenu.dds` |
 | Supply | `ui/hud2/team_info_atlas.dds` via `GUIHudSupply.kThemeData`, replacing vanilla's MAC / Drifter |
@@ -461,12 +464,11 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   `GUIResourceDisplay`, whose create and destroy calls are now commented out, leaving the tooltip as
   the last place the worker icon stood for supply. The MAC and Drifter icons are untouched wherever
   they stand for the units themselves.
-- Hive biomass icons are drawn untinted, the way vanilla draws that same art in the commander
-  tooltip and in spectator view. They share atlas cell 112, so tinting them made the hive HUD the odd
-  one out.
-- **Biomass on the hive status HUD.** Each hive in the top-left panel now shows one icon per biomass
-  level it has, beside its location name. The fourth uses the denser cluster art off the research
-  button that grants it, so a maxed hive reads differently from one still climbing.
+- **Biomass on the hive status HUD.** Each hive in the top-left panel now shows one icon per +1
+  biomass research it has completed, beside its location name. A fresh hive shows none, matching how
+  it shows no hive type icon until it is upgraded, and each research adds its own button's art -
+  which get denser as they go, so the row reads as a progression. Drawn untinted, as vanilla draws
+  that art everywhere else.
 - **A researching indicator on the same panel.** Vanilla's rotating ring plus the DNA glyph appear on
   any hive researching anything - biomass, a lifeform ability, or a hive type upgrade - at the same
   rotation speed as the ring the player sees on the hive itself.

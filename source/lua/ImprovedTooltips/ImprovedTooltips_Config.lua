@@ -102,8 +102,9 @@ IT.kSpreadBiomassProgress = true
 -- the server, because a Hive is only relevant to players within 40m and the whole point of that
 -- panel is hives across the map. See ImprovedTooltips_HiveState.lua.
 
--- One icon per biomass level, beside the hive's location name. Biomass 1 shows one, 4 shows four,
--- and the fourth uses the denser cluster art off the research button that grants it.
+-- One icon per +1 biomass research a hive has completed, beside its location name. A fresh hive
+-- shows none, matching how it shows no hive type icon until it is upgraded; each research then adds
+-- its own button's art, in order, so the icons grow denser as the hive climbs.
 IT.kShowHiveBiomassIcons = true
 
 -- Vanilla's rotating "working" ring plus the DNA glyph on any hive that is researching anything -

@@ -494,3 +494,19 @@ Note that `luac -p` passing proves nothing about `output/`; it only checks `sour
   `kTechId.BioMassOne` are both atlas index 112 (`TechTreeButtons.lua:341`, `:39`), i.e. the same
   greyscale cell. `GUITechMap` is the exception, not the rule: it colours every icon by tech status,
   so its warm yellow means "researched", not "biomass".
+
+### Hive HUD biomass row: researches, not levels (0.93, revised)
+
+The row shows the **researches a hive has completed**, not the biomass it holds, settled with the
+user on 2026-08-30. A fresh hive is biomass 1 and shows **nothing** -- deliberately, to match how a
+hive shows no type icon until it is upgraded to Crag/Shade/Shift. Icon count is `bioMassLevel - 1`.
+
+Icon `i` is simply `GetTextureCoordinatesForIcon(kTechId.ResearchBioMass<N>)`, in order. That removes
+the old "three plain balls plus a denser fourth" special case: the researches are strictly sequential
+and their own button art already gets denser as they go (150 = three small spheres, 112 = the plain
+ball, 175 = the dense cluster), so the progression is vanilla's, not the mod's.
+
+`ResearchBioMassFour` is listed but never reached in vanilla -- `Hive:GetTechButtons` stops at
+`bioMassLevel <= 3` -- and shares cell 112 with `Two`. It is kept so a mod adding the research works
+with no change here. The list stops at the first name missing from `kTechId` rather than closing the
+gap, because a position in that list IS which research the icon stands for.
