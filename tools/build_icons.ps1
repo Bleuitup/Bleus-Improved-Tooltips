@@ -214,9 +214,17 @@ function Add-CommanderGlyph($cellX, $bx1, $by1, $bx2, $by2, $slot) {
         }
     }
 
-    # Fit into the cell preserving aspect, with the same padding the other glyphs use.
-    $pad = 6
-    $box = $CELL - 2*$pad
+    # Fit into the cell at VANILLA's proportion, not the mod's.
+    #
+    # Vanilla draws these glyphs at ~29px inside a 48x48 cell, about 61% of it. The mod's own glyphs
+    # fill ~81%. Baking at 81% made the tooltips right but blew up vanilla's selection panel, which
+    # draws the same cell into an item size it sets itself - same box, bigger glyph inside it.
+    #
+    # So they are baked at vanilla's 61% and the TOOLTIP magnifies instead, by sampling a smaller
+    # centred window of the cell (see kOwnIconCoords). Sampling inward cannot bleed into the
+    # neighbouring cells, whereas sampling outward to shrink them would.
+    $box = 39                       # 39/64 = 61%, matching vanilla; a 48px window gives 39/48 = 81%
+    $pad = ($CELL - $box) / 2
     $scale = [Math]::Min($box / $gw, $box / $gh)
     $dw = [int]($gw * $scale); $dh = [int]($gh * $scale)
     $dx = $slot*$CELL + [int](($CELL - $dw) / 2)

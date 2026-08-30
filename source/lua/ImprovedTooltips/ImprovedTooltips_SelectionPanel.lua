@@ -24,6 +24,11 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 local IT = ImprovedTooltips
 
+-- The FULL cells, deliberately. The glyphs are baked at vanilla's own proportion (39px of a 64px
+-- cell, ~61%), so drawing the whole cell here keeps this panel looking exactly as it always did.
+-- The mod's tooltips sample a smaller centred window of the same cells to magnify them instead -
+-- see kOwnIconCoords in ImprovedTooltips_TooltipGUI.lua. Baking at the tooltip's proportion and
+-- drawing the full cell here is what made these oversized in 0.9.
 local kIconTexture = "ui/bleu_tooltip_icons.dds"
 local kIconCoords = {
 	health = { 192, 0, 256, 64 },

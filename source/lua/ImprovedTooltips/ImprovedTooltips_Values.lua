@@ -172,6 +172,50 @@ end
 -- returns, so they answer correctly with no instance - but MAC's reads self.rolloutSourceFactory
 -- and self:GetIsInCombat(), which throws on a nil self. pcall contains that, and the constant is
 -- the fallback, which is the right base value for MAC anyway.
+-- Having a speed is not the same as being able to use it.
+--
+-- A class that defines GetStructureMoveable is saying its movement is conditional, and the condition
+-- is NOT the same between mods - so it cannot be hardcoded:
+--
+--   B2TP Spur   built and active and GetHasTech(self, kTechId.ShiftHive)
+--   CBM Spur    not self.electrified - no tech gate at all, it moves from the start
+--   Whip        GetIsUnblocked() - transient, no tech gate
+--
+-- Every one of those needs a real entity; GetHasTech(self, ...) cannot even work out the team
+-- without one. So rather than encode any mod's rule, ask the entities on the field: whatever mod is
+-- loaded, its own code answers. B2TP hides the Spur's speed until Shift Hive is in, CBM shows it
+-- throughout, and Whip shows it - each because that mod said so.
+--
+-- Any instance reporting moveable counts, not just the first, so one momentarily blocked Whip or
+-- electrified Spur does not blink the figure off the whole team's tooltips.
+--
+-- With no instance at all - hovering a build button before you own one - the answer is "hide". The
+-- alternative is claiming mobility that cannot be verified, which is the bug this fixes. Classes
+-- with no GetStructureMoveable at all (ARC, MAC, Drifter) are unconditional movers and skip this
+-- entirely, so build-button speed for those is unaffected.
+local function GetIsClassMovementAllowed(className, class)
+
+	if type(class.GetStructureMoveable) ~= "function" then
+		return true
+	end
+
+	local player = Client and Client.GetLocalPlayer and Client.GetLocalPlayer()
+	local teamNumber = player and player.GetTeamNumber and player:GetTeamNumber()
+	if not teamNumber then
+		return false
+	end
+
+	for _, entity in ipairs(GetEntitiesForTeam(className, teamNumber)) do
+		local ok, moveable = pcall(entity.GetStructureMoveable, entity)
+		if ok and moveable then
+			return true
+		end
+	end
+
+	return false
+
+end
+
 local function LookupClassMoveSpeed(techId)
 
 	local className = kTechId[techId]
@@ -181,6 +225,10 @@ local function LookupClassMoveSpeed(techId)
 
 	local class = _G[className]
 	if type(class) ~= "table" then
+		return 0
+	end
+
+	if not GetIsClassMovementAllowed(className, class) then
 		return 0
 	end
 

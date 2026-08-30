@@ -141,6 +141,12 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   structure. They are already coloured per team, so **do not tint them**, and they sit in the very
   atlas the tooltip background already loads. 0.86 and earlier drew custom ones after rejecting the
   softer copies in `ui/alien_buymenu.dds`; that was looking at the wrong atlas.
+- **Those cells are baked at VANILLA's proportion, and the tooltip magnifies by sampling inward.**
+  The glyph is 39px in a 64px cell (~61%, what vanilla uses); the selection panel draws the full
+  cell, the tooltip samples a centred 48px window giving 39/48 = 81%, matching the other icons.
+  Baking at 81% instead made the tooltips right and blew up vanilla's selection panel — same item
+  size, bigger glyph inside it (issue #2). Sampling inward is safe; sampling outward to shrink
+  would bleed into neighbouring cells.
 - **The mod ships resampled copies of vanilla's cross and shield** (atlas cells 3 and 4), rather
   than drawing the vanilla atlas directly. Three reasons, all found in testing: the source glyphs
   occupy only ~29px of a 48px cell so they rendered smaller than the other icons; they top out at
@@ -192,6 +198,17 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   so name-derivation found nothing and the button showed none. Vanilla already points that button's
   TechData at `kDrifterHealth`/`kDrifterArmor`, so a resolver aliases speed to `kTechId.Drifter` too.
   **If a value is missing for one button, check whether its techId names the produced unit.**
+- **Having a speed is not being able to use it.** A class defining `GetStructureMoveable` has
+  conditional movement, and the condition differs by mod, so it cannot be hardcoded: B2TP's Spur
+  requires `GetHasTech(self, kTechId.ShiftHive)`, CBM's Spur only `not self.electrified` (no tech
+  gate at all), vanilla's Whip only `GetIsUnblocked()`. All need a real entity — `GetHasTech(self,…)`
+  cannot even determine the team without one. So the mod **asks live entities on the player's team**
+  and lets whichever mod is loaded answer for itself. Any instance reporting moveable counts, so one
+  blocked Whip does not blink the figure off. **Do not hardcode a ShiftHive check — it would be
+  wrong under CBM.**
+- With **no instance** of a gated class, speed is hidden rather than guessed (user's call, issue #3).
+  Classes with no `GetStructureMoveable` — ARC, MAC, Drifter — are unconditional and skip the gate,
+  so their build-button speed is unaffected.
 - **A zero speed means two different things.** The default 0 ("does not move") is hidden, or every
   structure would carry a pointless `0`; a 0 from a *registered resolver* is deliberate and is
   shown. `IT.HasResolver(field, techId)` distinguishes them. This is what puts `0` on ARC Deploy.

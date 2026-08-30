@@ -129,6 +129,15 @@ there vestigially, read by nothing. So the accessor is asked first, statically -
 constant returns, and the one that needs a real instance (MAC) throws and falls back to the constant,
 which is its correct base value anyway.
 
+**Having a speed is not the same as being able to use it.** A class defining `GetStructureMoveable`
+has conditional movement, and the condition is not the same between mods — B2TP's Spur requires a
+Shift Hive, CBM's Spur only requires not being electrified, vanilla's Whip only requires not being
+blocked. All three need a real entity to answer. So rather than encode any mod's rule, the mod asks
+the entities actually on your team and lets whichever mod is loaded answer for itself. Any instance
+reporting moveable counts, so one blocked Whip does not blink the figure off. With no instance at
+all, speed is hidden rather than guessed; unconditional movers (ARC, MAC, Drifter) skip the check
+entirely.
+
 ### Icons
 
 Only the hourglass and stopwatch are drawn from scratch. Everything else is vanilla art:
@@ -303,6 +312,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**Unreleased**
+- Fixed the health and armour glyphs being oversized on vanilla's selection panel. They are now
+  baked at vanilla's own proportion, with the tooltips magnifying by sampling a smaller window.
+- Speed is now hidden for structures whose movement is conditional until an entity on your team
+  actually reports it can move. B2TP's Spur needs a Shift Hive, CBM's Spur does not - the mod asks
+  the loaded mod rather than encoding either rule.
 
 **0.9**
 - **Movement speed** added for things that move: ARC 2.0, Shade 1.73, Crag 2.9, Shift 2.9, Whip 3.5,

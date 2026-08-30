@@ -38,8 +38,13 @@ local kOwnIconCoords = {
 	research     = { 0,   0, 64,  64 },
 	cooldown     = { 64,  0, 128, 64 },
 	speedMarine  = { 128, 0, 192, 64 },
-	health       = { 192, 0, 256, 64 },
-	armor        = { 256, 0, 320, 64 },
+	-- Health and armour sample a centred 48px window of their 64px cell rather than the whole cell.
+	-- The glyphs are baked at vanilla's proportion (39px, ~61% of the cell) so that vanilla's own
+	-- selection panel renders them at its usual size; sampling a smaller window here magnifies them
+	-- to 39/48 = 81%, matching the hourglass and stopwatch. Sampling inward is safe - it cannot
+	-- reach the neighbouring cells.
+	health       = { 200, 8, 248, 56 },
+	armor        = { 264, 8, 312, 56 },
 }
 
 -- Celerity, index 64 in a 12-column sheet of 80px cells.
