@@ -48,11 +48,38 @@ in `ui/minimap_blip.dds`. `MapBlipMixin.lua:228` resolves the type with
 today. Sprite and colour are independent, which is exactly why this decision costs nothing: tint the
 glyph the marine already has.
 
-**Open, and an art question rather than a code one:** B2TP ships its own edited
-`ui/minimap_blip.dds` that darkens the jetpack backpack, because vanilla's distinction between the
-marine and jetpacker glyphs is faint at map scale. Reusing that edit here would make the sprite half
-of this feature far more legible. It is the user's own art from their own mod, so it is their call
-whether to bring it across — do not copy it without asking.
+### The sheet this branch ships (done 2026-08-31)
+
+Vanilla's marine and jetpacker glyphs are nearly the same silhouette, so the sprite half of this
+feature barely reads at map scale. B2TP darkens the jetpack backpack, and CBM ships the same edit.
+
+`source/ui/minimap_blip.dds` here is **vanilla's sheet with only cell (3,2) replaced** by B2TP's
+jetpacker. Verified: exactly one cell differs from vanilla in mip 0 (341 of 1024 pixels), every
+other cell is byte-identical, and the file matches vanilla's format — 256x256, uncompressed RGBA,
+9 mipmaps, 349,652 bytes.
+
+Built rather than copied, deliberately:
+
+- **B2TP's file could not be shipped as-is.** It is a DXT1 re-encode with a single mip level
+  (32,896 bytes). Adopting it would have replaced every blip in the game with a block-compressed
+  version and thrown away the mipmaps the minimap needs when it draws blips small.
+- **CBM's file could not be shipped as-is either.** It is full quality, but it edits **18 cells**,
+  not one. Taking it wholesale would have imported all of CBM's other blip art.
+
+Method, if it ever needs redoing: `utils/nvdecompress.exe` on both sheets to TGA, composite cell
+(3,2) with System.Drawing, then
+`utils/nvcompress.exe -rgb -alpha -highqual merged.png minimap_blip.dds`.
+
+### Two things to settle before this merges to main
+
+1. **Shipping this file overrides CBM's whole sheet**, including the 17 other cells CBM edits, for
+   anyone running both mods. Given how much this mod values CBM compatibility, that is a real cost
+   for one glyph. Options: ship it anyway, drop the sheet and rely on colour alone, or ask the CBM
+   team.
+2. **Provenance.** The cell came from B2TP, the user's own mod, on their instruction. CBM ships a
+   visually identical and technically cleaner version of the same edit. If the design originated
+   with CBM, whether it belongs in this mod — and whether anything should be said in the credits —
+   is the user's call, not one to make silently.
 
 ## The weapon is already on every client — no new networking
 
