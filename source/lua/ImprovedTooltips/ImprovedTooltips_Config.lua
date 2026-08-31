@@ -189,3 +189,18 @@ IT.kColorCBMBiomassFive = true
 -- If the model's own shade reads better in game, CBM's biomass 5 hive glows a deeper magenta,
 -- roughly Color(0.85, 0.25, 0.45, 1); swapping this line is the whole change.
 IT.kCBMBiomassFiveColor = Color(0.7, 0.3, 1, 1)
+
+------------------------------------------------------------------------------------------------
+-- Lost arms lab upgrades
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_ArmsLabAlert.lua. Vanilla hides the weapon and armour upgrade icons when the
+-- team has no working arms lab, which looks exactly like never having researched them. It also
+-- contains the code to paint them red instead - unreachable, because the icons are hidden first.
+
+-- Keep the icons on screen, in alert red, while the upgrades are researched but inactive.
+IT.kShowLostArmsLabUpgrades = true
+
+-- Vanilla's own alert red, from GUIMarineHUD:Update. Kept as a setting only so it can be toned
+-- down; the default is deliberately the shade the game already chose for this state.
+IT.kArmsLabLostColor = Color(1, 0, 0, 1)

@@ -30,6 +30,9 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
 	-- The spectator top bar, for its biomass counter's colour.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
+	-- Marine HUD: keep researched-but-inactive weapon and armour icons on screen in alert red
+	-- when the arms lab is destroyed or unpowered, instead of hiding them.
+	ModLoader.SetupFileHook("lua/Hud/Marine/GUIMarineHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_ArmsLabAlert.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
