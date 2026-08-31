@@ -20,3 +20,8 @@ if not Client then
 end
 
 AddClientUIScriptForClass("Player", "ImprovedTooltips/GUIImprovedTooltipsCooldowns")
+
+-- Exo charge figures beside the crosshair. Registered for "Exo" rather than "Player": these are
+-- only ever meaningful in an exosuit, and ClientUI matches with forPlayer:isa(class), so this
+-- covers both exo variants without naming them.
+AddClientUIScriptForClass("Exo", "ImprovedTooltips/GUIImprovedTooltipsExoCharge")

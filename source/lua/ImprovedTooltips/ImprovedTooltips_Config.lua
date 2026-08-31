@@ -189,3 +189,35 @@ IT.kColorCBMBiomassFive = true
 -- If the model's own shade reads better in game, CBM's biomass 5 hive glows a deeper magenta,
 -- roughly Color(0.85, 0.25, 0.45, 1); swapping this line is the whole change.
 IT.kCBMBiomassFiveColor = Color(0.7, 0.3, 1, 1)
+
+------------------------------------------------------------------------------------------------
+-- Exosuit charge, with the viewmodel hidden
+------------------------------------------------------------------------------------------------
+--
+-- See GUIImprovedTooltipsExoCharge.lua. Vanilla paints the minigun's heat gauge and the railgun's
+-- charge ring onto the weapon viewmodel, so hiding the viewmodel takes both readouts with it. This
+-- puts the same numbers beside the crosshair instead.
+
+-- Master switch. This is the setting the mod's options panel toggles.
+IT.kShowExoChargeNumbers = true
+
+-- Only draw the figures while the viewmodel is actually hidden. Left on by default: with the
+-- viewmodel visible, vanilla's own gauges are right there on the weapon and a second readout is
+-- just clutter. Turn it off to have the numbers up at all times.
+IT.kExoChargeOnlyWhenViewModelHidden = true
+
+-- Distance from the centre of the screen, before GUIScale. x is mirrored: the left arm's figure
+-- sits that far to the left of the crosshair, the right arm's the same distance to the right.
+IT.kExoChargeOffsetX = 96
+IT.kExoChargeOffsetY = 44
+
+IT.kExoChargeFontSize = 20
+
+-- Both weapons read "more is better" - the railgun's charge as it fills, and the minigun's
+-- REMAINING heat capacity rather than its heat, matching how vanilla's own bars present it in
+-- GUIInsight_PlayerHealthbars.lua:300-315. So a low number always means the same thing on either
+-- arm, and this threshold can be a single value.
+IT.kExoChargeWarnBelow = 25
+
+IT.kExoChargeColor     = Color(1, 1, 1, 0.9)
+IT.kExoChargeWarnColor = Color(1, 0.5, 0.2, 1)
