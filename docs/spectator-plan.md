@@ -35,13 +35,27 @@ Three independent blockers:
 A dead player spectating their own team is a `TeamSpectator`, still on team 1 or 2, and keeps their
 own side's tech map. Only the true spectator (team 3) and the both-teams case fail.
 
-### Intended behaviour
+### Intended behaviour (settled 2026-08-31)
 
 | Situation | Show |
 |---|---|
-| True spectator, both teams | Both tech trees |
-| Spectating a single team's POV | That team's tree |
-| First person on a player | That player's team's tree |
+| Neutral spectator, both teams' information visible | **Both trees, side by side** |
+| Restricted to one team | That team's tree only |
+| First person on a specific player | That player's team's tree |
+
+The test is the spectator's own team number: `kSpectatorIndex` means unrestricted and gets both
+trees; anything else is a `TeamSpectator` and gets one. `TeamSpectator:GetIsValidTarget`
+(`TeamSpectator.lua:43`) already refuses targets on the other team, so the restriction is a property
+of how you are spectating, not a setting.
+
+**There is no legend entry that hides one team's information.** The overhead legend has the thirteen
+entries listed above and no more — `Weapon4` toggles the whole Insight HUD, not one team's half. What
+separates the two cases is joining as a neutral spectator versus spectating from a team slot (which
+is also what happens when you die). If a manual per-team toggle is wanted, it would be new work.
+
+Side by side means two `GUITechMap` instances at reduced scale. Check legibility of the icons early —
+if half-width turns out to be too small, the fallback is one instance with the `ShowTechMap` key
+cycling marine / alien / off.
 
 ### Shape of the work
 
@@ -64,6 +78,10 @@ is gated or commented out. Skulk is absent for the same reason.
 Adding gorge is a copy of an existing branch: match `STATUS_GORGE` and `GORGE_EGG`, use
 `ui/Gorge.dds` (it ships), and the shared text format needs no change —
 `string.format("%s %s Has Died", oldStatus, playerName)`.
+
+**Gorge only — skulk is deliberately not added** (settled 2026-08-31). `ui/Skulk.dds` ships too and
+it would be the same one-branch change, but skulks die constantly and the alerts would bury the
+lerk / fade / onos / exo ones the queue exists to surface.
 
 ## 3. Jetpack death alert
 
