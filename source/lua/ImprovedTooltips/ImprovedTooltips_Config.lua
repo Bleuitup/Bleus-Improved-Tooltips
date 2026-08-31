@@ -213,11 +213,16 @@ IT.kExoChargeOffsetY = 44
 
 IT.kExoChargeFontSize = 20
 
--- Both weapons read "more is better" - the railgun's charge as it fills, and the minigun's
--- REMAINING heat capacity rather than its heat, matching how vanilla's own bars present it in
--- GUIInsight_PlayerHealthbars.lua:300-315. So a low number always means the same thing on either
--- arm, and this threshold can be a single value.
-IT.kExoChargeWarnBelow = 25
+-- The two weapons read in OPPOSITE directions, on the user's call: the minigun prints its heat
+-- (up is bad) and the railgun prints its charge (up is good). So there is no single threshold -
+-- each weapon carries its own.
+--
+-- Vanilla inverts the minigun to "capacity remaining" for its own bars
+-- (GUIInsight_PlayerHealthbars.lua:300-315). We do not: the number is labelled by what the weapon
+-- is doing, and heat counting up is what a pilot expects.
+IT.kExoChargeWarnAbove = 75
+IT.kExoChargeReadyAt   = 100
 
 IT.kExoChargeColor     = Color(1, 1, 1, 0.9)
 IT.kExoChargeWarnColor = Color(1, 0.5, 0.2, 1)
+IT.kExoChargeReadyColor = Color(0.5, 0.9, 1, 1)

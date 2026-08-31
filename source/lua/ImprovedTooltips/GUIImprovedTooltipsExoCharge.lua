@@ -21,10 +21,17 @@
 -- viewmodel. So this script reads the same numbers vanilla does; nothing is being reverse
 -- engineered out of animation state.
 --
--- The reading is the same one vanilla uses for its own bars in GUIInsight_PlayerHealthbars.lua
--- :300-315, including the inversion on the minigun: heat is reported as remaining capacity, so
--- 100% means ready to fire and 0% means overheated. Both weapons therefore read "more is better",
--- which is the only way one number beside a crosshair is safe to glance at.
+-- The values come from the same place vanilla's own bars read them (GUIInsight_PlayerHealthbars.lua
+-- :300-315), but they are presented differently, on the user's call (2026-08-31):
+--
+--   Minigun  shows HEAT.    0% = cool, 100% = overheated.  Higher is worse.
+--   Railgun  shows CHARGE.  0% = empty, 100% = ready.      Higher is better.
+--
+-- Vanilla's bar inverts the minigun to "remaining capacity" so both weapons fill the same
+-- direction. That is deliberately not done here: the figure is labelled by what the weapon is
+-- actually doing, and "heat" counting up is what a pilot expects. The cost is that the two weapons
+-- read in OPPOSITE directions, so there is no single warning threshold - each weapon carries its
+-- own, and kExoChargeWarnAbove/kExoChargeReadyAt are separate settings for that reason.
 --
 -- Unlike vanilla's bar, the two slots are NOT averaged. An exo's arms overheat independently and
 -- averaging them hides the one that matters; each slot gets its own figure on its own side.
@@ -45,25 +52,25 @@ local function UpdateScale()
 	kOffsetY  = GUIScale(IT.kExoChargeOffsetY)
 end
 
--- Fraction of "usable" left, 0..1, or nil when the weapon is neither an exo weapon we understand
--- nor present at all. Minigun is inverted so both weapons read the same direction.
+-- Returns the fraction to print (0..1) and which way it reads: "heat" counts up towards bad,
+-- "charge" counts up towards ready. nil means this is not a weapon we show a figure for.
 local function GetWeaponFraction(weapon)
 
 	if not weapon then
-		return nil
+		return nil, nil
 	end
 
 	if weapon:isa("Railgun") then
-		return weapon:GetChargeAmount()
+		return weapon:GetChargeAmount(), "charge"
 	end
 
 	if weapon:isa("Minigun") then
 		-- heatAmount is declared "float (0 to 1 by 0.01)" and is a plain field, not an accessor.
-		local heat = weapon.heatAmount or 0
-		return 1 - heat
+		-- Shown as-is: heat counting up, not vanilla's inverted "capacity remaining".
+		return weapon.heatAmount or 0, "heat"
 	end
 
-	return nil
+	return nil, nil
 
 end
 
@@ -161,7 +168,7 @@ function GUIImprovedTooltipsExoCharge:HideBoth()
 
 end
 
-function GUIImprovedTooltipsExoCharge:UpdateFigure(item, fraction)
+function GUIImprovedTooltipsExoCharge:UpdateFigure(item, fraction, kind)
 
 	if not item then
 		return
@@ -174,8 +181,17 @@ function GUIImprovedTooltipsExoCharge:UpdateFigure(item, fraction)
 
 	local percent = math.floor(math.max(0, math.min(1, fraction)) * 100 + 0.5)
 
+	-- The two weapons read in opposite directions, so each gets its own test: a hot minigun is the
+	-- warning, a full railgun is the good news.
+	local highlight
+	if kind == "heat" then
+		highlight = percent >= IT.kExoChargeWarnAbove and IT.kExoChargeWarnColor or nil
+	else
+		highlight = percent >= IT.kExoChargeReadyAt and IT.kExoChargeReadyColor or nil
+	end
+
 	item:SetText(string.format("%d%%", percent))
-	item:SetColor(percent <= IT.kExoChargeWarnBelow and IT.kExoChargeWarnColor or IT.kExoChargeColor)
+	item:SetColor(highlight or IT.kExoChargeColor)
 	item:SetIsVisible(true)
 
 end
@@ -209,6 +225,9 @@ function GUIImprovedTooltipsExoCharge:Update(deltaTime)
 		return
 	end
 
+	-- GetWeaponFraction returns two values and must therefore stay in FINAL argument position:
+	-- Lua truncates a multi-value call to one value anywhere else, which would silently drop the
+	-- "heat"/"charge" kind and make every figure behave like a railgun.
 	self:UpdateFigure(self.left,  GetWeaponFraction(GetSlotWeapon(holder, "leftWeaponId")))
 	self:UpdateFigure(self.right, GetWeaponFraction(GetSlotWeapon(holder, "rightWeaponId")))
 

@@ -44,9 +44,18 @@ through `activeWeapon:isa("ExoWeaponHolder")` and `Shared.GetEntity(activeWeapon
 rightWeaponId)`, then `GetChargeAmount()` for a railgun or `heatAmount` for a minigun — **inverted**,
 `1 - heat`, so the bar reads as remaining capacity.
 
-This script keeps that inversion, so both weapons read "more is better": 100% is ready to fire or
-fully charged, 0% is overheated or empty. One direction is the only way a number beside a crosshair
-is safe to glance at, and it means a single warning threshold covers both weapons.
+**This script does not keep that inversion** (decided 2026-08-31). Each weapon prints what it is
+actually doing:
+
+| Weapon | Shows | Direction |
+|---|---|---|
+| Minigun | Heat | 0% cool, 100% overheated — up is bad |
+| Railgun | Charge | 0% empty, 100% ready — up is good |
+
+Heat counting up is what a pilot expects, and the figure is labelled by the thing it measures rather
+than by its complement. The cost is that the two weapons read in opposite directions, so there is no
+single warning threshold: `IT.kExoChargeWarnAbove` (75) colours a hot minigun, and
+`IT.kExoChargeReadyAt` (100) colours a charged railgun, in separate colours.
 
 **One deliberate difference: the slots are not averaged.** Vanilla averages dual weapons into one
 bar, with its own source comment calling that a placeholder ("Maybe 2 bars eventually?"). An exo's
@@ -83,8 +92,8 @@ both colours are constants alongside them.
 - The figure disappears when the viewmodel is switched back on, and returns when it is hidden again,
   without a map change — `ViewModelOption_Update` restarts `GUIMarineHUD` and `GUIExoEject` but not
   this script, so confirm the per-frame check is enough.
-- Minigun held down to overheat: the number should fall to 0 and go orange, and recover.
-- Railgun held: the number should climb to 100 over about two seconds, and drop back on release.
+- Minigun held down to overheat: the number should climb to 100 and go orange, and fall back.
+- Railgun: the number should reach 100 and change colour when fully charged.
 - Ejecting from the exo, and dying in it, should leave nothing on screen.
 - Resolution change, since `OnResolutionChanged` rebuilds both items.
 
