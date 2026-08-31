@@ -17,6 +17,9 @@ All line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 - Anything that is not a distinct primary — welder, pistol, mines — reads as rifle. This needs no
   code: `GetPlayerStatusDesc` inspects slot 1 only and already resolves them to
   `kPlayerStatus.Rifle`.
+- **Jetpackers keep the jetpack glyph and take the weapon colour** (settled 2026-08-31). The
+  distinction is carried by the sprite, the colour by the weapon — the two are independent, so a
+  jetpacker with a shotgun reads as "jetpack" and "shotgun" at once.
 - Toggleable, so a busy palette is acceptable.
 - Must react to the vanilla colourblind setting.
 
@@ -30,6 +33,26 @@ The vanilla colours it overrides come from `AdvancedOptions["playercolor_m"]` / 
 (`AdvancedOptions.lua:1115-1153`), colour pickers writing `CHUD_PlayerColor_M` / `_A`, defaults
 `0x00D8FF` and `0xFF8A00`, whose `immediateUpdate` sets `MapBlip.kCustomMarineColor` /
 `kCustomAlienColor`.
+
+## Jetpackers already have their own sprite
+
+No new art is needed for the distinction itself. Blip sprites are chosen by class name through
+`BuildClassToGrid` (`NS2Utility.lua:2709`), and the jetpacker has its own cell:
+
+    ClassToGrid["Marine"]        = { 1, 2 }
+    ClassToGrid["Exo"]           = { 2, 2 }
+    ClassToGrid["JetpackMarine"] = { 3, 2 }
+
+in `ui/minimap_blip.dds`. `MapBlipMixin.lua:228` resolves the type with
+`kMinimapBlipType[self:GetClassName()]`, so a jetpacker is already drawn with the jetpack glyph
+today. Sprite and colour are independent, which is exactly why this decision costs nothing: tint the
+glyph the marine already has.
+
+**Open, and an art question rather than a code one:** B2TP ships its own edited
+`ui/minimap_blip.dds` that darkens the jetpack backpack, because vanilla's distinction between the
+marine and jetpacker glyphs is faint at map scale. Reusing that edit here would make the sprite half
+of this feature far more legible. It is the user's own art from their own mod, so it is their call
+whether to bring it across — do not copy it without asking.
 
 ## The weapon is already on every client — no new networking
 
