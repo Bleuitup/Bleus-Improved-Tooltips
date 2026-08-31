@@ -30,6 +30,10 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
 	-- The spectator top bar, for its biomass counter's colour.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
+	-- The mod's own settings panel under Options, Mods. Hooked on the file that declares
+	-- gModsCategories, so by the time we append, the table exists and manageMods is already first
+	-- in it - which GUIMenuOptions.lua:425 asserts.
+	ModLoader.SetupFileHook("lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua", "lua/ImprovedTooltips/ImprovedTooltips_ModsMenu.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
