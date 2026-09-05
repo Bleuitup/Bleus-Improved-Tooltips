@@ -33,6 +33,9 @@ if Client then
 	-- Marine HUD: keep researched-but-inactive weapon and armour icons on screen in alert red
 	-- when the arms lab is destroyed or unpowered, instead of hiding them.
 	ModLoader.SetupFileHook("lua/Hud/Marine/GUIMarineHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_ArmsLabAlert.lua", "post")
+	-- The twelve-bead biomass bar shown with the map, buy menu or tech map open: a partial fill on
+	-- each bead being researched, and progress meters under the ability icons.
+	ModLoader.SetupFileHook("lua/GUIBioMassDisplay.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassOverlay.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and

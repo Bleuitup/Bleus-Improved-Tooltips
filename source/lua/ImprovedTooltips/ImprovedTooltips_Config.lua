@@ -204,3 +204,29 @@ IT.kShowLostArmsLabUpgrades = true
 -- Vanilla's own alert red, from GUIMarineHUD:Update. Kept as a setting only so it can be toned
 -- down; the default is deliberately the shade the game already chose for this state.
 IT.kArmsLabLostColor = Color(1, 0, 0, 1)
+-- The twelve-bead biomass overlay
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_BiomassOverlay.lua. The bar in the top left, shown with the map, the buy
+-- menu or the tech map open. Vanilla reads a single integer for it, so a bead can only pop from
+-- empty to full; these draw the research that is already in flight.
+
+-- Partial fill on the beads being researched, and progress meters under the ability icons.
+IT.kShowBiomassOverlayProgress = true
+
+-- Tint for the partial bead. It draws the same slice of the same texture as the filled bar, so
+-- this is what tells "being researched" apart from "done" - dimmer and slightly transparent, in
+-- the manner of a ghost.
+IT.kBiomassBeadProgressColor = Color(1, 1, 1, 0.5)
+
+-- Height of an ability progress meter, as a fraction of the icon. GUITechMap uses 10px against its
+-- own larger icons; these are a twelfth of the bar, so a fraction keeps the proportion rather than
+-- the pixel count.
+IT.kBiomassAbilityMeterFraction = 0.18
+
+-- White, to match the tech map. Vanilla never calls SetColor on its own progress meter anywhere in
+-- GUITechMap.lua, so it renders at the GUI default - plain white - and the same research reads the
+-- same way in both places. Do not "correct" this to the alien palette: the meter is a mechanism,
+-- not team furniture, and it was alien yellow here until 2026-09-05 when the inconsistency showed
+-- up in game.
+IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
