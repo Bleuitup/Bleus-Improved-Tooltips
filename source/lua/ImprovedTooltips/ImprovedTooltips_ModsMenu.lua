@@ -92,7 +92,9 @@ local kContents =
 			optionPath = kOptionCooldownPanel,
 			optionType = "bool",
 			default = kDefaultCooldownPanel,
-			tooltip = "Show the In Cooldown panel listing the commander abilities your team currently has on cooldown. Cooldowns are shared by the whole team, so this is useful to every player, not only the commander.",
+			-- The inner quotes are escaped, not smart quotes: this is a plain double-quoted Lua
+			-- string, so an unescaped " would close it early.
+			tooltip = "Show the \"In Cooldown\" panel listing the commander abilities your team currently has on cooldown. Cooldowns are shared by and to the whole team.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =
@@ -115,7 +117,9 @@ local kContents =
 			maxValue = 30,
 			decimalPlaces = 0,
 
-			tooltip = "Abilities with a cooldown shorter than this are left out, so the panel does not flicker with the two and three second casts. At the default of 5 it lists Shade Ink, Bone Wall, Nano Shield, Heal Wave and Reverse Phase Gate. Set to 0 to list everything.",
+			-- Deliberately names no abilities: any list here goes stale under a mod that retunes
+			-- cooldowns, and CBM retunes some.
+			tooltip = "Abilities with a cooldown shorter than this are left out. Default is 5. Set to 0 to list everything.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =
