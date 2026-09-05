@@ -211,4 +211,9 @@ IT.kBiomassBeadProgressColor = Color(1, 1, 1, 0.5)
 -- the pixel count.
 IT.kBiomassAbilityMeterFraction = 0.18
 
-IT.kBiomassAbilityMeterColor = Color(1, 0.9, 0.4, 1)
+-- White, to match the tech map. Vanilla never calls SetColor on its own progress meter anywhere in
+-- GUITechMap.lua, so it renders at the GUI default - plain white - and the same research reads the
+-- same way in both places. Do not "correct" this to the alien palette: the meter is a mechanism,
+-- not team furniture, and it was alien yellow here until 2026-09-05 when the inconsistency showed
+-- up in game.
+IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
