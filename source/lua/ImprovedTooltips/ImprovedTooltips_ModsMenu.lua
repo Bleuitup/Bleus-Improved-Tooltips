@@ -139,8 +139,12 @@ table.insert(gModsCategories,
 		class = GUIMenuCategoryDisplayBoxEntry,
 		params =
 		{
+			-- No height. GUIMenuCategoryDisplayBoxEntry defaults to kHeight = 166 (:40, applied at
+			-- :132 as "params.height or kHeight"), which is what vanilla's MANAGE MODS and every
+			-- other mod's category use. An earlier 101 here was copied from AdvancedMenuData, but
+			-- that is the ADVANCED tab, whose entries are deliberately denser - it made ours the
+			-- one short bar in the list.
 			label = "BLEU'S IMPROVED TOOLTIPS",
-			height = 101,
 		},
 	},
 
