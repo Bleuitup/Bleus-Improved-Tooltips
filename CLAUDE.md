@@ -163,7 +163,9 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   (4,5) of `ui/buildmenu.dds`. Greyscale, already points right, and CBM assigns the same index to
   `SpurPassive`.
 - **Icon indices in `buildmenu.dds` are `y*12 + x`, 80px cells**, sheet is 960 wide.
-- The mod's own sheet is now **192x64, three cells**: hourglass, stopwatch, marine speed chevron.
+- The mod's own sheet is **448x64, seven cells**: hourglass, stopwatch, marine speed chevron,
+  health cross, armour shield, ready tick, not-ready cross. `tools/build_icons.ps1` builds it, and
+  the cell ORDER is what `kOwnIconCoords` indexes - append, never reorder.
 - **The marine chevron is lifted, not drawn**: `marine_buildmenu_insight.dds` row 2 col 4
   (x 240-320, y 80-160), mirrored to point right. Its button plate is **opaque**, so unlike the
   buy-menu glyphs the alpha channel is useless — luminance becomes the mask instead. Luminance alone
