@@ -251,3 +251,19 @@ IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
 -- same value: that one means "a biomass icon", this one means "being researched". Changing one
 -- should not silently change the other.
 IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)
+
+------------------------------------------------------------------------------------------------
+-- Tournament mode ready pips
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_TournamentReady.lua. A tick or a cross in the corner of each team's skill
+-- badge on the scoreboard while Shine's tournament mode waits for both teams to ready up. Inert
+-- unless that plugin is running, and removed entirely once the round starts.
+
+IT.kShowTournamentReadyPips = true
+
+-- Pip size as a fraction of the skill badge's height, and how far it hangs past the badge's corner
+-- as a fraction of its own size. The overhang is what makes it read as a ribbon on the corner
+-- rather than as something sitting inside the badge.
+IT.kReadyPipScale = 0.34
+IT.kReadyPipOverhang = 0.25

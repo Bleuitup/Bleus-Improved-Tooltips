@@ -40,6 +40,9 @@ if Client then
 	-- gModsCategories, so by the time we append, the table exists and manageMods is already first
 	-- in it - which GUIMenuOptions.lua:425 asserts.
 	ModLoader.SetupFileHook("lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua", "lua/ImprovedTooltips/ImprovedTooltips_ModsMenu.lua", "post")
+	-- Scoreboard: a ready or not-ready pip on each team's skill badge while Shine's tournament mode
+	-- is waiting for both teams. Inert when that plugin is not running.
+	ModLoader.SetupFileHook("lua/GUIScoreboard.lua", "lua/ImprovedTooltips/ImprovedTooltips_TournamentReady.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
