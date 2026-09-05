@@ -70,6 +70,17 @@ if not kMainVM and ImprovedTooltips then
 	ImprovedTooltips.ApplyStoredOptions = ApplyStoredOptions
 end
 
+-- CASING, matching vanilla. Option labels and category names are written in CAPITALS; the tooltip
+-- beneath them is ordinary sentence case with full stops. This is in the strings themselves, not a
+-- transform the widget applies - from ns2/gamestrings/enUS.txt:
+--
+--   ADVANCED_OPTION_MARINE_HEALTHBARS         = "MARINE HEALTH BARS"
+--   ADVANCED_OPTION_MARINE_HEALTHBARS_TOOLTIP = "Toggles the health bars from the bottom left of
+--                                                the marine HUD and only leaves the numbers."
+--   MENU_MANAGE_MODS                          = "MANAGE MODS"
+--
+-- So write labels upper and tooltips normally. Vanilla's tooltips also run one or two sentences;
+-- keep to that.
 local kContents =
 {
 	{
@@ -86,7 +97,7 @@ local kContents =
 		},
 		properties =
 		{
-			{ "Label", "In Cooldown panel" },
+			{ "Label", "IN COOLDOWN PANEL" },
 		},
 	},
 
@@ -109,7 +120,7 @@ local kContents =
 		},
 		properties =
 		{
-			{ "Label", "Minimum cooldown shown (seconds)" },
+			{ "Label", "MINIMUM COOLDOWN SHOWN (SECONDS)" },
 		},
 	},
 }
@@ -124,7 +135,7 @@ table.insert(gModsCategories,
 		class = GUIMenuCategoryDisplayBoxEntry,
 		params =
 		{
-			label = "Bleu's Improved Tooltips",
+			label = "BLEU'S IMPROVED TOOLTIPS",
 			height = 101,
 		},
 	},
