@@ -57,7 +57,7 @@ Movement speed is the structure's own figure, read from the game rather than fro
 
 Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here.
 
-[b]Community Balance Mod[/b] is the one mod named anywhere in the code, in a single place: its biomass 5 research is tinted purple on the hive panel, matching the way CBM marks that hive out. Everything else about CBM tech, including its own icons for it, arrives through the same path as anything else.
+[b]Community Balance Mod[/b] is the one mod named anywhere in the code, in a single place: its biomass 5 research is tinted on the hive panel in CBM's own colour for advanced alien tech, matching the way CBM marks that hive out. Everything else about CBM tech, including its own icons for it, arrives through the same path as anything else.
 
 Modders can register their own value resolvers for anything they compute at runtime — see the README on GitHub.
 

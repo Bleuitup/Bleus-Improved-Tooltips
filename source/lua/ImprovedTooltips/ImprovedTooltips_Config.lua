@@ -181,14 +181,21 @@ IT.kEnableCBMCompat = true
 -- Tint the biomass 5 research icon on the hive HUD, which CBM marks out in purple.
 IT.kColorCBMBiomassFive = true
 
--- The shade to use. This is CBM's own UI purple - the colour it draws tech map and minimap
--- connector lines in - chosen over sampling the hive model because this is a UI element sitting
--- among other UI, and because it is a colour CBM picked deliberately rather than one averaged out
--- of a texture.
+-- CBM's own colour for advanced ALIEN content: kAdvancedAlienColor in its GUIMinimap.lua, the
+-- counterpart to kAdvancedMarineColor = Color(0.4, 0, 1, 1) for advanced marine content. Confirmed
+-- by one of CBM's developers, 2026-09-05.
 --
--- If the model's own shade reads better in game, CBM's biomass 5 hive glows a deeper magenta,
--- roughly Color(0.85, 0.25, 0.45, 1); swapping this line is the whole change.
-IT.kCBMBiomassFiveColor = Color(0.7, 0.3, 1, 1)
+-- It used to be Color(0.7, 0.3, 1, 1) here, taken from CBM's tech map and minimap connector lines.
+-- That was the closest thing to a deliberate CBM colour at the time, but it is a generic UI purple
+-- and, as it turns out, nearer their advanced MARINE shade than their alien one - so an alien
+-- research was being marked in almost the marine colour. This is the semantic one.
+--
+-- Mirrored rather than read at runtime. CBM declares both as file-locals in its own copy of
+-- GUIMinimap.lua and keys them into self.blipColorTable through kBlipColorType, which it also
+-- redeclares as a file-local with two entries appended. Nothing about that is reachable by name
+-- from a post-hook, and indexing the table by a guessed enum position would break the moment CBM
+-- reorders it. If these ever drift, that file is where to look.
+IT.kCBMBiomassFiveColor = Color(0.93, 0, 0.65, 1)
 
 ------------------------------------------------------------------------------------------------
 -- Lost arms lab upgrades
