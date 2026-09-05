@@ -30,6 +30,9 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
 	-- The spectator top bar, for its biomass counter's colour.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
+	-- The twelve-bead biomass bar shown with the map, buy menu or tech map open: a partial fill on
+	-- each bead being researched, and progress meters under the ability icons.
+	ModLoader.SetupFileHook("lua/GUIBioMassDisplay.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassOverlay.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and

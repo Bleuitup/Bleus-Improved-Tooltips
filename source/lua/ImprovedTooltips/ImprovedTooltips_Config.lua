@@ -189,3 +189,26 @@ IT.kColorCBMBiomassFive = true
 -- If the model's own shade reads better in game, CBM's biomass 5 hive glows a deeper magenta,
 -- roughly Color(0.85, 0.25, 0.45, 1); swapping this line is the whole change.
 IT.kCBMBiomassFiveColor = Color(0.7, 0.3, 1, 1)
+
+------------------------------------------------------------------------------------------------
+-- The twelve-bead biomass overlay
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_BiomassOverlay.lua. The bar in the top left, shown with the map, the buy
+-- menu or the tech map open. Vanilla reads a single integer for it, so a bead can only pop from
+-- empty to full; these draw the research that is already in flight.
+
+-- Partial fill on the beads being researched, and progress meters under the ability icons.
+IT.kShowBiomassOverlayProgress = true
+
+-- Tint for the partial bead. It draws the same slice of the same texture as the filled bar, so
+-- this is what tells "being researched" apart from "done" - dimmer and slightly transparent, in
+-- the manner of a ghost.
+IT.kBiomassBeadProgressColor = Color(1, 1, 1, 0.5)
+
+-- Height of an ability progress meter, as a fraction of the icon. GUITechMap uses 10px against its
+-- own larger icons; these are a twelfth of the bar, so a fraction keeps the proportion rather than
+-- the pixel count.
+IT.kBiomassAbilityMeterFraction = 0.18
+
+IT.kBiomassAbilityMeterColor = Color(1, 0.9, 0.4, 1)
