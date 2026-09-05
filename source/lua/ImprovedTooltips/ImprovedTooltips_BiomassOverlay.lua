@@ -45,6 +45,29 @@ local IT = ImprovedTooltips
 local kForegroundCoords = { 0, 0, 1200, 160 }
 local kBeadCount = 12
 
+-- THE BEADS ARE NOT EVENLY SPACED, so a bead is not a twelfth of the bar. Measured from
+-- ui/biomass_bar.dds itself, by decompressing it with utils/nvdecompress.exe and taking the runs of
+-- columns carrying alpha above 40 in the foreground band (y 0..159). Widths come out 78 to 80 with
+-- gaps between them of 10 to 25 pixels, so dividing 1200 by 12 puts a fill up to a third of a bead
+-- out of place, starting inside the dark gap before it.
+--
+-- Left edge inclusive, right edge exclusive, in texture pixels.
+local kBeadBounds =
+{
+	{   30,  108 },
+	{  127,  207 },
+	{  222,  302 },
+	{  326,  406 },
+	{  423,  502 },
+	{  518,  597 },
+	{  622,  701 },
+	{  720,  799 },
+	{  815,  894 },
+	{  904,  983 },
+	{ 1001, 1080 },
+	{ 1096, 1176 },
+}
+
 -- Same list, and the same ordering, as ImprovedTooltips_BiomassProgress.lua writes to. The index IS
 -- the team biomass level the node stands for, so this must stay positional - never close a gap.
 local kBioMassTechIds =
@@ -84,22 +107,29 @@ end
 -- Partial fill on the beads being researched
 ------------------------------------------------------------------------------------------------
 
-local function GetBeadItem(self, index)
+-- One item per bead, at a fixed position, always the full size of its bead and showing that whole
+-- bead of the texture. How much of it is revealed is done with a CROP rather than by resizing.
+--
+-- Resizing would mean keeping two numbers in step - the item's width and a matching sub-slice of
+-- the texture - and any disagreement between them squashes or stretches the art. A crop cannot
+-- drift: the item never moves and never changes size, so the visible part always lines up with the
+-- bead underneath it.
+local function GetBeadItem(self, level)
 
 	self.itBeads = self.itBeads or { }
 
-	if not self.itBeads[index] then
+	if not self.itBeads[level] then
 
 		local item = GetGUIManager():CreateGraphicItem()
 		item:SetAnchor(GUIItem.Left, GUIItem.Top)
 		item:SetInheritsParentAlpha(true)
 		item:SetIsVisible(false)
 		self.background:AddChild(item)
-		self.itBeads[index] = item
+		self.itBeads[level] = item
 
 	end
 
-	return self.itBeads[index]
+	return self.itBeads[level]
 
 end
 
@@ -115,42 +145,41 @@ local function UpdateBeadProgress(self)
 	local bioMass = (teamInfo and teamInfo.GetBioMassLevel) and teamInfo:GetBioMassLevel() or 0
 
 	local barSize = self.background:GetSize()
-	local beadWidth = barSize.x / kBeadCount
-	local texWidth = (kForegroundCoords[3] - kForegroundCoords[1]) / kBeadCount
-
-	local shown = 0
+	local texWidth = kForegroundCoords[3] - kForegroundCoords[1]
 
 	-- Only levels ABOVE the current one can be in flight, and vanilla's own filled bar already
 	-- covers everything at or below it, so there is nothing to overlap.
-	for index = bioMass + 1, kBeadCount do
+	for level = 1, kBeadCount do
 
-		local fraction = GetResearchFraction(techTree, kBioMassTechIds[index])
+		local fraction = 0
+
+		if level > bioMass then
+			fraction = GetResearchFraction(techTree, kBioMassTechIds[level])
+		end
+
+		local item = GetBeadItem(self, level)
 
 		if fraction > 0 then
 
-			shown = shown + 1
-			local item = GetBeadItem(self, shown)
+			local bounds = kBeadBounds[level]
+			local scale = barSize.x / texWidth
 
-			-- Same texture and the same slice of it vanilla uses, just cropped to one bead and then
-			-- to the fraction within it. Read from the live item so a re-themed bar follows.
+			-- Same texture vanilla uses, read from the live item so a re-themed bar follows.
 			item:SetTexture(self.foreground:GetTexture())
-			item:SetSize(Vector(beadWidth * fraction, barSize.y, 0))
-			item:SetPosition(Vector((index - 1) * beadWidth, 0, 0))
+			item:SetPosition(Vector(bounds[1] * scale, 0, 0))
+			item:SetSize(Vector((bounds[2] - bounds[1]) * scale, barSize.y, 0))
+			item:SetTexturePixelCoordinates(bounds[1], kForegroundCoords[2], bounds[2], kForegroundCoords[4])
 
-			local x1 = kForegroundCoords[1] + (index - 1) * texWidth
-			item:SetTexturePixelCoordinates(x1, kForegroundCoords[2], x1 + texWidth * fraction, kForegroundCoords[4])
+			item:SetCropMinCornerNormalized(0, 0)
+			item:SetCropMaxCornerNormalized(fraction, 1)
 
 			item:SetColor(IT.kBiomassBeadProgressColor)
 			item:SetIsVisible(true)
 
+		else
+			item:SetIsVisible(false)
 		end
 
-	end
-
-	if self.itBeads then
-		for i = shown + 1, #self.itBeads do
-			self.itBeads[i]:SetIsVisible(false)
-		end
 	end
 
 end
