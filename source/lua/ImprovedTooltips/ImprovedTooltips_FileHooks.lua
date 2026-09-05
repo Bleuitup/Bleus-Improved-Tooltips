@@ -36,6 +36,10 @@ if Client then
 	-- The twelve-bead biomass bar shown with the map, buy menu or tech map open: a partial fill on
 	-- each bead being researched, and progress meters under the ability icons.
 	ModLoader.SetupFileHook("lua/GUIBioMassDisplay.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassOverlay.lua", "post")
+	-- The mod's own settings panel under Options, Mods. Hooked on the file that declares
+	-- gModsCategories, so by the time we append, the table exists and manageMods is already first
+	-- in it - which GUIMenuOptions.lua:425 asserts.
+	ModLoader.SetupFileHook("lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua", "lua/ImprovedTooltips/ImprovedTooltips_ModsMenu.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
