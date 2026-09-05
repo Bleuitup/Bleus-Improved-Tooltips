@@ -45,13 +45,24 @@ Both are visible to every player on the team, not just the commander.
 [*] [b]Simultaneous biomass research.[/b] With two hives researching biomass at once the tech map lit up only one icon between them, because the team collapses every hive into a single number before drawing. Two hives now light two icons, three light three.
 [*] [b]Supply icons.[/b] The supply figure on a tooltip was marked with a MAC or a Drifter while the HUD's top bar used a different pair of icons for the same thing. The tooltip now uses the top bar's. The MAC and Drifter icons are untouched wherever they stand for the units themselves.
 [*] [b]Uncoloured biomass icons.[/b] The biomass icon was drawn as bare greyscale art wherever it appeared: on the commander tooltip, on the spectator counter, and so on the hive panel too. Nothing else in a tooltip or in the tech tree stays uncoloured, so it read as unfinished rather than deliberate. All of them now take the tech map's own colour for researched alien tech.
+[*] [b]Lost arms lab upgrades.[/b] When a team loses every arms lab, or they all lose power, the weapon and armour icons on the marine HUD simply vanished - which looks exactly like never having researched them. They now stay on screen in the alert red the base game already defined for this and never showed, so "we lost it" reads differently from "we never had it".
 [/list]
 
 [h1]Live values[/h1]
 
 Numbers that change during a round are read live rather than printed from a table. Bone Wall's health scales with your biomass level, so at Biomass 9 the tooltip says 900, not 100.
 
-Movement speed is the structure's own figure, read from the game rather than from a table, which is why it picks up whatever the loaded mods set it to.
+Movement speed is read off the unit's own class rather than from a table, so it is the vanilla unupgraded figure. Mods that compute speed live from game state rather than storing it will read low, or blank rather than guess.
+
+[h1]The biomass bar[/h1]
+
+The twelve bead bar in the top left, the one that appears with the map, the buy menu or the tech map open, only ever knew whole beads: a bead was empty until the research finished, then full.
+
+Each bead being researched now fills as the work goes in, and more than one fills at a time when more than one hive is working. The ability icons along the bar light up and carry a progress bar while their research is under way, the same as they do on the tech map, instead of staying greyed out until the moment they finish.
+
+[h1]Settings[/h1]
+
+Options, Mods, "Bleu's Improved Tooltips". The In Cooldown panel can be turned off there, and a slider sets the shortest cooldown it will list, so you can quiet it down or show everything. Both take effect immediately.
 
 [h1]Works with other mods[/h1]
 

@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.0. Published to the Steam Workshop as
+Version 1.01. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -488,6 +488,30 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.01**
+- **Lost arms lab upgrades stay on screen, in red.** When a team loses every arms lab, or they all
+  lose power, the marine HUD's weapon and armour icons simply vanished — indistinguishable from
+  never having researched them. Vanilla already contains the alert red for this state but can never
+  show it: `GUIMarineHUD:Update` hides the icons fifteen lines before it colours them, and both
+  tests come from the same arms lab. The icons now stay, using vanilla's own colour, driven by the
+  `researched` flag `PlayerUI_GetArmorLevel` accepts and the HUD never passes.
+- **The biomass bar shows research as it happens.** The twelve bead bar knew only whole beads —
+  empty until a research finished, then full — because it reads a single integer. Each bead being
+  researched now fills as the work goes in, several at once when several hives are working, drawn
+  from the per-level progress the 0.92 fix has been publishing all along. Bead positions are
+  measured from the texture rather than assumed even; they are not.
+- **Ability icons on that bar light up while being researched** and carry a progress bar, matching
+  the tech map, which promotes any node with partial progress to its "available" colour. They used
+  to stay greyed out until the instant the research completed.
+- **A settings panel under Options, Mods**, alongside CBM's and anyone else's: the In Cooldown panel
+  can be switched off, and a slider sets the shortest cooldown it will list. Both apply immediately.
+- **CBM's biomass 5 tint now uses CBM's own advanced alien colour.** It previously used the purple
+  from CBM's tech map connector lines, which is in fact nearer their advanced *marine* shade — an
+  alien research marked in almost the marine colour.
+- The Workshop description no longer claims movement speed "picks up whatever the loaded mods set it
+  to". It does not: the figure is read off the unit's own class, so mods that compute speed live
+  from game state read low or blank. Known, and stated plainly rather than overclaimed.
 
 **1.0**
 - **Speed is stated plainly and never dimmed.** Structures whose movement is conditional used to be
