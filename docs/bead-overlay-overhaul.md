@@ -87,26 +87,25 @@ them individually. Our `Uninitialize` hook only clears the references.
 - Open and close the map repeatedly, and switch teams, to shake out stale or leaked items.
 - Check it as commander, where the overlay is always visible, as well as from the map.
 
-## Checked against another mod
+## Two things the first draft got wrong
 
-The Manga Admin mod on another server ships the same feature, written independently
-(`GUIBioMassPartialProgress.lua`, plus an `AlienTeamBiomassDisplay.lua` matching our 0.92 server
-fix). Two of its choices were better than the first draft here and were adopted:
+Both were found before the branch was tested, and both are worth keeping written down because the
+wrong version looks plausible.
 
-- **Measured bead positions** rather than dividing the bar into twelfths. The beads are not evenly
-  spaced — 78 to 80 pixels wide with gaps of 10 to 25 between them — so an even split put a fill up
-  to a third of a bead out of place, starting inside the dark gap before it. The bounds in this file
-  were measured independently from the texture and agree with theirs to within a pixel.
-- **Crop rather than resize** to reveal progress, so the item never moves or changes size and cannot
-  drift out of alignment with the bead beneath it.
+- **Bead positions must be measured, not assumed.** The first draft divided the bar into twelfths.
+  The beads are not evenly spaced — 78 to 80 pixels wide with gaps of 10 to 25 between them — so an
+  even split put a fill up to a third of a bead out of place, starting inside the dark gap before
+  it. The bounds in this file come from decompressing `ui/biomass_bar.dds` and taking the runs of
+  columns carrying alpha in the foreground band; the method is written into the source comment so it
+  can be redone if the art ever changes.
+- **Crop rather than resize** to reveal progress. Resizing meant keeping the item's width and a
+  matching texture sub-slice in step, and any disagreement between them stretched the art. With a
+  crop the item never moves or changes size, so it cannot drift out of alignment with the bead
+  beneath it.
 
-**Not adopted:** raising the level text's layer. Their version does it, but testing showed the text
-sits clear of the bead art, and vanilla's own full-width fill already passes under it at 12/12
-without obscuring it. There is nothing to fix.
-
-**What they do not have:** the ability progress meters, and ordering pending research by time
-remaining rather than by fraction. Theirs sorts by progress, which puts bars on the wrong beads
-whenever two hives sit at different levels, since biomass researches run 25, 40, 60 and 80 seconds.
+**Considered and rejected:** raising the level text's layer, on the theory that a partial fill could
+draw over "Biomass Level: N / 12". Testing showed the text sits clear of the bead art, and vanilla's
+own full-width fill already passes under it at 12/12 without obscuring it. There is nothing to fix.
 
 ## Most likely to need adjusting in game
 
