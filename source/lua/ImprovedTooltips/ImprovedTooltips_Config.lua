@@ -138,7 +138,7 @@ IT.kHiveResearchDnaScale = 0.55
 -- means the same thing wherever it is seen.
 --
 -- A compatibility module can claim a different colour for one specific research; CBM's biomass 5
--- takes CBM purple this way. See IT.RegisterIconColor.
+-- takes CBM's advanced alien colour this way. See IT.RegisterIconColor.
 IT.kBiomassIconColor = Color(1, 0.9, 0.4, 1)
 
 -- Colour the spectator top bar's biomass counter too. Separate because reaching it takes more work
@@ -237,3 +237,17 @@ IT.kBiomassAbilityMeterFraction = 0.18
 -- not team furniture, and it was alien yellow here until 2026-09-05 when the inconsistency showed
 -- up in game.
 IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
+
+-- Colour for an ability icon while its research is in flight. Vanilla's overlay only knows locked
+-- and unlocked, so a research under way sits greyed out until the moment it finishes.
+--
+-- The tech map does not: GUITechMap promotes any node with partial progress straight to
+-- kTechStatus.Available - "if researchProgress ~= 0 and researchProgress ~= 1 then status =
+-- kTechStatus.Available" - so the icon lights up the moment work starts. This is that same colour,
+-- kTechMapIconColors[kAlienTeamType][kTechStatus.Available], so a research in progress looks the
+-- same in both places.
+--
+-- Deliberately its own constant rather than sharing IT.kBiomassIconColor, which happens to hold the
+-- same value: that one means "a biomass icon", this one means "being researched". Changing one
+-- should not silently change the other.
+IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)

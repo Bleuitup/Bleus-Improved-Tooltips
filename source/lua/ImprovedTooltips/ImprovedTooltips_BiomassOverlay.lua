@@ -256,6 +256,18 @@ local function UpdateAbilityProgress(self)
 					background:SetIsVisible(true)
 					meter:SetIsVisible(true)
 
+					-- Light the icon itself, matching the tech map. Vanilla's overlay knows only
+					-- locked and unlocked (GUIBioMassDisplay.lua:123-135), so a research under way
+					-- stays greyed out until it finishes; GUITechMap instead promotes any node with
+					-- partial progress to kTechStatus.Available and colours it.
+					--
+					-- Safe to set every frame: vanilla writes this colour from UpdateAbilityList,
+					-- which only runs inside its own Update, and that early-returns on most frames.
+					-- Ours runs after it either way, so the override always lands. When the fraction
+					-- returns to zero we stop touching it and vanilla restores locked or unlocked on
+					-- its next pass.
+					levelIcon.Graphic:SetColor(IT.kBiomassAbilityResearchingColor)
+
 				elseif levelIcon.itMeterBg then
 
 					levelIcon.itMeterBg:SetIsVisible(false)
