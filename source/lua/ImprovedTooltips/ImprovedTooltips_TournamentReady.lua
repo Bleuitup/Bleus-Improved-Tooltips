@@ -4,21 +4,32 @@
 -- Post-hook on lua/GUIScoreboard.lua. Puts a tick or a cross in the corner of each team's skill
 -- badge while Shine's tournament mode is waiting for both teams to ready up.
 --
--- WHERE THE STATE COMES FROM. Shine already broadcasts it: the tournamentmode plugin declares
--- TeamReadyChange { Team, IsReady } as a client message in its shared.lua, so nothing is needed
--- from the server and nothing is needed from Shine. But the plugin's client half only prints a
--- notification when that arrives (tournamentmode/client.lua:76) - it does not keep the state - so
--- this file keeps its own.
+-- WHERE THE STATE COMES FROM. Shine already broadcasts it, but not as one canonical message. The
+-- tournamentmode plugin picks whichever message suits the situation, and three of them move a team
+-- between ready and not ready:
 --
--- It wraps the plugin's own receiver rather than hooking the raw network message. The message is
--- registered as "SH_tournamentmode_TeamReadyChange" (Shine builds the name in
--- core/shared/base_plugin/networking.lua:87), but it only exists once the plugin has loaded, and
--- this mod has no ordering relationship with Shine at all. Wrapping the receiver is late-bound by
--- nature: we look for the plugin each frame until it is there, and if tournament mode is never
--- enabled nothing happens.
+--   TeamReadyChange { Team, IsReady }        server.lua:180,189,345,365. Both directions, but
+--       ReadyTeam only sends it when the OTHER team is already ready.
+--   TeamReadyWaiting { ReadyTeam, Waiting }  server.lua:350. The first team to ready. Only sent
+--       when the other team is not ready, so it settles the state of both.
+--   TeamPlayerNotReady { Team, PlayerName }  server.lua:413. A player on a ready team backing out.
+--       UnReadyTeam is then called without its notify flag, so no TeamReadyChange follows and this
+--       is the only word a client gets that the team is no longer ready.
 --
--- KNOWN GAP, and it is Shine's rather than ours: TeamReadyChange only fires on a CHANGE. There is
--- no message carrying the current state, so a client connecting mid-pregame does not learn that a
+-- Listening to TeamReadyChange alone therefore misses the most ordinary case of all: the first
+-- team to ready up. The plugin's client half keeps none of this - it only prints a notification
+-- (client.lua:76,84,113) - so this file keeps its own table.
+--
+-- It wraps the plugin's own receivers rather than hooking the raw network messages. The messages
+-- are registered as "SH_tournamentmode_<Name>" (Shine builds the name in
+-- core/shared/base_plugin/networking.lua:87), but they only exist once the plugin has loaded, and
+-- this mod has no ordering relationship with Shine at all. Wrapping is safe and late-bound:
+-- Shine's dispatcher looks the receiver up on the plugin table at call time (networking.lua:102),
+-- not at registration, so a wrapper installed later still runs. We look for the plugin each frame
+-- until it is there, and if tournament mode is never enabled nothing happens.
+--
+-- KNOWN GAP, and it is Shine's rather than ours: all three messages fire on a CHANGE. There is no
+-- message carrying the current state, so a client connecting mid-pregame does not learn that a
 -- team is already ready until the next toggle. The default is "not ready", so the wrong answer is
 -- a cross on a team that is ready, which corrects itself the moment anything changes. Fixing it
 -- properly needs something new from the Shine side.
@@ -59,6 +70,35 @@ local function GetTournamentPlugin()
 
 end
 
+-- The receivers worth wrapping, and what each one says about a team. Keyed by method name so the
+-- wrapper below can install them all in one pass, and so a Shine version that drops one of these
+-- simply leaves it unwrapped rather than erroring.
+local kReceivers = {
+
+	ReceiveTeamReadyChange = function(data)
+		if data.Team then
+			readyStates[data.Team] = data.IsReady == true
+		end
+	end,
+
+	ReceiveTeamReadyWaiting = function(data)
+		-- Only sent when the waiting team is not ready, so both ends of it are known here.
+		if data.ReadyTeam then
+			readyStates[data.ReadyTeam] = true
+		end
+		if data.WaitingTeam then
+			readyStates[data.WaitingTeam] = false
+		end
+	end,
+
+	ReceiveTeamPlayerNotReady = function(data)
+		if data.Team then
+			readyStates[data.Team] = false
+		end
+	end,
+
+}
+
 -- Wrapped once per plugin instance. Compared by identity rather than by a boolean so that a plugin
 -- reloaded mid-session is wrapped again rather than left un-hooked.
 local function EnsurePluginHook(plugin)
@@ -67,18 +107,22 @@ local function EnsurePluginHook(plugin)
 		return
 	end
 
-	if not plugin.ReceiveTeamReadyChange then
-		return
-	end
+	for name, apply in pairs(kReceivers) do
 
-	local original = plugin.ReceiveTeamReadyChange
+		local original = plugin[name]
 
-	plugin.ReceiveTeamReadyChange = function(self, data)
+		if original then
 
-		original(self, data)
+			plugin[name] = function(self, data)
 
-		if data and data.Team then
-			readyStates[data.Team] = data.IsReady == true
+				original(self, data)
+
+				if data then
+					apply(data)
+				end
+
+			end
+
 		end
 
 	end

@@ -1,35 +1,56 @@
-# Tournament mode ready badge — plan
+# Tournament mode ready badge
 
-Branch `feature/tournament-ready-badge`, cut from `release/1.01`. Nothing implemented yet.
+Branch `feature/tournament-ready-badge`, cut from `release/1.01`. Built and under test.
 
 A tick when a team is ready under Shine's tournament mode, a cross when it is not.
 
-All NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`; Shine
-paths are relative to the local `Shine` clone in the workspace.
+All NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`. Shine
+paths are relative to `lua/shine` inside its Workshop copy, which on this machine is
+`D:\SteamLibrary\steamapps\workshop\content\4920\117887554` — the readable source of truth for what
+the server actually runs, since nothing under the server folder carries Shine's Lua.
 
 ## The ready state is already on the client
 
-Shine's tournament mode broadcasts it. From
-`Shine/lua/shine/extensions/tournamentmode/shared.lua:26-29`:
+Shine's tournament mode broadcasts it — but not as one canonical message, which cost a round of
+testing to find out. `ReadyTeam` (`extensions/tournamentmode/server.lua:338-357`) picks its message
+based on what the *other* team is doing:
 
 ```
-self:AddNetworkMessage( "TeamReadyChange", {
-    Team = TeamField,
-    IsReady = "boolean"
-}, "Client" )
+if OtherReady then
+    self:SendNetworkMessage( nil, "TeamReadyChange", { Team = Team, IsReady = true }, true )
+else
+    self:SendNetworkMessage( nil, "TeamReadyWaiting", { ReadyTeam = Team, WaitingTeam = OtherTeam }, true )
+end
 ```
 
-So no server work and no cooperation from Shine is needed — only listening.
+So **listening to `TeamReadyChange` alone misses the first team to ready up** — the single most
+common event there is. Three messages move a team between ready and not ready:
 
-**The registered name is `SH_tournamentmode_TeamReadyChange`.** Shine builds it as
+| Message | Fields | Sent when |
+| --- | --- | --- |
+| `TeamReadyChange` | `Team`, `IsReady` | A team readies while the other already is; a team unreadies by command; a ready team loses its commander (`server.lua:180,189`) |
+| `TeamReadyWaiting` | `ReadyTeam`, `WaitingTeam` | The first team readies. Only sent when the other is *not* ready, so it settles both |
+| `TeamPlayerNotReady` | `Team`, `PlayerName` | A player on a ready team backs out. `UnReadyTeam` is then called *without* its notify flag (`server.lua:424`), so no `TeamReadyChange` follows and this is the only word the client gets |
+
+`GameStartAborted` needs no handling: whatever caused the abort already sent one of the three above.
+
+No server work and no cooperation from Shine is needed — only listening to all three.
+
+**Registered names are `SH_tournamentmode_<Name>`.** Shine builds them as
 `StringFormat( "SH_%s_%s", self.__Name, Name )` in
 `core/shared/base_plugin/networking.lua:87`. Worth writing down because it is not guessable from
 the plugin source alone.
 
-**It only exists when the plugin is loaded**, and `Shared.RegisterNetworkMessage` for it runs inside
-the plugin's `SetupDataTable`. So the hook has to be defensive about both the message being absent
-and about load order — this mod is a standalone ModLoader mod and has no ordering relationship with
-Shine at all. Check whether reading the client-side plugin's own state is more robust than hooking
+**They only exist when the plugin is loaded**, and `Shared.RegisterNetworkMessage` for them runs
+inside the plugin's `SetupDataTable`. So the hook has to be defensive about both the messages being
+absent and about load order — this mod is a standalone ModLoader mod and has no ordering
+relationship with Shine at all.
+
+**Wrapping the plugin's receivers is safe**, and is what the mod does rather than hooking the raw
+messages. Shine's dispatcher does `self[ FuncName ]( ... )` — a lookup on the plugin table at call
+time, not a captured reference (`networking.lua:97-102`) — so a wrapper installed long after
+registration still runs. The client half keeps no state of its own; it only prints notifications
+(`client.lua:76,84,113`), so the mod keeps its own table.
 the message; `tournamentmode/client.lua` is where to look.
 
 ## Where it goes (settled)
@@ -88,7 +109,7 @@ colour blindness, a green square against a red one does not.
 
 ## Known gap: no initial state
 
-`TeamReadyChange` fires only on a **change**. Shine sends nothing carrying the current state, so a
+All three messages fire only on a **change**. Shine sends nothing carrying the current state, so a
 client connecting mid-pregame does not learn that a team is already ready until the next toggle.
 
 The default is "not ready", so the wrong answer is a cross on a team that is ready — which corrects
