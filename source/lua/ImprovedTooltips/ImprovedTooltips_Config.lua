@@ -251,3 +251,27 @@ IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
 -- same value: that one means "a biomass icon", this one means "being researched". Changing one
 -- should not silently change the other.
 IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)
+
+------------------------------------------------------------------------------------------------
+-- Tournament mode ready pips
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_TournamentReady.lua. A tick or a cross in the corner of each team's skill
+-- badge on the scoreboard while Shine's tournament mode waits for both teams to ready up. Inert
+-- unless that plugin is running, and removed entirely once the round starts.
+
+IT.kShowTournamentReadyPips = true
+
+-- Pip size as a fraction of the skill badge's height, and how far it is pulled in from the badge's
+-- lower right corner, as a fraction of its own size.
+--
+-- The scale is larger than the size the pip reads at. Cells 5 and 6 draw their rounded plate inset
+-- to pixels 6..52 of a 64 cell, so the coloured shape is 0.72 of the item it sits in; 0.70 of the
+-- badge height therefore puts the visible plate at very close to half of it. The inset stays in the
+-- art rather than being drawn out to the cell edge, which would bleed into the neighbouring cells
+-- once the sheet is compressed and mipmapped.
+--
+-- Inset moves the pip diagonally towards the badge's centre, so it overlaps the badge art rather
+-- than perching on its corner. Zero sits it flush in the corner; raise it to overlap further.
+IT.kReadyPipScale = 0.70
+IT.kReadyPipInset = 0.15
