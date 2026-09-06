@@ -251,3 +251,26 @@ IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
 -- same value: that one means "a biomass icon", this one means "being researched". Changing one
 -- should not silently change the other.
 IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)
+
+------------------------------------------------------------------------------------------------
+-- Spectator top bar supply
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_InsightSupply.lua. The spectator bar shows resources, resource towers and
+-- alien biomass, but never supply. No new networking: TeamInfo carries it already.
+
+IT.kShowSpectatorSupply = true
+
+-- Position along the 512 wide bar, pre-GUIScale, following vanilla's own convention: the marine
+-- figure is measured from the bar's LEFT edge, the alien one leftward from its RIGHT edge.
+--
+-- Vanilla's own items sit at marine extractors 50, marine resources 130, centre 256, alien
+-- resources 317, alien harvesters 397, alien biomass 507.
+--
+-- Alien supply goes in the gap between harvesters and biomass, which is the only real one on that
+-- side. Marine supply goes INBOARD of resources, towards the centre, because there is no room
+-- outboard - extractors are already at 50. The two sides are not symmetric in vanilla either.
+--
+-- Both are expected to want nudging against the real thing.
+IT.kSpectatorSupplyMarineX = 210
+IT.kSpectatorSupplyAlienX = 60

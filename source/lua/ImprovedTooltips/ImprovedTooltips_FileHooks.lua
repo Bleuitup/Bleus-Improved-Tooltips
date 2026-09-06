@@ -30,6 +30,9 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
 	-- The spectator top bar, for its biomass counter's colour.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
+	-- The same bar again, for a supply counter per team. A separate file so the biomass tint and the
+	-- supply counter can be switched off independently, and so neither breaks if the other is wrong.
+	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightSupply.lua", "post")
 	-- Marine HUD: keep researched-but-inactive weapon and armour icons on screen in alert red
 	-- when the arms lab is destroyed or unpowered, instead of hiding them.
 	ModLoader.SetupFileHook("lua/Hud/Marine/GUIMarineHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_ArmsLabAlert.lua", "post")
