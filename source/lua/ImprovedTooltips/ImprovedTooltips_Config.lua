@@ -273,6 +273,6 @@ IT.kShowSpectatorSupply = true
 --   marine supply    outside the bar's left edge
 --   alien supply     the slot biomass used to sit in, hard against the right edge
 --   biomass shift    how far right vanilla's biomass pair moves to free that slot
-IT.kSpectatorSupplyMarineX = -140
+IT.kSpectatorSupplyMarineX = -95
 IT.kSpectatorSupplyAlienX = -5
 IT.kSpectatorBiomassShiftX = 110
