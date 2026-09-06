@@ -1,7 +1,8 @@
 # Spectator work — plan
 
-Branch `feature/spectator`. Tracking issue: #6. Nothing here is implemented yet; this file is the
-spec so the research does not have to be redone.
+Branch `feature/spectator`. Tracking issue: #6. Sections 1 to 3 are spec only, so the research does
+not have to be redone. **Section 4 shipped in 1.02** — see `docs/spectator-supply.md` on `main` for
+what was actually built, which is not what this file proposed.
 
 All line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`.
 
@@ -106,7 +107,16 @@ fires first and the jetpack is never consulted.
 Still to find: the jetpack icon's coordinates in `ui/marine_buy_bigIcons.dds`, the sheet the exo
 alert already uses.
 
-## 4. Supply on the spectator top bar
+## 4. Supply on the spectator top bar — SHIPPED IN 1.02
+
+Built on `feature/spectator-supply` and merged for 1.02.
+`docs/spectator-supply.md` is the record; this section is kept for the research that led into it.
+
+**The placement below did not survive the first in-game test.** It assumed there was room inside the
+bar. There is not: vanilla fills all 512 pixels, and both counters collided with what was already
+there. What shipped puts marine supply outside the bar's left edge, alien supply in the slot biomass
+used to occupy, and pushes vanilla's biomass pair further right to free it — so "nothing else on the
+top bar moves" turned out to be wrong too.
 
 No new networking: `TeamInfo.supplyUsed` is a networkVar with `TeamInfo:GetSupplyUsed()`
 (`TeamInfo.lua:42`, `:348`), and a global event `OnTeam%dSupplyUsedChanged` (`:236`) exists to drive
