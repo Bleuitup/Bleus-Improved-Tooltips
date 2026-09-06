@@ -253,6 +253,31 @@ IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
 IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)
 
 ------------------------------------------------------------------------------------------------
+-- Spectator top bar supply
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_InsightSupply.lua. The spectator bar shows resources, resource towers and
+-- alien biomass, but never supply. No new networking: TeamInfo carries it already.
+
+IT.kShowSpectatorSupply = true
+
+-- Positions, pre-GUIScale, written exactly as vanilla writes them: marine measured from the bar's
+-- LEFT edge, alien leftward from its RIGHT edge, so a negative alien number is inside the bar and a
+-- positive one is out past it.
+--
+-- Vanilla sits at marine extractors 50, marine resources 130, centre 256, alien resources 317,
+-- harvesting 397, biomass 507 - all within a bar only 512 wide, on a screen that is not. The first
+-- attempt put both counters inside those 512 pixels and they collided. These use the empty space
+-- either side instead.
+--
+--   marine supply    outside the bar's left edge
+--   alien supply     the slot biomass used to sit in, hard against the right edge
+--   biomass shift    how far right vanilla's biomass pair moves to free that slot
+IT.kSpectatorSupplyMarineX = -95
+IT.kSpectatorSupplyAlienX = -5
+IT.kSpectatorBiomassShiftX = 110
+
+------------------------------------------------------------------------------------------------
 -- Tournament mode ready pips
 ------------------------------------------------------------------------------------------------
 --
