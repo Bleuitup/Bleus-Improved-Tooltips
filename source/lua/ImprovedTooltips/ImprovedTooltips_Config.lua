@@ -262,17 +262,16 @@ IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)
 
 IT.kShowTournamentReadyPips = true
 
--- Pip size as a fraction of the skill badge's height, and how far it hangs past the badge's corner
--- as a fraction of its own size.
+-- Pip size as a fraction of the skill badge's height, and how far it is pulled in from the badge's
+-- lower right corner, as a fraction of its own size.
 --
 -- The scale is larger than the size the pip reads at. Cells 5 and 6 draw their rounded plate inset
--- to pixels 6..52 of a 64 cell, so the coloured shape is 0.72 of the item it sits in; 0.46 of the
--- badge height therefore puts the visible plate at very close to a third of it. The inset stays in
--- the art rather than being drawn out to the cell edge, which would bleed into the neighbouring
--- cells once the sheet is compressed and mipmapped.
+-- to pixels 6..52 of a 64 cell, so the coloured shape is 0.72 of the item it sits in; 0.70 of the
+-- badge height therefore puts the visible plate at very close to half of it. The inset stays in the
+-- art rather than being drawn out to the cell edge, which would bleed into the neighbouring cells
+-- once the sheet is compressed and mipmapped.
 --
--- Overhang is zero: the pip sits wholly on the badge, tucked into the lower right corner, where the
--- plate's own margin gives it a little breathing room from the badge edge. At 0.25 it hung outside
--- the corner and read as a stray blip rather than as a ribbon laid on the badge.
-IT.kReadyPipScale = 0.46
-IT.kReadyPipOverhang = 0
+-- Inset moves the pip diagonally towards the badge's centre, so it overlaps the badge art rather
+-- than perching on its corner. Zero sits it flush in the corner; raise it to overlap further.
+IT.kReadyPipScale = 0.70
+IT.kReadyPipInset = 0.15

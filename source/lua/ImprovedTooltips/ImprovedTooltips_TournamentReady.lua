@@ -179,10 +179,12 @@ function GUIScoreboard:Update(deltaTime)
 				-- empty team cannot be ready, so that is the behaviour we want anyway.
 				local badgeSize = badge:GetSize()
 				local size = badgeSize.y * IT.kReadyPipScale
-				local overhang = size * IT.kReadyPipOverhang
+				-- Anchored to the badge's lower right, so backing off by the pip's own size sits
+				-- it flush in the corner; the inset then carries it in towards the centre.
+				local offset = -size * (1 + IT.kReadyPipInset)
 
 				pip:SetSize(Vector(size, size, 0))
-				pip:SetPosition(Vector(-size + overhang, -size + overhang, 0))
+				pip:SetPosition(Vector(offset, offset, 0))
 
 				local coords = readyStates[teamNumber] and kReadyCoords or kNotReadyCoords
 				pip:SetTexturePixelCoordinates(coords[1], coords[2], coords[3], coords[4])

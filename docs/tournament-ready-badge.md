@@ -38,8 +38,10 @@ The scoreboard team header skill badge: `teamSkillItem`, `GUIScoreboard.lua:171-
 reachable — the team background builder returns it as `TeamSkill` in the team's `GUIs` table
 (`:302`), which vanilla itself reads back at `:778`.
 
-The pip sits in that badge's lower right corner at a third of its height, hanging slightly past the
-corner so it reads as a ribbon rather than as something inside the badge.
+The pip sits towards the badge's lower right at half its height, pulled in off the corner so it
+overlaps the badge art and reads as a ribbon laid on it. `kReadyPipScale` is set against the item
+rather than the visible plate, which cell 5 and 6 draw inset to 0.72 of the cell, so the scale runs
+higher than the fraction of the badge you actually see.
 
 **It inherits the badge's visibility**, being parented to it — and vanilla hides that badge for a
 team with no players (`:1142-1156`) and starts it hidden (`:178`). An empty team cannot be ready, so
