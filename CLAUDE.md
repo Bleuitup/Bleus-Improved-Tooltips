@@ -344,9 +344,12 @@ and cost time to rule out.
   the "In Cooldown" panel, speed and its dimming, health/armour colour matching and ARC stances, and
   no longer claims the mod "sends nothing", which stopped being true in 0.86. When editing it,
   remember Launch Pad must be fully closed and reopened first or it writes its stale copy back.
-  `mod.settings` is LF in both the index and the working tree (`git ls-files --eol`), same as
-  everything else here; an older note in this file called it the repo's one CRLF file, which is not
-  true of what is committed.
+  **Line endings are a non-issue here, and two earlier notes got it wrong.** `core.autocrlf` is
+  `true` in this clone, so git stores LF in the index and checks out CRLF in the working tree.
+  Launch Pad writes `mod.settings` back as CRLF on publish, which is why `git status` shows it
+  modified afterwards while `git diff` shows nothing: the content is identical once normalised.
+  `mod.settings` is not special either way — nineteen tracked files sit in the same state. Do not
+  "preserve CRLF" and do not "convert to LF"; just edit the file.
 - Discussed but not built: ARC range feedback, settled on drawing the 7m minimum-range circle
   (`[kVisualRange] = { ARC.kFireRange, ARC.kMinFireRange }`, since `kVisualRange` accepts a table)
   plus an origin marker on nearby targets whose state encodes both distance rules. See the ARC notes
