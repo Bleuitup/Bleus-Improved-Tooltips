@@ -29,7 +29,8 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
--- [locationId] = { biomass = 0..6, researching = boolean }
+-- [locationId] = { biomass = 0..6, researchId = kTechId, researchFraction = 0..1,
+--                   abilityResearching = boolean }
 -- Parked on the shared table so a Script.Load with reload does not drop live state.
 IT.hiveState = IT.hiveState or { }
 
@@ -37,26 +38,35 @@ function IT.ClearHiveState()
 	IT.hiveState = { }
 end
 
-function IT.SetHiveState(locationId, biomass, researching)
+function IT.SetHiveState(locationId, state)
 
 	if not locationId or locationId <= 0 then
 		return
 	end
 
-	-- Biomass 0 with nothing researching means the location has no hive worth drawing for - a dead
+	state = state or { }
+
+	local researchId = state.researchId or kTechId.None
+
+	-- Biomass 0 with nothing happening means the location has no hive worth drawing for - a dead
 	-- hive, or one that has not finished building. Drop the entry rather than keeping a row of
 	-- zeroes around.
-	if (biomass or 0) <= 0 and not researching then
+	if (state.biomass or 0) <= 0 and researchId == kTechId.None and not state.abilityResearching then
 		IT.hiveState[locationId] = nil
 		return
 	end
 
-	IT.hiveState[locationId] = { biomass = biomass or 0, researching = researching == true }
+	IT.hiveState[locationId] = {
+		biomass = state.biomass or 0,
+		researchId = researchId,
+		researchFraction = state.researchFraction or 0,
+		abilityResearching = state.abilityResearching == true,
+	}
 
 end
 
 -- Always returns a table, so callers do not have to nil-check before reading either field.
-local kEmptyHiveState = { biomass = 0, researching = false }
+local kEmptyHiveState = { biomass = 0, researchId = kTechId.None, researchFraction = 0, abilityResearching = false }
 
 function IT.GetHiveState(locationId)
 	return IT.hiveState[locationId] or kEmptyHiveState
@@ -75,7 +85,7 @@ if not Server then
 	return
 end
 
-function IT.SendHiveStateTo(player, locationId, biomass, researching, clear)
+function IT.SendHiveStateTo(player, locationId, state, clear)
 
 	-- Bots go through the same join path but have no client to message.
 	if not player or (player.GetIsVirtual and player:GetIsVirtual()) then
@@ -83,14 +93,14 @@ function IT.SendHiveStateTo(player, locationId, biomass, researching, clear)
 	end
 
 	Server.SendNetworkMessage(player, "ImprovedTooltipsHiveState",
-		BuildImprovedTooltipsHiveStateMessage(locationId, biomass, researching, clear), true)
+		BuildImprovedTooltipsHiveStateMessage(locationId, state, clear), true)
 
 end
 
-function IT.BroadcastHiveState(teamNumber, locationId, biomass, researching)
+function IT.BroadcastHiveState(teamNumber, locationId, state)
 
 	for _, player in ipairs(GetEntitiesForTeam("Player", teamNumber)) do
-		IT.SendHiveStateTo(player, locationId, biomass, researching, false)
+		IT.SendHiveStateTo(player, locationId, state, false)
 	end
 
 end
@@ -103,10 +113,10 @@ IT.publishedHiveState = IT.publishedHiveState or { }
 -- everyone else is seeing.
 function IT.ResyncPlayerHiveState(player)
 
-	IT.SendHiveStateTo(player, 0, 0, false, true)
+	IT.SendHiveStateTo(player, 0, nil, true)
 
 	for locationId, state in pairs(IT.publishedHiveState) do
-		IT.SendHiveStateTo(player, locationId, state.biomass, state.researching, false)
+		IT.SendHiveStateTo(player, locationId, state, false)
 	end
 
 end

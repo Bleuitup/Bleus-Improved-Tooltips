@@ -82,20 +82,32 @@ local kHiveStateMessage =
 	locationId = "integer",
 	-- Matches Hive.lua's own network var range.
 	biomass = "integer (0 to 6)",
-	-- Any research at all: biomass, a lifeform ability, or a hive type upgrade. Deliberately not
-	-- which one, and not a progress fraction - the HUD only shows that the hive is busy.
-	researching = "boolean",
+	-- What the HIVE ITSELF is researching, and how far in. That is biomass or a hive type upgrade;
+	-- kTechId.None when it is idle. The panel draws these two differently - biomass fills the next
+	-- biomass icon, a hive type loads a dial on the hive - so it needs to know which, not just that
+	-- something is happening.
+	researchId = "enum kTechId",
+	researchFraction = "float (0 to 1 by 0.01)",
+	-- Lifeform abilities are researched on the hive's EVOLUTION CHAMBER, not the hive
+	-- (Hive.lua:159), and the two run independently - a hive can be growing biomass while its
+	-- chamber researches Leap. So this is a separate flag rather than another value of researchId,
+	-- and it stays a boolean because the DNA ring it drives shows no progress.
+	abilityResearching = "boolean",
 	-- Set on the first message of a full resync (team join) so the client drops anything stale
 	-- from a previous team or round.
 	clear = "boolean",
 }
 
-function BuildImprovedTooltipsHiveStateMessage(locationId, biomass, researching, clear)
+function BuildImprovedTooltipsHiveStateMessage(locationId, state, clear)
+
+	state = state or { }
 
 	return {
 		locationId = locationId or 0,
-		biomass = math.max(0, math.min(6, biomass or 0)),
-		researching = researching == true,
+		biomass = math.max(0, math.min(6, state.biomass or 0)),
+		researchId = state.researchId or kTechId.None,
+		researchFraction = math.max(0, math.min(1, state.researchFraction or 0)),
+		abilityResearching = state.abilityResearching == true,
 		clear = clear == true,
 	}
 
