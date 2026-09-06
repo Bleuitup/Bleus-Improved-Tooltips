@@ -261,16 +261,18 @@ IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)
 
 IT.kShowSpectatorSupply = true
 
--- Position along the 512 wide bar, pre-GUIScale, following vanilla's own convention: the marine
--- figure is measured from the bar's LEFT edge, the alien one leftward from its RIGHT edge.
+-- Positions, pre-GUIScale, written exactly as vanilla writes them: marine measured from the bar's
+-- LEFT edge, alien leftward from its RIGHT edge, so a negative alien number is inside the bar and a
+-- positive one is out past it.
 --
--- Vanilla's own items sit at marine extractors 50, marine resources 130, centre 256, alien
--- resources 317, alien harvesters 397, alien biomass 507.
+-- Vanilla sits at marine extractors 50, marine resources 130, centre 256, alien resources 317,
+-- harvesting 397, biomass 507 - all within a bar only 512 wide, on a screen that is not. The first
+-- attempt put both counters inside those 512 pixels and they collided. These use the empty space
+-- either side instead.
 --
--- Alien supply goes in the gap between harvesters and biomass, which is the only real one on that
--- side. Marine supply goes INBOARD of resources, towards the centre, because there is no room
--- outboard - extractors are already at 50. The two sides are not symmetric in vanilla either.
---
--- Both are expected to want nudging against the real thing.
-IT.kSpectatorSupplyMarineX = 210
-IT.kSpectatorSupplyAlienX = 60
+--   marine supply    outside the bar's left edge
+--   alien supply     the slot biomass used to sit in, hard against the right edge
+--   biomass shift    how far right vanilla's biomass pair moves to free that slot
+IT.kSpectatorSupplyMarineX = -140
+IT.kSpectatorSupplyAlienX = -5
+IT.kSpectatorBiomassShiftX = 110

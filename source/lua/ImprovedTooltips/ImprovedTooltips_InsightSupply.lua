@@ -21,12 +21,18 @@
 --   marine extractors  50      marine resources 130      CENTRE 256
 --   alien resources   317      alien harvesters 397      alien biomass 507
 --
--- The requested order is resources, then supply, then biomass outward from the centre. On the alien
--- side that fits: the only real gap is between harvesters and biomass, which is where supply goes.
--- On the marine side there is NO room outboard - extractors already sit at 50 - so marine supply
--- goes inboard instead, between resources and the centre. The two sides are not symmetric in
--- vanilla either, so this is in keeping. Both offsets are config, because these want tuning against
--- the real thing rather than being derived.
+-- The first attempt squeezed both counters INSIDE those 512 pixels and they collided with what was
+-- already there. The bar is only 512 wide on a screen that is not, so the space either side of it is
+-- empty and unused - which is where these go.
+--
+--   marine supply   left of the bar entirely, outside its left edge
+--   alien supply    the slot biomass used to occupy, hard against the right edge
+--   alien biomass   pushed further right, out past the bar, one place further out
+--
+-- Moving vanilla's biomass counter is the one thing here that touches an existing item. Its icon and
+-- its text are both children of a holder created by vanilla's CreateIconTextItem, so shifting the
+-- HOLDER moves the pair together and leaves their relative layout alone. The holder is reached with
+-- icon:GetParent(), the icon having been found by its texture.
 
 if not Client then
 	return
@@ -37,6 +43,7 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
 local IT = ImprovedTooltips
 
 local kBackgroundTexture = "ui/topbar.dds"
+local kBuildMenuTexture = "ui/buildmenu.dds"
 
 -- Same source the commander tooltip uses for its supply icon, kept in step with the copy in
 -- ImprovedTooltips_TooltipGUI.lua. Read from GUIHudSupply's own theme table so a mod that
@@ -140,17 +147,36 @@ function GUIInsight_TopBar:Initialize()
 	end
 
 	local background
+	local biomassIcon
 
 	for i = 1, #created do
+
 		local item = created[i]
-		if item and type(item.GetTexture) == "function" and item:GetTexture() == kBackgroundTexture then
+		local texture = item and type(item.GetTexture) == "function" and item:GetTexture()
+
+		if texture == kBackgroundTexture and not background then
 			background = item
-			break
+		elseif texture == kBuildMenuTexture and not biomassIcon then
+			-- The build menu atlas appears exactly once on this bar, for the biomass icon.
+			biomassIcon = item
 		end
+
 	end
 
 	if not background then
 		return
+	end
+
+	-- Push vanilla's biomass pair one place further out, freeing the slot beside the right edge for
+	-- alien supply. Moving the holder rather than the icon takes the number with it.
+	if biomassIcon and type(biomassIcon.GetParent) == "function" then
+
+		local holder = biomassIcon:GetParent()
+
+		if holder and holder ~= background then
+			holder:SetPosition(Vector(GUIScale(IT.kSpectatorBiomassShiftX), 0, 0))
+		end
+
 	end
 
 	local yoffset = GUIScale(4)
@@ -159,7 +185,7 @@ function GUIInsight_TopBar:Initialize()
 		Vector(GUIScale(IT.kSpectatorSupplyMarineX), yoffset, 0))
 
 	CreateSupplyItem(background, kTeam2Index, kAlienTeamType,
-		Vector(-GUIScale(IT.kSpectatorSupplyAlienX), yoffset, 0))
+		Vector(GUIScale(IT.kSpectatorSupplyAlienX), yoffset, 0))
 
 end
 
