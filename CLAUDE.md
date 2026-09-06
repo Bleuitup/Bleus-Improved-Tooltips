@@ -312,9 +312,10 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- Version 0.9, tested in game (client and dedicated server) and published. (There is no published
-  0.81 — that was the working version number while the stat row was moved and the hourglass redrawn;
-  it shipped as 0.85.)
+- **1.01 is published and tagged `v1.01`.** 1.02 is assembled on `release/1.02` and has NOT been
+  tested with both of its features running together — spectator supply and the tournament ready
+  pips were each verified alone. (There is no published 0.81 — that was the working version number
+  while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
 - `preview.jpg` is the user's own artwork (added 2026-08-26), replacing the generated placeholder.
   `tools/build_preview.ps1`, which produced that placeholder, has been deleted — do not recreate a
@@ -326,8 +327,10 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 - **The Workshop description was brought current with 0.91** (2026-08-30, `83ec3fa`) — it now covers
   the "In Cooldown" panel, speed and its dimming, health/armour colour matching and ARC stances, and
   no longer claims the mod "sends nothing", which stopped being true in 0.86. When editing it,
-  remember Launch Pad must be fully closed and reopened first or it writes its stale copy back, and
-  keep `mod.settings` CRLF — it is the one CRLF file in the repo.
+  remember Launch Pad must be fully closed and reopened first or it writes its stale copy back.
+  `mod.settings` is LF in both the index and the working tree (`git ls-files --eol`), same as
+  everything else here; an older note in this file called it the repo's one CRLF file, which is not
+  true of what is committed.
 - Discussed but not built: ARC range feedback, settled on drawing the 7m minimum-range circle
   (`[kVisualRange] = { ARC.kFireRange, ARC.kMinFireRange }`, since `kVisualRange` accepts a table)
   plus an origin marker on nearby targets whose state encodes both distance rules. See the ARC notes
@@ -693,3 +696,42 @@ Removed on 2026-08-30 at the user's direction. Do not reintroduce any of these w
 
 What survives of the CBM module is the biomass 5 purple tint and nothing else. The user confirmed
 that one in game and explicitly kept it when the rest was rolled back.
+
+## Shine integration (1.02)
+
+**Shine's Lua is not under the server folder.** `NS2 Server/Server/Server/shine` holds configs only.
+The readable source of what the server actually runs is its Workshop copy, on this machine
+`D:\SteamLibrary\steamapps\workshop\content\4920\117887554`. Read it before assuming anything about
+a plugin's messages; searching the server folder finds nothing and looks like Shine is absent.
+
+**Enabling a plugin for local testing** is `BaseConfig.json`, the plugin list around `:36-48`.
+`tournamentmode` is now `true` there for the ready-pip work; `BaseConfig.json.bak` holds the
+original. `pregameplus` is also true and both want the pre-round, so check the server console for a
+conflict line if either stops loading.
+
+**Wrapping a plugin's receiver is safe and late-bound.** Shine's dispatcher does
+`self[ FuncName ]( ... )` — a lookup on the plugin table at call time, not a captured reference
+(`core/shared/base_plugin/networking.lua:97-102`). So a wrapper installed long after the message was
+registered still runs, which is what lets this mod hook Shine with no load-order relationship at
+all. Find the plugin with `Shine:IsExtensionEnabled( name )`, which returns `enabled, plugin`.
+
+**A plugin does not necessarily have one canonical message per state change.** Tournament mode
+sends three different messages for "a team's readiness changed", picked by situation — see
+`docs/tournament-ready-badge.md` for the table. Listening to the obvious one alone missed the most
+common case in the game and cost a round of testing. Read the *server* half to see what is actually
+sent; the shared half only tells you what exists.
+
+## The spectator top bar is 512 wide on a screen that is not (1.02)
+
+`GUIInsight_TopBar` lays every item out inside a 512-wide centred bar, and vanilla fills it: marine
+extractors 50, marine resources 130, centre 256, alien resources 317, harvesters 397, biomass 507.
+There is no room left inside it. **The space either side of the bar is empty and unused**, and that
+is where anything new has to go — the first spectator supply attempt put both counters inside those
+512 pixels and they collided with what was already there.
+
+Marine items anchor `GUIItem.Left` from the bar's left edge; everything else anchors `GUIItem.Right`
+and is positioned leftward from its right edge, so the two sides' offsets look mirrored.
+
+**To move one of vanilla's existing pairs, move the holder, not the icon.** `CreateIconTextItem`
+parents both the icon and its number to a holder; shifting the icon strands the number. Reach the
+holder with `icon:GetParent()`, having found the icon by its texture.

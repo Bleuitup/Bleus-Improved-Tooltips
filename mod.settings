@@ -60,6 +60,15 @@ The twelve bead bar in the top left, the one that appears with the map, the buy 
 
 Each bead being researched now fills as the work goes in, and more than one fills at a time when more than one hive is working. The ability icons along the bar light up and carry a progress bar while their research is under way, the same as they do on the tech map, instead of staying greyed out until the moment they finish.
 
+[h1]Spectating and tournament play[/h1]
+
+[list]
+[*] [b]Supply on the spectator bar.[/b] The top bar a spectator sees carries resources, resource towers and alien biomass, but never supply. Both teams' supply now sits on it, used against maximum, in the same style as the rest of the bar. Nothing new is sent to get it: the team info the client already has carries it.
+[*] [b]Ready state on the scoreboard.[/b] On a server running Shine's tournament mode, each team's skill badge on the scoreboard carries a tick when that team has readied up and a cross when it has not, so the scoreboard answers whether you are waiting on them or they are waiting on you. Both come off once the round starts. On a server not running tournament mode nothing is drawn at all.
+[/list]
+
+One honest limit on that second one: Shine announces readiness only when it changes and sends nothing carrying the current state, so a client that connects part way through the pre game shows a cross for a team that is already ready, until the next time anything changes.
+
 [h1]Settings[/h1]
 
 Options, Mods, "Bleu's Improved Tooltips". The In Cooldown panel can be turned off there, and a slider sets the shortest cooldown it will list, so you can quiet it down or show everything. Both take effect immediately.

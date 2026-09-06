@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.01. Published to the Steam Workshop as
+Version 1.02. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -446,6 +446,29 @@ and `mod.settings` names the file by extension.
 - `kUseTopBarSupplyIcon` — mark supply on the tooltip with the HUD top bar's icon instead of vanilla's
   MAC / Drifter
 - `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
+- `kCooldownPanelMarineBackgroundAlpha` / `kCooldownPanelAlienBackgroundAlpha` — panel backing
+  opacity per team; both default to 0, meaning no backing at all
+- `kShowLostArmsLabUpgrades` — keep researched weapon and armour icons on the marine HUD when every
+  arms lab is dead or unpowered, instead of hiding them
+- `kArmsLabLostColor` — the shade they take in that state. Defaults to vanilla's own alert red, the
+  one `GUIMarineHUD:Update` defines and can never reach
+- `kShowBiomassOverlayProgress` — partial fills on the twelve bead bar, and progress meters under
+  its ability icons
+- `kBiomassBeadProgressColor` — tint for a bead being researched. It draws the same slice of the
+  same texture as a finished bead, so this is the only thing telling the two apart
+- `kBiomassAbilityMeterFraction` — meter height as a fraction of the ability icon, rather than a
+  pixel count, since these icons are a twelfth of the bar
+- `kBiomassAbilityMeterColor` / `kBiomassAbilityResearchingColor` — the meter, and the tint an
+  ability icon takes while its research is running. Both match the tech map
+- `kShowSpectatorSupply` — supply counters for both teams on the spectator top bar
+- `kSpectatorSupplyMarineX` / `kSpectatorSupplyAlienX` / `kSpectatorBiomassShiftX` — their positions,
+  and how far vanilla's biomass pair shifts right to make room. Written the way vanilla writes the
+  rest of that bar: marine from the left edge, alien leftward from the right
+- `kShowTournamentReadyPips` — the ready tick and not-ready cross on the scoreboard's team skill
+  badges under Shine's tournament mode. Inert when that plugin is not running
+- `kReadyPipScale` / `kReadyPipInset` — pip size as a fraction of the badge height, and how far it is
+  pulled in off the badge's lower right corner. The scale runs higher than the size the pip reads
+  at, because the art is drawn inset to 0.72 of its cell
 
 ## Building the assets
 
@@ -488,6 +511,21 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.02**
+- **Supply on the spectator top bar.** That bar carries resources, resource towers and alien
+  biomass but never supply, on a screen far wider than the 512 pixel bar vanilla lays out inside.
+  Both teams' supply now sits in the space either side, used against maximum, with vanilla's biomass
+  pair shifted right to free the slot. No new networking: `TeamInfo` already carries the numbers.
+- **A ready tick or a not-ready cross on the scoreboard's team skill badges** while Shine's
+  tournament mode waits for both teams, so the scoreboard says who is being waited on. Inert on a
+  server not running that plugin, and off entirely once the round starts. Shine does not send one
+  canonical ready message — `ReadyTeam` picks between `TeamReadyChange` and `TeamReadyWaiting`
+  depending on what the other team is doing, and a player backing out of a ready team produces only
+  `TeamPlayerNotReady` — so all three are tracked. Listening to `TeamReadyChange` alone misses the
+  first team to ready up, which is the most common event there is.
+- The `Config` section of this README now lists every constant. Ten added in 1.01 were never
+  documented there.
 
 **1.01**
 - **Lost arms lab upgrades stay on screen, in red.** When a team loses every arms lab, or they all

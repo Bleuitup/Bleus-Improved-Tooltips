@@ -1,6 +1,6 @@
 # Tournament mode ready badge
 
-Branch `feature/tournament-ready-badge`, cut from `release/1.01`. Built and under test.
+Shipped in 1.02, from `feature/tournament-ready-badge`.
 
 A tick when a team is ready under Shine's tournament mode, a cross when it is not.
 
