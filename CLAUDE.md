@@ -306,6 +306,22 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
    0.81 commit swept the wiped `mod.settings` in unnoticed. `git status` + `git diff --cached` on
    `mod.settings` before committing.
 
+**The Workshop description has a hard 8000-byte cap, and this one is close to it.** Steam's
+`k_cchPublishedDocumentDescriptionMax` is 8000; over that, publish fails with a Launch Pad dialog
+reading `steam result InvalidParam(8)` and nothing else. It gives no hint that length is the cause,
+and nothing local is wrong. **It bit the first 1.02 publish attempt (2026-09-06):** 1.01 published
+at 7209 bytes, the two new features took it to 8250, and Steam refused the call. Measure before
+publishing, counting only what is between `[=[` and `]=]`:
+
+```
+awk '/description = \[=\[/{sub(/^description = \[=\[/,"");f=1} f{if(/\]=\]$/){sub(/\]=\]$/,"");print;exit} print}' mod.settings | wc -c
+```
+
+**From here every release spends from a fixed budget.** Adding a section means compressing an
+existing one. When a publish fails with InvalidParam and nothing about the files has changed
+structurally, check the byte count first — preview size, tags and `publish_id` were all fine here
+and cost time to rule out.
+
 ## Status
 
 > Tag namespaces: `v*` = published and tested; `pending-test/*` = compiles but never run. If a
