@@ -356,3 +356,71 @@ Event.Hook("Console_it_blipcolors", function()
 	Shared.Message(string.format("[Improved Tooltips] %d weapon colours resolved. Anything not listed keeps the plain marine colour.", found))
 
 end)
+
+-- Live state, for when the colours resolve but nothing changes on the map. Every link in the chain
+-- is checked separately so the answer is which one is broken, not that something is.
+Event.Hook("Console_it_blipstate", function()
+
+	local function Say(fmt, ...)
+		Shared.Message("[Improved Tooltips] " .. string.format(fmt, ...))
+	end
+
+	Say("setting kColorMarineBlipsByWeapon = %s", tostring(IT.kColorMarineBlipsByWeapon))
+
+	-- 1. Is our wrapper actually the function the game will call?
+	Say("hook installed = %s", tostring(MapBlip.GetMapBlipColor ~= originalGetMapBlipColor))
+
+	-- 2. Would we be allowed to colour anything from where we are sitting?
+	local player = Client.GetLocalPlayer()
+	local team = player and player:GetTeamNumber()
+	Say("local player team = %s (marine is %s), allowed without spectating = %s",
+		tostring(team), tostring(kTeam1Index), tostring(team == kTeam1Index))
+
+	-- 3. Does the weapon table have anything in it?
+	RefreshStatuses()
+
+	local infoCount = 0
+
+	for _, info in ientitylist(Shared.GetEntitiesWithClassname("PlayerInfoEntity")) do
+		infoCount = infoCount + 1
+		local statusName = kPlayerStatus and kPlayerStatus[info.status]
+		Say("  PlayerInfoEntity: playerId=%s name=%s status=%s",
+			tostring(info.playerId), tostring(info.playerName), tostring(statusName))
+	end
+
+	Say("PlayerInfoEntity count = %d", infoCount)
+
+	-- 4. Do the blips join up to it? This is the join that has to work.
+	local blipCount, marineBlips, matched = 0, 0, 0
+
+	for _, blip in ientitylist(Shared.GetEntitiesWithClassname("MapBlip")) do
+
+		blipCount = blipCount + 1
+
+		if kColorableBlipTypes[blip.mapBlipType] then
+
+			marineBlips = marineBlips + 1
+
+			local owner = blip:GetOwnerEntityId()
+			local status = statusByOwner[owner]
+			local color = status and GetColorForStatus(status)
+
+			if color then
+				matched = matched + 1
+			end
+
+			Say("  marine blip: owner=%s status=%s colour=%s",
+				tostring(owner),
+				tostring(status and kPlayerStatus[status]),
+				color and string.format("#%02X%02X%02X",
+					math.floor(color.r * 255 + 0.5),
+					math.floor(color.g * 255 + 0.5),
+					math.floor(color.b * 255 + 0.5)) or "none")
+
+		end
+
+	end
+
+	Say("MapBlips: %d total, %d marine or jetpacker, %d resolved to a colour", blipCount, marineBlips, matched)
+
+end)
