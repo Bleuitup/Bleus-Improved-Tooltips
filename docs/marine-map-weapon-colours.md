@@ -117,32 +117,55 @@ That is the dynamic half. A mod that adds a weapon, gives it a `kPlayerStatus` v
 to `smg`.
 
 **Why the SMG is in config rather than left to the fallback:** CBM does **not** list `smg` in
-`kAmmoColors` (`:42-56`; it adds `exoflamer` and `PlasmaLauncher` but not the SMG). Its own commander
-ammo bar therefore falls through to `kEnergyColor`, which is yellow — the flamethrower's colour. Left
-to the fallback we would inherit that collision. Naming it in config keeps the map agreeing with
-CBM's world outline instead, which is the colour a player actually associates with the weapon.
+`kAmmoColors` (`:42-56`; it adds `exoflamer` and `PlasmaLauncher` but not the SMG). The
+spectator ammo bar therefore falls through to `kEnergyColor`, yellow — the flamethrower's colour. Left
+to the fallback we would inherit that collision, even though CBM colours the SMG correctly in the two
+palettes that matter. Naming it in config keeps the map agreeing with those instead.
 
 Worth telling the CBM developers about, since it is a small inconsistency on their side: a spectator's
-SMG ammo bar reads flamethrower yellow while the same weapon's outline glow is correctly orange.
+SMG ammo bar reads flamethrower yellow, while the commander's bar and the outline glow both have it
+right as orange. One line in kAmmoColors would fix it, and this mod's fallback would then pick it up.
 
 Everything here costs nothing without CBM: `rawget(kPlayerStatus, "Submachinegun")` is nil in
 vanilla, so the entry never resolves to a status and is never used.
 
 
-## Who sees which palette
+## Three palettes, not two
 
-The two palettes are not shown to the same people, which matters when reasoning about what a
-mismatch would actually look like:
+There are **three** per-weapon colour tables in NS2, and they are shown to different people. I found
+the first two and reasoned from them; the user pointed out the third, which is the one a commander
+actually reads.
 
-| | palette | seen by |
-| --- | --- | --- |
-| Weapon outline glow in the world | outline lookup (`.dds`) | everyone, **including the commander** — `CommanderGlowMixin.lua:32` adds the model to `EquipmentOutline` so equipment can be picked out of the darkness from above |
-| Ammo bar under a marine | `kAmmoColors` | **spectators only**. Both health bar scripts are created and destroyed by `GUIInsight_Overhead.lua:224,227`, the spectator overhead view, and nowhere else |
-| Map blip | this mod | marines and spectators |
+| | file | seen by | readable at runtime |
+| --- | --- | --- | --- |
+| Outline glow on the model | `ui/marine_outline_lookup.dds`, indexed by `EquipmentOutline.lua:20` | everyone, **including the commander** (`CommanderGlowMixin.lua:32`) | **no** — file-local list, colours in a texture |
+| Ammo bar under a marine, top-down | `GUIUnitStatus.lua:57-64`, keyed by `kTechId` | **the commander** | **no** — `local kAmmoBarColors` |
+| Ammo bar under a marine, spectating | `GUIInsight_PlayerHealthbars.lua:42-56`, keyed by `kMapName` | **spectators** (`GUIInsight_Overhead.lua:224`) | **yes** — public table |
 
-So CBM's SMG gap shows up for **spectators**, not commanders: a spectator's SMG ammo bar falls
-through to `kEnergyColor` yellow, the flamethrower's colour, while the commander's outline glow for
-the same weapon is correctly orange.
+| weapon | outline | commander bar | spectator bar |
+| --- | --- | --- | --- |
+| Rifle | `#00EFFF` | `#00FFFF` teal | `#0000FF` blue |
+| Shotgun | `#00FF00` | `#00FF00` | `#00FF00` |
+| Grenade Launcher | `#FF00FF` | `#FF00FF` | `#FF00FF` |
+| Flamethrower | `#FFFF00` | `#FFFF00` | `#FFFF00` |
+| Heavy Machine Gun | `#FF0000` | `#E60000` | `#FF0000` |
+| **Submachinegun (CBM)** | `#D37300` | `#FF6600` | **missing** |
+
+**All three agree exactly on shotgun, grenade launcher and flamethrower.** HMG differs only in the
+commander bar being a shade darker. Rifle has three different values, which costs nothing here
+because rifles are never recoloured — they keep the player's `playercolor_m`.
+
+**CBM colours the SMG in two of the three.** The commander bar gets `#FF6600` and the outline gets
+`#D37300`; only the spectator bar is missing an entry, where it falls through to `kEnergyColor`
+yellow — the flamethrower's colour. So the gap is spectator-only, and a commander sees the SMG
+correctly as orange.
+
+**This mod uses the commander bar's `#FF6600`**, because the map is read from the same seat and at
+the same moment as that bar, and the brighter orange carries further at blip size.
+
+Only the spectator table is reachable from Lua, which is why every value here is written down rather
+than read: the two authoritative palettes keep their lists in file-locals and their colours in a
+texture.
 
 ## Feed the base colour, do not return the result
 

@@ -545,18 +545,17 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - Exosuits keep the plain marine colour. Vanilla does colour them elsewhere — the spectator ammo
   bars give minigun red and railgun orange — but under CBM an exo is modular and can carry any
   combination, so there is no single weapon to colour one by.
-- **CBM's SMG is coloured too, and other mods' weapons resolve on their own.** CBM appends
-  `Submachinegun` to `kPlayerStatus` and gives it an orange outline of its own (`#D37300`, read out
-  of CBM's `marine_outline_lookup.dds`), so the map matches. Anything else falls back to
-  `GUIInsight_PlayerHealthbars.kAmmoColors` at runtime — the one per-weapon palette in the game that
-  is both readable and extendable from Lua — so a mod that adds a weapon and lists an ammo colour
-  for it gets a map colour here with no patch. The outline palette cannot be read: its weapon list
-  is a file-local and its colours live in a texture.
-- **The palette was corroborated against a second vanilla source.**
-  `GUIInsight_PlayerHealthbars.kAmmoColors`, which colours the ammo bar under a marine in the
-  spectator overhead view, gives exactly the same four values: green shotgun, fuchsia GL,
-  yellow flamethrower, red HMG. The two disagree only about the rifle — cyan in one, blue in the
-  other — which costs nothing here, since rifles keep the player's own colour either way.
+- **CBM's SMG is coloured too, in CBM's own orange.** `GUIUnitStatus.lua:64` gives
+  `kTechId.Submachinegun` the colour a commander already sees on that marine's ammo bar (`#FF6600`),
+  and the map now matches it. Anything not named in config falls back at runtime to
+  `GUIInsight_PlayerHealthbars.kAmmoColors` — the only per-weapon palette in the game readable and
+  extendable from Lua — so a mod that adds a weapon and lists an ammo colour for it gets a map
+  colour with no patch here.
+- NS2 has **three** per-weapon palettes, not one: the outline glow on the model (everyone,
+  commander included), the ammo bar under a marine in the commander's view, and the ammo bar in the
+  spectator's. All three agree exactly on shotgun, grenade launcher and flamethrower; HMG differs by
+  a shade; rifle has three different values, which costs nothing here because rifles are never
+  recoloured. Recorded in `docs/marine-map-weapon-colours.md`.
 - The Workshop description lost two sentences to make room under Steam's 8000-byte cap: the quoted
   Lua stub in the "In Cooldown" paragraph, and a clause about display versus enforcement. Both were
   implementation detail on a page meant for players.
