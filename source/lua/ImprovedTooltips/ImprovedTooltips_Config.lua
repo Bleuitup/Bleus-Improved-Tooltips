@@ -300,9 +300,14 @@ IT.kReadyLabelColor = Color(0, 1, 0, 1)
 IT.kNotReadyLabelColor = Color(1, 0, 0, 1)
 
 -- Glyph height as a fraction of the label's own measured text height, so it squares off against
--- the text rather than against the row. Below 1 because a text height includes the descender space
--- the label itself does not use.
-IT.kReadyGlyphHeightScale = 0.8
+-- the text rather than against the row.
+--
+-- Two things pull in opposite directions here. A measured text height includes descender space the
+-- bracketed label never uses, which argues for a value below 1; but cells 5 and 6 draw their plate
+-- inset to pixels 6..52 of a 64 cell, so only 0.72 of whatever this sets is actually inked. At 0.8
+-- the visible square came out at 0.58 of the text height and read a shade small beside it. 0.92
+-- puts it at 0.66, which sits level with the label's cap height.
+IT.kReadyGlyphHeightScale = 0.92
 
 -- Unscaled gaps: glyph to label, and label to the team name after it. Applied before the
 -- scoreboard's scaling factor, the same as every other measurement in that file.

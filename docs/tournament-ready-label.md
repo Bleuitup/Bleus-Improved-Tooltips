@@ -64,7 +64,7 @@ the header row, where it reads at a glance:
 
 ```
 [tick]  [Ready]      Frontiersmen (6 Players)  [skill badge]
-[cross] [Not Ready]  The Kharaa   (6 Players)  [skill badge]
+[cross] [Not Ready]  Kharaa       (6 Players)  [skill badge]
 ```
 
 Label green for ready, red for not; glyph squared off to the height of the text beside it.

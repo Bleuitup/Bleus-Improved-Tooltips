@@ -5,7 +5,7 @@
 -- while Shine's tournament mode is waiting for both teams, by prefixing the header row:
 --
 --   [tick]  [Ready]      Frontiersmen (6 Players)  [skill badge]
---   [cross] [Not Ready]  The Kharaa   (6 Players)  [skill badge]
+--   [cross] [Not Ready]  Kharaa       (6 Players)  [skill badge]
 --
 -- The text is green for ready and red for not, and the glyph is drawn to the height of the text
 -- beside it. 1.02 put a small pip in the corner of the skill badge instead; this is the same state
