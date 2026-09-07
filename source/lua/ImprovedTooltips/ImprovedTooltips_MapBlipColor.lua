@@ -82,6 +82,74 @@ MapWeapon("Shotgun",         IT.kMapBlipColorShotgun)
 MapWeapon("GrenadeLauncher", IT.kMapBlipColorGrenadeLauncher)
 MapWeapon("Flamethrower",    IT.kMapBlipColorFlamethrower)
 MapWeapon("HeavyMachineGun", IT.kMapBlipColorHeavyMachineGun)
+MapWeapon("Submachinegun",   IT.kMapBlipColorSubmachinegun)
+
+-- WHAT CAN AND CANNOT BE READ AT RUNTIME. The outline palette is the authoritative per-weapon one,
+-- and it is unreachable: EquipmentOutline.lua keeps its weapon list in a file-local (`local lookup`)
+-- and its colours in ui/marine_outline_lookup.dds, so neither the mapping nor the RGB is visible to
+-- Lua. That is why the values above are read out of the texture and written down.
+--
+-- GUIInsight_PlayerHealthbars.kAmmoColors IS reachable - a public table on a public script, keyed by
+-- weapon kMapName - and it is the same palette on every weapon that appears in both. So anything not
+-- named above falls back to it, which is what lets a mod that adds a weapon and gives it an ammo
+-- colour get a map colour here without a patch to this file.
+--
+-- The bridge from a kPlayerStatus name to a kMapName is lowercase, which is right for rifle,
+-- shotgun, grenadelauncher and flamethrower. Two do not follow it and are aliased.
+local kStatusToMapName =
+{
+	HeavyMachineGun = "hmg",
+	Submachinegun   = "smg",
+}
+
+local function GetAmmoBarColor(statusName)
+
+	if not IT.kMapBlipUseAmmoColorFallback then
+		return nil
+	end
+
+	local colors = GUIInsight_PlayerHealthbars and GUIInsight_PlayerHealthbars.kAmmoColors
+
+	if not colors then
+		return nil
+	end
+
+	return colors[kStatusToMapName[statusName] or string.lower(statusName)]
+
+end
+
+-- Resolved once per status rather than per blip: the fallback walks two table lookups and a
+-- string.lower, and this runs inside the minimap's per-blip loop.
+local resolvedColors = { }
+
+local function GetColorForStatus(status)
+
+	local cached = resolvedColors[status]
+
+	if cached ~= nil then
+		return cached or nil
+	end
+
+	local color = kWeaponColors[status]
+
+	if not color then
+
+		-- enum tables carry their own reverse mapping, so this recovers the name to bridge with.
+		local statusName = kPlayerStatus and kPlayerStatus[status]
+
+		if type(statusName) == "string" then
+			color = GetAmmoBarColor(statusName)
+		end
+
+	end
+
+	-- false rather than nil, so a weapon with no colour is remembered as "none" instead of being
+	-- looked up again every time a blip carrying it is drawn.
+	resolvedColors[status] = color or false
+
+	return color
+
+end
 
 -- The join from a blip to a weapon. A blip knows its owner entity id (MapBlip.lua:110); a
 -- PlayerInfoEntity knows a playerId and a status, and status IS the weapon - kPlayerStatus carries
@@ -152,7 +220,7 @@ local function GetWeaponColor(blip)
 
 	local status = statusByOwner[blip:GetOwnerEntityId()]
 
-	return status and kWeaponColors[status] or nil
+	return status and GetColorForStatus(status) or nil
 
 end
 

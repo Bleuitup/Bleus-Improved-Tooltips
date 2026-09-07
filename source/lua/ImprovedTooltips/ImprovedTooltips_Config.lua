@@ -342,6 +342,28 @@ IT.kMapBlipColorGrenadeLauncher = Color(1, 0, 1, 1)          -- #FF00FF
 IT.kMapBlipColorFlamethrower    = Color(1, 1, 0, 1)          -- #FFFF00
 IT.kMapBlipColorHeavyMachineGun = Color(1, 0, 0, 1)          -- #FF0000
 
+-- CBM adds a sixth weapon, and colours it itself. Its EquipmentOutline.lua extends
+-- kEquipmentOutlineColor with 'Orange' and maps "Submachinegun" to it, and its own
+-- marine_outline_lookup.dds carries that colour at index 5. Read out of CBM's texture, the same way
+-- the four above were read out of vanilla's. CBM's first five entries are byte-identical to
+-- vanilla's, so nothing else changes when CBM is loaded.
+--
+-- Costs nothing when CBM is absent: kPlayerStatus has no Submachinegun value there, so this never
+-- resolves to a status and is never used.
+--
+-- It is here rather than left to the runtime fallback below because CBM does NOT list the SMG in
+-- kAmmoColors - its own commander ammo bar falls through to yellow, the flamethrower's colour. This
+-- keeps the map agreeing with CBM's world outline rather than with that fallback.
+IT.kMapBlipColorSubmachinegun = Color(0.827, 0.451, 0, 1)    -- #D37300
+
+-- After the table above, fall back to GUIInsight_PlayerHealthbars.kAmmoColors, which is a public
+-- table any mod can add to and is what colours the ammo bar under a marine in the commander and
+-- spectator views. That is the only per-weapon palette in the game readable at runtime: the outline
+-- one keeps its class list in a file-local and its colours in a texture, so neither can be reached
+-- from Lua. This is what lets a mod that adds a weapon AND gives it an ammo colour get a map colour
+-- here with no patch to this mod.
+IT.kMapBlipUseAmmoColorFallback = true
+
 -- Seconds between rebuilds of the blip-owner to weapon table. GetMapBlipColor runs once per blip
 -- per minimap update, so this must not be per call. A quarter second is far below the time it
 -- takes to notice a weapon change on a map.

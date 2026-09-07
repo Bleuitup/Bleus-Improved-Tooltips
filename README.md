@@ -478,6 +478,11 @@ and `mod.settings` names the file by extension.
   `kMapBlipColorHeavyMachineGun` — the four colours, read out of `ui/marine_outline_lookup.dds` so
   they match the outlines on dropped weapons. There is deliberately no entry for rifles, sidearms
   or exos: they keep the player's own `playercolor_m`
+- `kMapBlipColorSubmachinegun` — CBM's sixth weapon, in CBM's own orange. Unused without CBM, since
+  `kPlayerStatus` has no `Submachinegun` value there
+- `kMapBlipUseAmmoColorFallback` — for any weapon not named above, consult
+  `GUIInsight_PlayerHealthbars.kAmmoColors` at runtime, so a mod that adds a weapon and lists an
+  ammo colour for it is picked up with no patch here
 - `kMapBlipColorRefreshInterval` — seconds between rebuilds of the blip-owner to weapon table.
   `GetMapBlipColor` runs once per blip per minimap update, so this cannot be per call
 
@@ -540,6 +545,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - Exosuits keep the plain marine colour. Vanilla does colour them elsewhere — the commander's ammo
   bars give minigun red and railgun orange — but under CBM an exo is modular and can carry any
   combination, so there is no single weapon to colour one by.
+- **CBM's SMG is coloured too, and other mods' weapons resolve on their own.** CBM appends
+  `Submachinegun` to `kPlayerStatus` and gives it an orange outline of its own (`#D37300`, read out
+  of CBM's `marine_outline_lookup.dds`), so the map matches. Anything else falls back to
+  `GUIInsight_PlayerHealthbars.kAmmoColors` at runtime — the one per-weapon palette in the game that
+  is both readable and extendable from Lua — so a mod that adds a weapon and lists an ammo colour
+  for it gets a map colour here with no patch. The outline palette cannot be read: its weapon list
+  is a file-local and its colours live in a texture.
 - **The palette was corroborated against a second vanilla source.**
   `GUIInsight_PlayerHealthbars.kAmmoColors`, which colours the ammo bar under a marine in the
   commander and spectator views, gives exactly the same four values: green shotgun, fuchsia GL,
