@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.02. Published to the Steam Workshop as
+Version 1.02b. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -464,11 +464,13 @@ and `mod.settings` names the file by extension.
 - `kSpectatorSupplyMarineX` / `kSpectatorSupplyAlienX` / `kSpectatorBiomassShiftX` — their positions,
   and how far vanilla's biomass pair shifts right to make room. Written the way vanilla writes the
   rest of that bar: marine from the left edge, alien leftward from the right
-- `kShowTournamentReadyPips` — the ready tick and not-ready cross on the scoreboard's team skill
-  badges under Shine's tournament mode. Inert when that plugin is not running
-- `kReadyPipScale` / `kReadyPipInset` — pip size as a fraction of the badge height, and how far it is
-  pulled in off the badge's lower right corner. The scale runs higher than the size the pip reads
-  at, because the art is drawn inset to 0.72 of its cell
+- `kShowTournamentReadyLabels` — the glyph and green/red label at the front of each team's
+  scoreboard header under Shine's tournament mode. Inert when that plugin is not running
+- `kReadyLabelText` / `kNotReadyLabelText` — the label strings, brackets included
+- `kReadyLabelColor` / `kNotReadyLabelColor` — full green and full red. The tick and cross beside
+  them are what carry the meaning for a red/green dichromat
+- `kReadyGlyphHeightScale` — glyph height as a fraction of the label's measured text height
+- `kReadyGlyphGap` / `kReadyLabelGap` — unscaled gaps, glyph to label and label to team name
 
 ## Building the assets
 
@@ -511,6 +513,20 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.02b**
+- **The tournament mode ready state moved from the skill badge to the front of the header row.**
+  1.02 drew a pip in the badge's corner; it worked, but it was small and took two rounds of
+  resizing to be legible at all. Each team's header now reads `[tick] [Ready] Frontiersmen
+  (6 Players)`, green for ready and red for not, with the glyph squared off to the height of the
+  label beside it. No art change — cells 5 and 6 were already a coloured square with a white mark.
+- Two things in vanilla made that harder than it looks, both recorded in
+  `docs/tournament-ready-label.md`. The skill badge's x is derived from the team name's width but
+  only recomputed when the team's summed skill changes, so shifting the name strands the badge on
+  top of it unless the mod drives that position itself. And there is little room before the player
+  column headers — 400 unscaled pixels on a wide screen, 275 below 1280 — which tournament mode
+  makes tighter still by letting admins set 25-character team names. The row is therefore measured
+  every update, and the label drops to glyph-only rather than overlapping the Score column.
 
 **1.02**
 - **Supply on the spectator top bar.** That bar carries resources, resource towers and alien

@@ -64,7 +64,7 @@ Each bead being researched now fills as the work goes in, and more than one fill
 
 [list]
 [*] [b]Supply on the spectator bar.[/b] It carries resources, resource towers and alien biomass, but never supply. Both teams' supply now sits on it, used against maximum, and nothing new is sent to get it.
-[*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode a tick or a cross sits on each team's skill badge, so the scoreboard shows who is being waited on. Both come off at round start, and nothing is drawn on a server without that plugin. Shine announces readiness only when it changes, so a client joining part way through a pre game sees a cross on a team that is already ready, until the next change.
+[*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header is marked ready in green or not ready in red, with a tick or a cross beside it. Both come off at round start, and nothing is drawn on a server without that plugin. Shine announces readiness only when it changes, so a client joining mid pre game sees an already ready team marked not ready until the next change.
 [/list]
 
 [h1]Settings[/h1]

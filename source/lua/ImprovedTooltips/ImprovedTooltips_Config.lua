@@ -278,25 +278,33 @@ IT.kSpectatorSupplyAlienX = -5
 IT.kSpectatorBiomassShiftX = 110
 
 ------------------------------------------------------------------------------------------------
--- Tournament mode ready pips
+-- Tournament mode ready labels
 ------------------------------------------------------------------------------------------------
 --
--- See ImprovedTooltips_TournamentReady.lua. A tick or a cross in the corner of each team's skill
--- badge on the scoreboard while Shine's tournament mode waits for both teams to ready up. Inert
--- unless that plugin is running, and removed entirely once the round starts.
+-- See ImprovedTooltips_TournamentReady.lua. A glyph and a coloured label at the front of each
+-- team's scoreboard header while Shine's tournament mode waits for both teams to ready up, in
+-- place of the corner pip 1.02 drew on the skill badge. Inert unless that plugin is running, and
+-- removed entirely once the round starts.
 
-IT.kShowTournamentReadyPips = true
+IT.kShowTournamentReadyLabels = true
 
--- Pip size as a fraction of the skill badge's height, and how far it is pulled in from the badge's
--- lower right corner, as a fraction of its own size.
---
--- The scale is larger than the size the pip reads at. Cells 5 and 6 draw their rounded plate inset
--- to pixels 6..52 of a 64 cell, so the coloured shape is 0.72 of the item it sits in; 0.70 of the
--- badge height therefore puts the visible plate at very close to half of it. The inset stays in the
--- art rather than being drawn out to the cell edge, which would bleed into the neighbouring cells
--- once the sheet is compressed and mipmapped.
---
--- Inset moves the pip diagonally towards the badge's centre, so it overlaps the badge art rather
--- than perching on its corner. Zero sits it flush in the corner; raise it to overlap further.
-IT.kReadyPipScale = 0.70
-IT.kReadyPipInset = 0.15
+-- The labels themselves. Brackets included deliberately: they read as a status marker rather than
+-- as part of the team's name, which is the thing immediately to their right.
+IT.kReadyLabelText = "[Ready]"
+IT.kNotReadyLabelText = "[Not Ready]"
+
+-- Full green and full red. These are the one pair a red/green dichromat cannot separate, which is
+-- why the tick and the cross are kept beside them: the shape carries the meaning and the colour
+-- only reinforces it.
+IT.kReadyLabelColor = Color(0, 1, 0, 1)
+IT.kNotReadyLabelColor = Color(1, 0, 0, 1)
+
+-- Glyph height as a fraction of the label's own measured text height, so it squares off against
+-- the text rather than against the row. Below 1 because a text height includes the descender space
+-- the label itself does not use.
+IT.kReadyGlyphHeightScale = 0.8
+
+-- Unscaled gaps: glyph to label, and label to the team name after it. Applied before the
+-- scoreboard's scaling factor, the same as every other measurement in that file.
+IT.kReadyGlyphGap = 6
+IT.kReadyLabelGap = 10
