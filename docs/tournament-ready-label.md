@@ -109,6 +109,44 @@ prefix comes off entirely on `GetGameStarted`, the name and badge return to vani
 and the tracked states are cleared on the way back out so last round's readiness cannot leak into
 the next pre-game. The plugin does the same on its side (`server.lua:213`) and resends nothing.
 
+## Scoreboard mods replace this file wholesale
+
+**Devnull's Enhanced Scoreboard** (Workshop `2597529958`, v2.8, `lua/Devnull_ESB/`) hooks
+`lua/GUIScoreboard.lua` with `"replace"`, not `"post"` — so vanilla's copy never loads and ours
+post-hooks *theirs*. Its entry `Priority` is 99 against our 5, and ModLoader sorts descending, so
+our hooks register last and wrap whatever it left. That part works by design.
+
+What did not work was assuming vanilla's arrangement. The first version hardcoded name-at-10,
+badge-after-name and wrote both positions from those constants. ESB flows the header the other way:
+
+| | vanilla | Devnull ESB |
+| --- | --- | --- |
+| skill badge | after the name, at `GetTextWidth(header) + 20` (`:1153`) | pinned at x=10 (`:360`) |
+| team name | x=10 (`:165`) | x = 10 + badge width, for playing teams (`:350-352`) |
+| repositions the badge later? | yes, but only when summed skill changes (`:1142`) | never |
+| team name font | `kTeamNameFontName`, which is the font it actually uses | `SetFont` with Arial 13; `kTeamNameFontName` is left as `Fonts.kInsight` and unused |
+
+So on a server running ESB our code **moved somebody else's badge from the front of the row to the
+back of it**, and set our label in `Fonts.kInsight` while the name beside it was Arial 13.
+
+Both fixes generalise rather than special-casing ESB:
+
+- **Read the host's positions back and only shift them.** `TrackBase` keeps, per item, the last x
+  we wrote; anything different from that on the next update is the host's own write and becomes the
+  new base. The prefix goes at `min(nameBase, badgeBase)` and both items move right by its width,
+  so whichever order the host chose survives. Zero shift puts everything back exactly.
+- **Copy the font off the team name item.** `SetFont` resolves to `SetFontName` plus a fitted scale
+  (`GUIItemExtras.lua:413-431`), so `GetFontName()` and `GetScale()` describe whatever the host
+  settled on however it was set. Gaps became fractions of the measured text height for the same
+  reason.
+
+Nothing here reads a constant that a scoreboard mod could redefine, except `GetColumnStartX`, which
+ESB reproduces identically (`:370`).
+
+**Other scoreboard replacements on this machine**, all worth a look if a report comes in:
+CompMod (`1876217244`), Shimizu Scoreboard (`3776560923`), Shimizu Better Spectator
+(`3789671641`), ExperienceManager (`3774306230`), NoMoreSkillTierIcons.
+
 ## Art (unchanged from 1.02)
 
 Cells 5 and 6 of the mod's own sheet, 448x64. See `tools/build_icons.ps1`. The move from badge pip
@@ -140,12 +178,15 @@ half, only to the Shine plumbing above it.
 - Tournament mode on, pre-game: both teams show the cross and a red `[Not Ready]`.
 - One team readies: tick and a green `[Ready]`; the other stays as it was.
 - Un-ready: back to the cross.
-- Round starts: the prefix goes, the name returns to x=10 and the badge lands right beside it —
-  no gap left where the label used to be.
+- Round starts: the prefix goes and the name and badge return to exactly where the host had them —
+  no gap left where the label used to be, and no change of order.
 - Round ends into a new pre-game: both not ready again, not whatever they were last round.
 - A team with no players: no prefix. Vanilla hides the skill badge in that case and this follows it.
 - **A full team.** `Frontiersmen (12 Players)` is the widest the header gets in English; confirm the
   label drops to glyph-only rather than running into the Score column.
+- **Devnull's Enhanced Scoreboard loaded**: the badge must stay at the FRONT of the row where
+  that mod puts it, with the prefix before it, and the label must be in the same typeface as the
+  team name. This is the case that caught the first version out.
 - **A narrow screen**, under 1280 wide, where the budget is 275 rather than 400. Likeliest place to
   see the glyph-only fallback.
 - Someone joining or leaving mid-pregame, which is when vanilla would otherwise reposition the

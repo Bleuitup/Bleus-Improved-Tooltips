@@ -309,7 +309,9 @@ IT.kNotReadyLabelColor = Color(1, 0, 0, 1)
 -- puts it at 0.66, which sits level with the label's cap height.
 IT.kReadyGlyphHeightScale = 0.92
 
--- Unscaled gaps: glyph to label, and label to the team name after it. Applied before the
--- scoreboard's scaling factor, the same as every other measurement in that file.
-IT.kReadyGlyphGap = 6
-IT.kReadyLabelGap = 10
+-- Gaps as fractions of the label's own text height: glyph to label, and label to the team name
+-- after it. Fractions rather than pixels because a scoreboard mod can set the header in a font of
+-- its own choosing, and a gap that stays in proportion to the text looks right in any of them.
+-- These reproduce the 6 and 10 pixels they replaced at vanilla's font size.
+IT.kReadyGlyphGap = 0.3
+IT.kReadyLabelGap = 0.5

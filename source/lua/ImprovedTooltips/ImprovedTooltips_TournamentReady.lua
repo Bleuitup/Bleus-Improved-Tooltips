@@ -35,21 +35,24 @@
 -- not at registration, so a wrapper installed later still runs. We look for the plugin each frame
 -- until it is there, and if tournament mode is never enabled nothing happens.
 --
--- LAYING OUT THE ROW. Vanilla flows it left to right from x=10: the team name, then the skill
--- badge at GetTextWidth(header) + 20 (GUIScoreboard.lua:1153). Two things make that awkward to
--- prefix:
+-- LAYING OUT THE ROW. The prefix goes at the front, which means everything already there has to
+-- move right by its width. Three things make that harder than it sounds:
 --
---   1. That badge position is CACHED. Line 1142 guards it on the team's summed skill changing, so
---      it moves when someone joins or leaves and not otherwise. Shift the name and the badge stays
---      put, on top of it. So this file drives the badge x itself on every update, in both states,
---      reproducing vanilla's own formula when there is no prefix to add.
---   2. There is not much room. The player column headers start at kPlayerItemWidth on a screen
+--   1. The row's order is NOT fixed, because the scoreboard file itself is not. Vanilla flows it
+--      name-then-badge from x=10, with the badge at GetTextWidth(header) + 20
+--      (GUIScoreboard.lua:1153); Devnull's Enhanced Scoreboard replaces the whole file and flows it
+--      badge-then-name. So nothing here assumes an order: the host's positions are read back and
+--      only ever shifted. See TrackBase below.
+--   2. Vanilla's badge position is CACHED. Line 1142 guards it on the team's summed skill changing,
+--      so it moves when someone joins or leaves and not otherwise; Devnull's never moves at all.
+--      Either way a shift has to be re-applied every update rather than written once.
+--   3. There is not much room. The player column headers start at kPlayerItemWidth on a screen
 --      under 1280 wide, and at GetTeamItemWidth() - kTeamColumnSpacingX * 10 above it - 275 and
---      400 respectively. The name itself is always vanilla's own NAME_TEAM_n locale string
---      (GUIScoreboard.lua:780) - tournament mode's custom names go to the Insight spectator bar
---      through Insight.lua's "teams" command, never here - but "Frontiersmen (12 Players)" plus a
---      glyph plus "[Not Ready]" plus the badge is already close to the wide-screen budget, and past
---      it on a narrow one. Localisation into a wordier language would push it further.
+--      400 respectively. The name is always the NAME_TEAM_n locale string (GUIScoreboard.lua:780);
+--      tournament mode's custom names go to the Insight spectator bar through Insight.lua's "teams"
+--      command, never here. But "Frontiersmen (12 Players)" plus a glyph plus "[Not Ready]" plus
+--      the badge is already close to the wide-screen budget and past it on a narrow one, and a
+--      wordier language would push it further.
 --
 -- So the row is MEASURED, not assumed. If glyph, text, name and badge do not fit before the column
 -- headers, the text is dropped and the glyph alone is kept - still at the front of the row, still
@@ -158,16 +161,10 @@ local function EnsurePluginHook(plugin)
 
 end
 
--- Vanilla's own row metrics, unscaled. The first two match GUIScoreboard.lua:165 and :1153; the
--- badge width is kPlayerSkillIconSize.x (:79), which is a file-local there and cannot be read.
-local kRowStartX = 10
-local kRowTopY = 5
-local kNameToBadgeGap = 10
-local kBadgeWidth = 62
-
--- Where vanilla's player column headers begin (GUIScoreboard.lua:194). Reproduced rather than read
--- because it is a local there too; if this ever drifts, the symptom is a prefix that overlaps the
--- Score column instead of shortening itself.
+-- Where the host's player column headers begin, unscaled. Vanilla computes this at
+-- GUIScoreboard.lua:194 and Devnull's Enhanced Scoreboard reproduces it exactly, so the same
+-- expression serves both. If a scoreboard mod ever changes it, the symptom is a prefix that
+-- overlaps the Score column instead of shortening itself.
 local function GetColumnStartX(self)
 
 	if GUIScoreboard.screenWidth < 1280 then
@@ -178,8 +175,36 @@ local function GetColumnStartX(self)
 
 end
 
+-- NOTHING ABOUT THE ROW'S LAYOUT IS ASSUMED, and the first version of this file got that wrong.
+-- It hardcoded vanilla's order - name at x=10, badge after it at GetTextWidth + 20 - and wrote both
+-- positions from those constants. Devnull's Enhanced Scoreboard (Workshop 2597529958) replaces
+-- lua/GUIScoreboard.lua wholesale and lays the header out the other way round: the skill badge is
+-- pinned at x=10 and the name starts at 10 plus the badge width (its GUIScoreboard.lua:350-360),
+-- and it never repositions the badge afterwards. Writing vanilla's arrangement over that moved
+-- somebody else's badge from the front of the row to the back of it.
+--
+-- So this reads back where the host put each item and only ever SHIFTS it, preserving whatever
+-- order the host chose. The prefix goes at the leftmost of the two, and both move right by its
+-- width. Telling a host write apart from our own is the whole trick: whatever we did not write
+-- ourselves last frame is the host's, and becomes the new base. That covers vanilla recomputing
+-- the badge x when a team's summed skill changes (:1142), a resolution change, and a scoreboard
+-- mod that positions on some schedule of its own.
+local function TrackBase(layout, item, baseKey, setKey)
+
+	local x = item:GetPosition().x
+
+	-- A tolerance rather than equality, because these are pixel positions that have been through a
+	-- scale multiply.
+	if layout[setKey] == nil or math.abs(x - layout[setKey]) > 0.01 then
+		layout[baseKey] = x
+	end
+
+	return layout[baseKey]
+
+end
+
 -- Made lazily and cached on the team table. Both items are children of the team background, like
--- vanilla's name and badge, so a scoreboard rebuilt on a resolution change takes them with it.
+-- the host's own name and badge, so a scoreboard rebuilt on a resolution change takes them with it.
 local function GetPrefix(team)
 
 	if not team.itReadyPrefix then
@@ -193,18 +218,13 @@ local function GetPrefix(team)
 		local glyph = GUIManager:CreateGraphicItem()
 		glyph:SetTexture(kTexture)
 		glyph:SetAnchor(GUIItem.Left, GUIItem.Top)
-		-- The scoreboard clips its contents and every item vanilla parents in here sets the same
+		-- The scoreboard clips its contents and every item the host parents in here sets the same
 		-- stencil function. Without it these draw outside the clip.
 		glyph:SetStencilFunc(GUIItem.NotEqual)
 		glyph:SetIsVisible(false)
 		background:AddChild(glyph)
 
 		local text = GUIManager:CreateTextItem()
-		-- Same font and scale as the team name, so the label sits on the name's baseline and the
-		-- two scale together.
-		text:SetFontName(GUIScoreboard.kTeamNameFontName)
-		text:SetScale(Vector(1, 1, 1) * GUIScoreboard.kScalingFactor)
-		GUIMakeFontScale(text)
 		text:SetAnchor(GUIItem.Left, GUIItem.Top)
 		text:SetTextAlignmentX(GUIItem.Align_Min)
 		text:SetTextAlignmentY(GUIItem.Align_Min)
@@ -213,6 +233,7 @@ local function GetPrefix(team)
 		background:AddChild(text)
 
 		team.itReadyPrefix = { glyph = glyph, text = text }
+		team.itReadyLayout = { }
 
 	end
 
@@ -231,9 +252,28 @@ local function HidePrefix(team)
 
 end
 
--- Positions and shows whatever fits, and returns how far the team name has to move right to clear
--- it. Zero means nothing was drawn and the row keeps vanilla's layout exactly.
-local function LayOutPrefix(self, team, nameItem, nameWidth, isReady)
+-- The font is copied off the team name every update rather than taken from a constant. Vanilla's
+-- GUIScoreboard.kTeamNameFontName happens to be the font its own team name uses; Devnull's is not.
+-- That mod sets the name through SetFont with an Arial 13 table and leaves kTeamNameFontName as
+-- Fonts.kInsight, so reading the constant put our label in a different typeface from the name
+-- beside it. SetFont resolves to SetFontName plus a fitted scale (GUIItemExtras.lua:413-431), so
+-- GetFontName and GetScale together describe whatever the host settled on, either way.
+local function MatchFont(text, nameItem)
+
+	local fontName = nameItem:GetFontName()
+
+	if fontName then
+		text:SetFontName(fontName)
+	end
+
+	text:SetScale(nameItem:GetScale())
+
+end
+
+-- Positions and shows whatever fits, and returns how far the row has to move right to clear it.
+-- Everything here is in SCALED pixels, because the host's own item positions are, and this file no
+-- longer knows what unscaled coordinates the host was working in.
+local function LayOutPrefix(team, nameItem, nameY, rowStart, rightmost, limit, isReady)
 
 	local prefix = GetPrefix(team)
 
@@ -241,32 +281,35 @@ local function LayOutPrefix(self, team, nameItem, nameWidth, isReady)
 		return 0
 	end
 
-	local scale = GUIScoreboard.kScalingFactor
 	local label = isReady and IT.kReadyLabelText or IT.kNotReadyLabelText
 	local coords = isReady and kReadyCoords or kNotReadyCoords
 
+	MatchFont(prefix.text, nameItem)
 	prefix.text:SetText(label)
 	prefix.text:SetColor(isReady and IT.kReadyLabelColor or IT.kNotReadyLabelColor)
 
-	-- Measured rather than assumed, so the glyph tracks whatever the font does at this resolution.
-	local textHeight = nameItem:GetTextHeight(label)
+	-- GetTextWidth and GetTextHeight report unscaled, so each is taken against its own item's
+	-- scale, the way vanilla does it at GUIScoreboard.lua:1058.
+	local textHeight = nameItem:GetTextHeight(label) * nameItem:GetScale().x
+	local labelWidth = prefix.text:GetTextWidth(label) * prefix.text:GetScale().x
+
+	-- Gaps are fractions of the text height rather than fixed pixels, so they stay in proportion to
+	-- whatever font the loaded scoreboard uses.
 	local glyphSize = textHeight * IT.kReadyGlyphHeightScale
-	local textWidth = prefix.text:GetTextWidth(label)
+	local glyphGap = textHeight * IT.kReadyGlyphGap
+	local labelGap = textHeight * IT.kReadyLabelGap
 
-	local withText = glyphSize + IT.kReadyGlyphGap + textWidth + IT.kReadyLabelGap
-	local glyphOnly = glyphSize + IT.kReadyLabelGap
+	local withText = glyphSize + glyphGap + labelWidth + labelGap
+	local glyphOnly = glyphSize + labelGap
+	local showText = rightmost + withText <= limit
 
-	-- What is left before the player column headers once the name and badge have had their share.
-	local budget = GetColumnStartX(self) - kRowStartX - nameWidth - kNameToBadgeGap - kBadgeWidth
-	local showText = withText <= budget
-
-	prefix.glyph:SetSize(Vector(glyphSize, glyphSize, 0) * scale)
-	prefix.glyph:SetPosition(Vector(kRowStartX, kRowTopY + (textHeight - glyphSize) * 0.5, 0) * scale)
+	prefix.glyph:SetSize(Vector(glyphSize, glyphSize, 0))
+	prefix.glyph:SetPosition(Vector(rowStart, nameY + (textHeight - glyphSize) * 0.5, 0))
 	prefix.glyph:SetTexturePixelCoordinates(coords[1], coords[2], coords[3], coords[4])
 	prefix.glyph:SetIsVisible(true)
 
 	if showText then
-		prefix.text:SetPosition(Vector(kRowStartX + glyphSize + IT.kReadyGlyphGap, kRowTopY, 0) * scale)
+		prefix.text:SetPosition(Vector(rowStart + glyphSize + glyphGap, nameY, 0))
 		prefix.text:SetIsVisible(true)
 	else
 		prefix.text:SetIsVisible(false)
@@ -317,36 +360,54 @@ function GUIScoreboard:UpdateTeam(updateTeam)
 		return
 	end
 
-	local teamNumber = updateTeam.TeamNumber
 	local nameItem = gui.TeamName
+	local badgeItem = gui.TeamSkill
 
-	-- Vanilla assembles the header text into a local and keeps no copy, so it is read back off the
-	-- item it was just written to (GUIScoreboard.lua:815).
-	local nameWidth = nameItem:GetTextWidth(nameItem:GetText())
+	-- Created up front, because the layout table lives beside it.
+	if not GetPrefix(updateTeam) then
+		return
+	end
 
-	local shift = 0
+	local layout = updateTeam.itReadyLayout
+	local nameBase = TrackBase(layout, nameItem, "nameBase", "nameSet")
+	local badgeBase = TrackBase(layout, badgeItem, "badgeBase", "badgeSet")
+
+	local nameY = nameItem:GetPosition().y
+	local badgeY = badgeItem:GetPosition().y
+
+	-- The host assembles the header text into a local and keeps no copy, so it is read back off the
+	-- item it was just written to.
+	local nameWidth = nameItem:GetTextWidth(nameItem:GetText()) * nameItem:GetScale().x
+
+	local rowStart = math.min(nameBase, badgeBase)
+	local rightmost = math.max(nameBase + nameWidth, badgeBase + badgeItem:GetSize().x)
+	local limit = GetColumnStartX(self) * GUIScoreboard.kScalingFactor
+
+	local teamNumber = updateTeam.TeamNumber
 
 	-- Playing teams only. The ready room has a header row but no readiness.
 	local isPlayingTeam = teamNumber == kTeam1Index or teamNumber == kTeam2Index
 
-	-- An empty team cannot be ready, and vanilla hides its skill badge for the same reason
-	-- (GUIScoreboard.lua:1155). The prefix hangs off the team background rather than the badge, so
-	-- it does not inherit that and has to make the same call itself.
+	-- An empty team cannot be ready, and the host hides its skill badge for the same reason. The
+	-- prefix hangs off the team background rather than the badge, so it does not inherit that and
+	-- has to make the same call itself.
 	local hasPlayers = updateTeam.PlayerList ~= nil and #updateTeam.PlayerList > 0
 
+	local shift = 0
+
 	if IT.kShowTournamentReadyLabels and isPlayingTeam and hasPlayers and GetWaitingPlugin() then
-		shift = LayOutPrefix(self, updateTeam, nameItem, nameWidth, readyStates[teamNumber] == true)
+		shift = LayOutPrefix(updateTeam, nameItem, nameY, rowStart, rightmost, limit,
+			readyStates[teamNumber] == true)
 	else
 		HidePrefix(updateTeam)
 	end
 
-	-- Driven on every update, in both states. Vanilla only repositions the badge when the team's
-	-- summed skill changes (GUIScoreboard.lua:1142), so leaving it alone after shifting the name
-	-- would strand it on top of the name until someone joined or left. With shift at zero this is
-	-- vanilla's own formula, GetTextWidth(header) + 20.
-	local scale = GUIScoreboard.kScalingFactor
+	-- Only ever a shift off the host's own positions, so whichever order it put the name and badge
+	-- in survives. With shift at zero this puts both back exactly where the host had them.
+	layout.nameSet = nameBase + shift
+	layout.badgeSet = badgeBase + shift
 
-	nameItem:SetPosition(Vector(kRowStartX + shift, kRowTopY, 0) * scale)
-	gui.TeamSkill:SetPosition(Vector(kRowStartX + shift + nameWidth + kNameToBadgeGap, kRowTopY, 0) * scale)
+	nameItem:SetPosition(Vector(layout.nameSet, nameY, 0))
+	badgeItem:SetPosition(Vector(layout.badgeSet, badgeY, 0))
 
 end

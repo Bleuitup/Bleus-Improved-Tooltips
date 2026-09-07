@@ -470,7 +470,8 @@ and `mod.settings` names the file by extension.
 - `kReadyLabelColor` / `kNotReadyLabelColor` — full green and full red. The tick and cross beside
   them are what carry the meaning for a red/green dichromat
 - `kReadyGlyphHeightScale` — glyph height as a fraction of the label's measured text height
-- `kReadyGlyphGap` / `kReadyLabelGap` — unscaled gaps, glyph to label and label to team name
+- `kReadyGlyphGap` / `kReadyLabelGap` — gaps as fractions of the label's text height, glyph to
+  label and label to team name, so they stay in proportion under a scoreboard mod's own font
 
 ## Building the assets
 
@@ -528,6 +529,12 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   `Frontiersmen (12 Players)` plus glyph plus label plus badge is close to the first and past the
   second. The row is therefore measured every update, and the label drops to glyph-only rather than
   overlapping the Score column.
+- **Compatible with scoreboard mods that replace `GUIScoreboard.lua` wholesale**, Devnull's
+  Enhanced Scoreboard in particular. The first cut of this hardcoded vanilla's header order and so
+  moved that mod's skill badge from the front of the row to the back, and set the label in a font
+  the mod does not use. Nothing about the row is assumed now: the host's own item positions are
+  read back and only ever shifted, so whichever order it chose survives, and the label's font is
+  copied off the team name rather than taken from a constant the host may have left unused.
 
 **1.02**
 - **Supply on the spectator top bar.** That bar carries resources, resource towers and alien
