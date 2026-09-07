@@ -144,7 +144,7 @@ local kContents =
 			-- WILL notice theirs staying the team colour and wonder whether it is broken; the
 			-- rifle and the sidearms are not, because keeping the colour you already chose reads
 			-- as normal rather than as an omission.
-			tooltip = "Colour marine blips on the map by the weapon each player is carrying, using the same colours as the outlines on dropped weapons. Exosuits keep the normal marine colour. Only ever shown to marines and spectators.",
+			tooltip = "Colour marine blips on the map by each player's primary weapon, in the same colours the commander already sees on their ammo bars. It does not change when they switch to a pistol or a welder. Exosuits keep the normal marine colour. Only ever shown to marines and spectators.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =

@@ -474,10 +474,10 @@ and `mod.settings` names the file by extension.
   label and label to team name, so they stay in proportion under a scoreboard mod's own font
 - `kColorMarineBlipsByWeapon` — colour marine map blips by the weapon each player carries. Off by
   default, and exposed in the settings panel
-- `kMapBlipColorShotgun` / `kMapBlipColorGrenadeLauncher` / `kMapBlipColorFlamethrower` /
+- `kMapBlipColorRifle` / `kMapBlipColorShotgun` / `kMapBlipColorGrenadeLauncher` / `kMapBlipColorFlamethrower` /
   `kMapBlipColorHeavyMachineGun` / `kMapBlipColorSubmachinegun` — the **fallback** palette, used only
   when the runtime read below fails. Values copied from the commander's own `GUIUnitStatus`
-  `kAmmoBarColors`. No entry for rifles, sidearms or exos: they keep the player's `playercolor_m`
+  `kAmmoBarColors`. Every primary weapon is here, rifle included; exos are the one exclusion
 - `kMapBlipReadCommanderPalette` — read the commander's palette straight out of the running game
   instead, so a weapon any mod adds is picked up with nothing hardcoded here. `GUIUnitStatus` keeps
   that table as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
@@ -528,11 +528,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **1.03**
-- **Marine blips on the map can be coloured by weapon.** Optional, off by default, in the settings
-  panel. The colours are the commander's own — `GUIUnitStatus`'s `kAmmoBarColors`, the palette
-  already under each marine's ammo bar in the top-down view — so the map agrees with what a
-  commander is reading on the same screen. Rifles and sidearms keep whatever the player set for
-  `playercolor_m`; only the loud weapons deviate from it.
+- **Marine blips on the map can be coloured by primary weapon.** Optional, off by default, in the
+  settings panel. The colours are the commander's own — `GUIUnitStatus`'s `kAmmoBarColors`, the
+  palette already under each marine's ammo bar in the top-down view — so the map agrees with what a
+  commander is reading on the same screen. A rifleman is teal, a shotgunner green, and so on.
+- **It follows the primary weapon, not the one in hand.** A shotgunner who switches to a welder or a
+  pistol stays green: `Marine:GetPlayerStatusDesc` reads the primary HUD slot, so the map says what
+  a marine can bring rather than what is momentarily raised.
 - **The palette is read out of the running game, not hardcoded.** `GUIUnitStatus` keeps that table
   as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
   `debug.getupvalue` — the same technique Shine and NSL use — and the bridge from a blip to it is by

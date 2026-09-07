@@ -12,7 +12,7 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 | | |
 | --- | --- |
 | Which blips | Marine and JetpackMarine only. **Exos keep the plain marine colour** — under CBM an exo is modular and can carry any combination, so there is no single weapon to colour one by. Vanilla DOES colour exos in `GUIInsight_PlayerHealthbars` (minigun red, railgun orange); the CBM reason is the one that decides it |
-| Which weapons | Whatever the commander's own palette distinguishes, read at runtime — the four vanilla weapons plus anything a mod adds, CBM's SMG included. Rifle, pistol, welder and axe keep the player's own `playercolor_m` |
+| Which weapons | Every PRIMARY weapon the commander's palette distinguishes, read at runtime — rifle included, plus anything a mod adds such as CBM's SMG. Pistols, axes and welders never appear: `kPlayerStatus` has no value for them |
 | Who sees it | Marines and spectators only |
 | Friend tinting | Composes on top: a friend with an HMG is half-saturated red |
 | Own blip | Untouched. Not a `MapBlip` at all |
@@ -52,9 +52,18 @@ would pin every weapon to the fallback for the session. If the read genuinely ca
 debug library, a mod that replaces `GUIUnitStatus` with something shaped differently, a rename), the
 written-down table in config takes over, holding copies of the same values.
 
-**Rifles are excluded explicitly**, along with pistol, axe and welder. The commander palette *does*
-colour a rifle — teal — but taking it would repaint every ordinary marine and discard the player's
-own `playercolor_m`. Only the loud weapons deviate from it.
+**It is the PRIMARY weapon, not the one in hand**, and that falls out of the data source rather than
+needing any work. `Marine:GetPlayerStatusDesc` reads `GetWeaponInHUDSlot(1)` — the primary slot — so
+a shotgunner who switches to a welder or a pistol still reports `Shotgun`. The map says what a
+marine can bring, not what is momentarily raised.
+
+**Nothing is excluded by weapon.** An earlier version held rifles back, on the theory that they
+should stay the plain team colour; the user corrected it, and rightly. A rifle *is* a primary
+weapon and takes the commander palette's teal like any other, so a plain rifleman reads as teal
+rather than as an absence of information. Pistols, axes and welders never come up at all —
+`kPlayerStatus` has no value for them, since they only ever sit in slots 2 and 3.
+
+Exos remain the one exclusion, and that is by blip type rather than by weapon.
 
 ## Three palettes, not two
 
@@ -79,7 +88,7 @@ actually reads.
 
 **All three agree exactly on shotgun, grenade launcher and flamethrower.** HMG differs only in the
 commander bar being a shade darker. Rifle has three different values, which costs nothing here
-because rifles are never recoloured — they keep the player's `playercolor_m`.
+and this takes the commander bar's teal, since that is the palette a commander is reading beside it.
 
 **CBM colours the SMG in two of the three.** The commander bar gets `#FF6600` and the outline gets
 `#D37300`; only the spectator bar is missing an entry, where it falls through to `kEnergyColor`

@@ -332,12 +332,15 @@ IT.kColorMarineBlipsByWeapon = false
 -- kMapBlipReadCommanderPalette below. This table is the fallback for when that read cannot happen,
 -- so keep it in step with the game's own values if they ever change.
 --
--- There is deliberately NO entry for the rifle, pistol, welder or axe. The commander palette does
--- colour a rifle - teal - but taking it would repaint every ordinary marine and throw away the
--- player's own playercolor_m. Only the loud weapons deviate from it.
+-- Every primary weapon is here, rifle included: the colour says what a marine can bring, so a plain
+-- rifleman reads as teal rather than as an absence. Pistols, axes and welders never appear -
+-- kPlayerStatus has no value for them, they only ever sit in slots 2 and 3 - and a marine's colour
+-- does not change when they switch to one, because the status is read from the primary slot.
 --
--- Exos are left alone too. Vanilla colours them elsewhere (minigun red, railgun orange), but under
--- CBM an exo is modular and can carry any combination, so there is no single weapon to colour by.
+-- Exos are the one exclusion. Vanilla colours them elsewhere (minigun red, railgun orange), but
+-- under CBM an exo is modular and can carry any combination, so there is no single weapon to
+-- colour by.
+IT.kMapBlipColorRifle           = Color(0, 1, 1, 1)          -- #00FFFF
 IT.kMapBlipColorShotgun         = Color(0, 1, 0, 1)          -- #00FF00
 IT.kMapBlipColorGrenadeLauncher = Color(1, 0, 1, 1)          -- #FF00FF
 IT.kMapBlipColorFlamethrower    = Color(1, 1, 0, 1)          -- #FFFF00

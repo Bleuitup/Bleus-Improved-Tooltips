@@ -96,24 +96,22 @@ local function MapWeapon(statusName, color)
 
 end
 
+MapWeapon("Rifle",           IT.kMapBlipColorRifle)
 MapWeapon("Shotgun",         IT.kMapBlipColorShotgun)
 MapWeapon("GrenadeLauncher", IT.kMapBlipColorGrenadeLauncher)
 MapWeapon("Flamethrower",    IT.kMapBlipColorFlamethrower)
 MapWeapon("HeavyMachineGun", IT.kMapBlipColorHeavyMachineGun)
 MapWeapon("Submachinegun",   IT.kMapBlipColorSubmachinegun)
 
--- RIFLES ARE DELIBERATELY NOT COLOURED, even though the commander palette has an entry for them
--- (teal). Taking it would repaint every ordinary marine and throw away the player's own
--- playercolor_m, which is the colour they chose for their team. Only the loud weapons deviate from
--- it; a plain marine looks like a marine. Settled with the user, and the same reason sidearms are
--- left alone.
-local kNeverColored =
-{
-	Rifle = true,
-	Pistol = true,
-	Axe = true,
-	Welder = true,
-}
+-- IT IS THE PRIMARY WEAPON, NOT THE ONE IN HAND, and that falls out of the data source rather than
+-- needing work: Marine:GetPlayerStatusDesc reads GetWeaponInHUDSlot(1) - the primary slot - so a
+-- shotgunner who switches to a welder or a pistol still reports Shotgun. Which is the behaviour
+-- wanted: the map should say what that marine can bring, not what is momentarily raised.
+--
+-- Nothing is excluded here. An earlier version held rifles back on the theory that they should stay
+-- the plain team colour; the user corrected it. A rifle IS a primary weapon and takes the
+-- commander palette's teal like any other. Pistols, axes and welders never appear at all, since
+-- kPlayerStatus has no value for them - they can only ever sit in slots 2 and 3.
 
 local commanderPalette = nil
 local paletteResolved = false
@@ -177,7 +175,7 @@ local function GetColorForStatus(status)
 
 	local statusName = kPlayerStatus and kPlayerStatus[status]
 
-	if type(statusName) ~= "string" or kNeverColored[statusName] then
+	if type(statusName) ~= "string" then
 		resolvedColors[status] = false
 		return nil
 	end
