@@ -484,6 +484,21 @@ Drive mount, and deleting a whole directory tree and recreating it at the same p
 instant is exactly the pattern Drive's sync can reconcile badly -- the delete propagates, the
 recreate does not. The command above never removes the directory itself.
 
+**If it has already been broken, the symptom is `Access is denied` on every read**, from bash and
+PowerShell alike, while `Test-Path` returns false and `Get-Item` denies -- the directory is
+simultaneously "there" and "not there". It happened again on 2026-09-07, from an `rm -rf output`
+that this section already warns against. Recovery, in order:
+
+1. Ask the user to quit and relaunch Google Drive. Necessary, but on its own it was not enough.
+2. `cmd /c rmdir /s /q "<path>"` -- reports `Access is denied` and exit 5, but appears to queue the
+   delete anyway.
+3. `cmd /c move "<path>" "<path>_broken"` -- reports "cannot find the file specified", and the path
+   is then clear. Between 2 and 3 the entry resolves.
+4. `mkdir -p output && cp -r source/. output/`, then `diff -r source output`.
+
+Nothing is at risk while this is going on: `output/` is a build artefact, regenerable from `source/`
+in one command, and git holds the only copy that matters. Do not panic-commit around it.
+
 If a file is renamed or deleted in `source/`, that copy leaves the old one behind in `output/`, so
 after a rename check for strays:
 
