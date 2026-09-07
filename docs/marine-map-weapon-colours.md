@@ -173,6 +173,65 @@ per-channel difference against vanilla 13.96 and 13.95, against each other 2.36,
 It is Drey's art and both the user and the CBM developers have his permission. Not a blocker, and
 not this branch's business.
 
+## Testing it
+
+### Without bots, and without a round
+
+`it_blipcolors` in the client console dumps what the palette resolved to. This is the test that
+matters most, because the runtime read either works or silently falls back to the config copy and
+the two look nearly identical in game:
+
+```
+[Improved Tooltips] setting: off
+[Improved Tooltips] palette: read from GUIUnitStatus at runtime
+[Improved Tooltips]   Rifle              #00FFFF
+[Improved Tooltips]   Shotgun            #00FF00
+[Improved Tooltips]   GrenadeLauncher    #FF00FF
+[Improved Tooltips]   Flamethrower       #FFFF00
+[Improved Tooltips]   HeavyMachineGun    #E60000
+[Improved Tooltips]   Submachinegun      #FF6600      <- only with CBM loaded
+[Improved Tooltips] 6 weapon colours resolved.
+```
+
+`palette: CONFIG FALLBACK` means the `debug.getupvalue` read failed. Everything still works, but a
+weapon a mod added would be uncoloured.
+
+### With bots
+
+`give` cannot equip a bot — it only ever targets `client:GetControllingPlayer()`
+(`NS2ConsoleCommands_Server.lua:2032`), so there is no console command that hands a specific gun to
+a specific bot. Two ways round it:
+
+```
+cheats 1
+addbot 3 1          -- three bots on marines (team 1)
+allfree             -- everything costs nothing
+```
+
+- **Let them buy.** Marine bots have a `BuyWeapons` objective and `HasGoodWeapon` checks their
+  primary slot against shotgun, HMG, flamethrower and grenade launcher
+  (`bots/MarineBrain_Data.lua:808-816`). With an armoury and `allfree` they will equip themselves
+  within a minute or so. You get a spread of weapons, not the one you asked for.
+- **Drop weapons at them.** `spawn shotgun` puts one on the ground where you are looking
+  (`:2033`), and bots have a `PickupDroppedWeapons` action (`:3406-3445`), so they will collect
+  them. Still not deterministic about which bot takes which.
+
+`addpassivebot` gives bots that do not act — useful for a stationary target, but they will not pick
+anything up either.
+
+**You cannot see your own colour.** The local player's marker is the minimap arrow, not a `MapBlip`,
+so at least one OTHER marine has to exist for this feature to show anything at all.
+
+### The cases bots cannot cover
+
+- **The friend leak.** Needs a real Steam friend on the opposing team. Bots have no Steam identity,
+  so `Client.GetIsSteamFriend` is never true for them and neither the friend desaturation nor the
+  cross-team leak can be reproduced with bots at all.
+- **Friend desaturation** on your own team: same problem, needs a real friend.
+
+Both need a second human. Worth doing once, since the leak is the only failure mode that is
+invisible from the marine side.
+
 ## Test checklist
 
 **Never run in game.** `luac -p` passes, which proves the files parse and nothing more.

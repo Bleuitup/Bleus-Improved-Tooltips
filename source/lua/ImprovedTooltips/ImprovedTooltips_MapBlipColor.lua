@@ -312,3 +312,47 @@ function MapBlip:GetMapBlipColor(minimap, item)
 	return result
 
 end
+
+-- A console dump, because the risky half of this file cannot be seen on the map. Reading the
+-- commander's palette out of a file-local either works or silently falls back to the written-down
+-- copy, and the two look nearly identical in game - the only visible tell is a modded weapon such
+-- as CBM's SMG coming out uncoloured. "it_blipcolors" answers it directly, with no bots, no weapons
+-- and no round in progress.
+Event.Hook("Console_it_blipcolors", function()
+
+	local palette = GetCommanderPalette()
+
+	Shared.Message(string.format("[Improved Tooltips] setting: %s",
+		IT.kColorMarineBlipsByWeapon and "ON" or "off"))
+
+	Shared.Message(string.format("[Improved Tooltips] palette: %s",
+		palette and "read from GUIUnitStatus at runtime" or "CONFIG FALLBACK - the runtime read failed"))
+
+	if not kPlayerStatus then
+		Shared.Message("[Improved Tooltips] kPlayerStatus is missing; nothing to resolve")
+		return
+	end
+
+	local found = 0
+
+	for name, status in pairs(kPlayerStatus) do
+
+		if type(name) == "string" and type(status) == "number" then
+
+			local color = GetColorForStatus(status)
+
+			if color then
+				found = found + 1
+				Shared.Message(string.format("[Improved Tooltips]   %-18s #%02X%02X%02X", name,
+					math.floor(color.r * 255 + 0.5),
+					math.floor(color.g * 255 + 0.5),
+					math.floor(color.b * 255 + 0.5)))
+			end
+
+		end
+
+	end
+
+	Shared.Message(string.format("[Improved Tooltips] %d weapon colours resolved. Anything not listed keeps the plain marine colour.", found))
+
+end)
