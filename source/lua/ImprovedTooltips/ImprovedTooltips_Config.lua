@@ -315,3 +315,31 @@ IT.kReadyGlyphHeightScale = 0.92
 -- These reproduce the 6 and 10 pixels they replaced at vanilla's font size.
 IT.kReadyGlyphGap = 0.3
 IT.kReadyLabelGap = 0.5
+
+------------------------------------------------------------------------------------------------
+-- Marine map blips coloured by weapon
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_MapBlipColor.lua. Marine player blips on the map take a colour per weapon,
+-- so the map says where the shotguns are. Off by default: it is more to read at a glance than the
+-- one flat team colour, and not everyone wants that.
+
+IT.kColorMarineBlipsByWeapon = false
+
+-- Vanilla's own weapon colours, lifted from the dropped-weapon outlines: EquipmentOutline.lua maps
+-- the class to an index and ui/marine_outline_lookup.dds holds the palette. Read out of that
+-- texture rather than guessed, so a shotgun on the map is the exact green of a shotgun on the floor.
+--
+-- There is deliberately NO entry for the rifle, pistol, welder or axe. Vanilla's palette leaves
+-- them on its default and so does this: they keep whatever the player set for playercolor_m, and
+-- only the four loud weapons deviate from it. Exos are left alone too - vanilla has no exo colour,
+-- and under CBM an exo can carry any combination of guns.
+IT.kMapBlipColorShotgun         = Color(0, 1, 0, 1)          -- #00FF00
+IT.kMapBlipColorGrenadeLauncher = Color(1, 0, 1, 1)          -- #FF00FF
+IT.kMapBlipColorFlamethrower    = Color(1, 1, 0, 1)          -- #FFFF00
+IT.kMapBlipColorHeavyMachineGun = Color(1, 0, 0, 1)          -- #FF0000
+
+-- Seconds between rebuilds of the blip-owner to weapon table. GetMapBlipColor runs once per blip
+-- per minimap update, so this must not be per call. A quarter second is far below the time it
+-- takes to notice a weapon change on a map.
+IT.kMapBlipColorRefreshInterval = 0.25

@@ -33,11 +33,13 @@ local kMainVM = decoda_name == "Main"
 -- Prefixed so we can never collide with NS2+'s CHUD_ keys or another mod's.
 local kOptionCooldownPanel   = "BIT_CooldownPanel"
 local kOptionCooldownMinTime = "BIT_CooldownMinTime"
+local kOptionWeaponBlips     = "BIT_WeaponBlips"
 
 -- Repeated here rather than read from the config, because in the main menu VM the config is not
 -- loaded. Keep in step with ImprovedTooltips_Config.lua.
 local kDefaultCooldownPanel   = true
 local kDefaultCooldownMinTime = 5
+local kDefaultWeaponBlips     = false
 
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
@@ -58,6 +60,7 @@ local function ApplyStoredOptions()
 	end
 
 	IT.kShowCooldownPanel = Client.GetOptionBoolean(kOptionCooldownPanel, kDefaultCooldownPanel)
+	IT.kColorMarineBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlips, kDefaultWeaponBlips)
 
 	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
 	-- feeds compares against whole seconds, so round rather than truncate.
@@ -125,6 +128,28 @@ local kContents =
 		properties =
 		{
 			{ "Label", "MINIMUM COOLDOWN SHOWN (SECONDS)" },
+		},
+	},
+
+	{
+		name = "bitWeaponBlips",
+		class = OP_TT_Checkbox,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionWeaponBlips,
+			optionType = "bool",
+			default = kDefaultWeaponBlips,
+			-- Says what it covers rather than listing exceptions. Exos are named because a player
+			-- WILL notice theirs staying the team colour and wonder whether it is broken; the
+			-- rifle and the sidearms are not, because keeping the colour you already chose reads
+			-- as normal rather than as an omission.
+			tooltip = "Colour marine blips on the map by the weapon each player is carrying, using the same colours as the outlines on dropped weapons. Exosuits keep the normal marine colour. Only ever shown to marines and spectators.",
+			immediateUpdate = ApplyStoredOptions,
+		},
+		properties =
+		{
+			{ "Label", "COLOUR MAP BLIPS BY WEAPON" },
 		},
 	},
 }
