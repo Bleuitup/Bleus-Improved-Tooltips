@@ -86,9 +86,15 @@ with the badge 62 wide (`kPlayerSkillIconSize`, `:79`) plus its 20 gap, the name
 unscaled pixels on a wide screen and 183 on a narrow one. `Frontiersmen (1 Player)` plus a glyph
 and `[Not Ready]` exceeds that.
 
-Tournament mode makes it likelier, not less: admins set custom team names through the plugin, up to
-25 characters (`string (25)`, `shared.lua:17-18`), pushed to clients as a `teams` console command
-(`client.lua:28`).
+**The name is never custom, which I got wrong at first.** The header always uses vanilla's
+`NAME_TEAM_n` locale string (`:780`) — "Frontiersmen" and "Kharaa". Tournament mode's
+`sh_setteamnames` does not touch it: those names go to the **Insight spectator bar** through
+`Insight.lua`'s `teams` console command (`client.lua:28`, `Insight.lua:143-160`), which is a
+different surface entirely. So the 25-character limit in the plugin's data table is irrelevant here.
+
+What does vary is the player-count suffix and the locale. `Frontiersmen (12 Players)` is
+meaningfully wider than `Kharaa (1 Player)`, and a wordier language would be wider still — enough
+that the fallback is a live case on a full team, not a theoretical one.
 
 So the row is measured every update. If glyph, label, name and badge all fit before the column
 headers, the full prefix is drawn; if not, the label is dropped and the glyph alone is kept — still
@@ -138,7 +144,7 @@ half, only to the Shine plumbing above it.
   no gap left where the label used to be.
 - Round ends into a new pre-game: both not ready again, not whatever they were last round.
 - A team with no players: no prefix. Vanilla hides the skill badge in that case and this follows it.
-- **A long team name.** Set one with the plugin's `teams` command, 25 characters, and confirm the
+- **A full team.** `Frontiersmen (12 Players)` is the widest the header gets in English; confirm the
   label drops to glyph-only rather than running into the Score column.
 - **A narrow screen**, under 1280 wide, where the budget is 275 rather than 400. Likeliest place to
   see the glyph-only fallback.

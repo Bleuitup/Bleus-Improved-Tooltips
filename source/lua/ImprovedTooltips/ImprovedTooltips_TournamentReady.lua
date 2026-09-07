@@ -45,9 +45,11 @@
 --      reproducing vanilla's own formula when there is no prefix to add.
 --   2. There is not much room. The player column headers start at kPlayerItemWidth on a screen
 --      under 1280 wide, and at GetTeamItemWidth() - kTeamColumnSpacingX * 10 above it - 275 and
---      400 respectively. A prefix plus a long name plus the badge can reach past that, and
---      tournament mode is exactly where it would: admins set custom team names through the plugin,
---      up to 25 characters.
+--      400 respectively. The name itself is always vanilla's own NAME_TEAM_n locale string
+--      (GUIScoreboard.lua:780) - tournament mode's custom names go to the Insight spectator bar
+--      through Insight.lua's "teams" command, never here - but "Frontiersmen (12 Players)" plus a
+--      glyph plus "[Not Ready]" plus the badge is already close to the wide-screen budget, and past
+--      it on a narrow one. Localisation into a wordier language would push it further.
 --
 -- So the row is MEASURED, not assumed. If glyph, text, name and badge do not fit before the column
 -- headers, the text is dropped and the glyph alone is kept - still at the front of the row, still

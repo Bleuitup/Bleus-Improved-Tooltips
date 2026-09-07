@@ -524,9 +524,10 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   `docs/tournament-ready-label.md`. The skill badge's x is derived from the team name's width but
   only recomputed when the team's summed skill changes, so shifting the name strands the badge on
   top of it unless the mod drives that position itself. And there is little room before the player
-  column headers — 400 unscaled pixels on a wide screen, 275 below 1280 — which tournament mode
-  makes tighter still by letting admins set 25-character team names. The row is therefore measured
-  every update, and the label drops to glyph-only rather than overlapping the Score column.
+  column headers — 400 unscaled pixels on a wide screen, 275 below 1280 — and a full team's
+  `Frontiersmen (12 Players)` plus glyph plus label plus badge is close to the first and past the
+  second. The row is therefore measured every update, and the label drops to glyph-only rather than
+  overlapping the Score column.
 
 **1.02**
 - **Supply on the spectator top bar.** That bar carries resources, resource towers and alien
