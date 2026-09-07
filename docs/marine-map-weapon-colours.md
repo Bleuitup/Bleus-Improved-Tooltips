@@ -12,7 +12,7 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 | | |
 | --- | --- |
 | Which blips | Marine and JetpackMarine only. **Exos keep the plain marine colour** — under CBM an exo is modular and can carry any combination, so there is no single weapon to colour one by. Vanilla DOES colour exos in `GUIInsight_PlayerHealthbars` (minigun red, railgun orange); the CBM reason is the one that decides it |
-| Which weapons | The four vanilla already distinguishes. Rifle, pistol, welder and axe keep the player's own `playercolor_m` |
+| Which weapons | Whatever the commander's own palette distinguishes, read at runtime — the four vanilla weapons plus anything a mod adds, CBM's SMG included. Rifle, pistol, welder and axe keep the player's own `playercolor_m` |
 | Who sees it | Marines and spectators only |
 | Friend tinting | Composes on top: a friend with an HMG is half-saturated red |
 | Own blip | Untouched. Not a `MapBlip` at all |
@@ -20,115 +20,41 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 | Colourblind | Nothing to do |
 | Art | **None.** This branch ships no `.dds` |
 
-## The colours are vanilla's own
+## Read at runtime, not hardcoded
 
-`EquipmentOutline.lua:17-27` already maps weapon class to a colour, for the outline on a dropped
-weapon in the world:
+The colours come out of the running game. `GUIUnitStatus.lua:57-64` holds `kAmmoBarColors`, keyed by
+`kTechId` — the palette a commander is already reading on the ammo bar under each marine, on the
+same screen as this map.
+
+It is a file-local, so it cannot be indexed. It **can** be pulled from the upvalues of a function
+that closes over it — `GUIUnitStatus:UpdateUnitStatusBlip`, which uses it at `:678`:
 
 ```lua
-kEquipmentOutlineColor = enum { [0]='TSFBlue', 'Green', 'Fuchsia', 'Yellow', 'Red' }
-local lookup = { "Shotgun", "GrenadeLauncher", "Flamethrower", "HeavyMachineGun" }
+local name, value = debug.getupvalue(GUIUnitStatus.UpdateUnitStatusBlip, index)
+if name == "kAmmoBarColors" and type(value) == "table" then ...
 ```
 
-The index is a material parameter sampled out of `ui/marine_outline_lookup.dds`, so the RGB is in a
-texture rather than in Lua. Decompressed and read directly:
+That is normal practice in this ecosystem rather than a trick: Shine ships a wrapper for it
+(`shine/lib/debug.lua:9`) and NSL uses it too (`NSL/eventhooks/server.lua:176`).
 
-| weapon | colour |
-| --- | --- |
-| default — rifle, pistol, welder, axe | `#00EFFF` |
-| Shotgun | `#00FF00` |
-| Grenade Launcher | `#FF00FF` |
-| Flamethrower | `#FFFF00` |
-| Heavy Machine Gun | `#FF0000` |
+**The bridge is by name, so nothing is per-mod.** `kPlayerStatus` and `kTechId` use identical names
+for every weapon that matters — `Shotgun`, `GrenadeLauncher`, `Flamethrower`, `HeavyMachineGun`, and
+CBM's `Submachinegun` — so a blip's status resolves to a techId with no table of ours in between.
+**CBM's SMG is therefore not hardcoded**: CBM adds `kTechId.Submachinegun` to its own
+`kAmmoBarColors` and this picks it up, and so would any other mod that adds a weapon the same way.
 
-Reusing them means one mapping to learn, holding in the world and on the map. The default is not
-applied here: leaving rifles on `playercolor_m` respects a setting the player already chose, and
-that colour (`#00D8FF`) is near enough to `#00EFFF` that the two read as the same family anyway.
+`kTechId` is an **engine enum that raises on an unknown name**, so the lookup goes through
+`IT.GetTechIdByName`, which rawgets.
 
-**Corroborated against the spectator ammo bars, and they agree.**
-`GUIInsight_PlayerHealthbars.kAmmoColors` (`:42-54`) is a second, independent per-weapon palette,
-used for the ammo bar under a marine in the SPECTATOR overhead view. On the four weapons this
-feature colours, the two systems are identical:
+**Failure is handled, not assumed away.** If `GUIUnitStatus` has not loaded yet the read is retried
+rather than given up on, and results are only memoised once the question is settled — caching early
+would pin every weapon to the fallback for the session. If the read genuinely cannot happen (no
+debug library, a mod that replaces `GUIUnitStatus` with something shaped differently, a rename), the
+written-down table in config takes over, holding copies of the same values.
 
-| weapon | outline lookup | ammo bar | |
-| --- | --- | --- | --- |
-| Shotgun | `#00FF00` | `Color(0,1,0,1)` | same |
-| Grenade Launcher | `#FF00FF` | `Color(1,0,1,1)` | same |
-| Flamethrower | `#FFFF00` | `Color(1,1,0,1)` | same |
-| Heavy Machine Gun | `#FF0000` | `Color(1,0,0,1)` | same |
-
-So there is no side to pick: green shotgun, fuchsia GL, yellow flamethrower and red HMG are
-vanilla's answer in both places, and now on the map too.
-
-Where the two do differ is everything else, and it is worth knowing:
-
-- **Rifle.** The outline palette defaults it to `#00EFFF` cyan; the ammo bars give it `#0000FF`
-  blue. Vanilla is not self-consistent here. It costs us nothing, because rifles are deliberately
-  left on the player's own `playercolor_m` rather than taking either.
-- **Sidearms.** The ammo bars colour a pistol teal and axe, welder, builder and mines white. The
-  outline palette has none of them. Again untouched here.
-- **Exos.** The ammo bars DO distinguish them: minigun red `#FF0000`, railgun orange `#FF8000`.
-  Only the outline palette lacks exo colours.
-
-That last point corrects a claim made elsewhere in this document and in the commit for this branch:
-"vanilla has no exo colour" is true of the outline palette and **false in general**. The reason exos
-keep the plain marine colour is the CBM one on its own — an exo there is modular and can carry any
-combination, so there is no single weapon to colour it by, and a minigun/railgun split would be
-wrong the moment CBM changed a loadout. That reasoning stands without the false premise.
-
-
-## CBM's SMG, and how much of this can be dynamic
-
-**CBM adds a sixth weapon and colours it itself.** Its `Globals.lua:185` appends `"Submachinegun"`
-to `kPlayerStatus` (appended last, so every vanilla index is preserved), its `Marine.lua:841` returns
-that status, and its `EquipmentOutline.lua:17-27` extends `kEquipmentOutlineColor` with `'Orange'`
-and maps `"Submachinegun"` to it. Its own `ui/marine_outline_lookup.dds` carries six entries:
-
-| index | colour | |
-| --- | --- | --- |
-| 0-4 | `#00EFFF` `#00FF00` `#FF00FF` `#FFFF00` `#FF0000` | byte-identical to vanilla |
-| 5 | `#D37300` | Submachinegun, CBM's own |
-
-So CBM extended the palette rather than changing it, and the SMG has a defined colour: orange.
-
-**Almost none of that is readable at runtime, and it is worth being precise about why.**
-
-| source | reachable from Lua? | |
-| --- | --- | --- |
-| `kEquipmentOutlineColor` | yes | just an enum of names, no RGB |
-| `EquipmentOutline`'s weapon list | **no** | `local lookup` (`:20`), a file-local |
-| the outline RGBs | **no** | in `ui/marine_outline_lookup.dds`, sampled by a material parameter |
-| `GUIInsight_PlayerHealthbars.kAmmoColors` | **yes** | public table on a public script, keyed by `kMapName` |
-| `kPlayerStatus` | yes | public enum, and mods do extend it |
-
-The authoritative palette is therefore unreadable, which is why its values are read out of the
-texture and written into config. `kAmmoColors` is the one per-weapon palette a mod can both read and
-add to at runtime, so this file consults it for anything not named in config:
-
-1. config table, by `kPlayerStatus` value
-2. `kAmmoColors`, bridged from the status NAME to a `kMapName`
-3. nothing — the blip keeps the plain marine colour
-
-That is the dynamic half. A mod that adds a weapon, gives it a `kPlayerStatus` value and lists it in
-`kAmmoColors` gets a map colour here with no patch to this mod.
-
-**The bridge is lowercase**, which is correct for `rifle`, `shotgun`, `grenadelauncher` and
-`flamethrower`. Two do not follow it and are aliased: `HeavyMachineGun` to `hmg` and `Submachinegun`
-to `smg`.
-
-**Why the SMG is in config rather than left to the fallback:** CBM does **not** list `smg` in
-`kAmmoColors` (`:42-56`; it adds `exoflamer` and `PlasmaLauncher` but not the SMG). The
-spectator ammo bar therefore falls through to `kEnergyColor`, yellow — the flamethrower's colour. Left
-to the fallback we would inherit that collision, even though CBM colours the SMG correctly in the two
-palettes that matter. Naming it in config keeps the map agreeing with those instead.
-
-Worth telling the CBM developers about, since it is a small inconsistency on their side: a spectator's
-SMG ammo bar reads flamethrower yellow, while the commander's bar and the outline glow both have it
-right as orange. One line in kAmmoColors would fix it, and this mod's fallback would then pick it up.
-
-Everything here costs nothing without CBM: `rawget(kPlayerStatus, "Submachinegun")` is nil in
-vanilla, so the entry never resolves to a status and is never used.
-
+**Rifles are excluded explicitly**, along with pistol, axe and welder. The commander palette *does*
+colour a rifle — teal — but taking it would repaint every ordinary marine and discard the player's
+own `playercolor_m`. Only the loud weapons deviate from it.
 
 ## Three palettes, not two
 

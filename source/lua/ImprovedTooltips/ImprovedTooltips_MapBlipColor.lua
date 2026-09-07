@@ -5,20 +5,21 @@
 -- carrying, so a glance at the map says where the shotguns are rather than only where bodies are.
 -- Off by default: it is more to read, and not everyone wants it.
 --
--- THE COLOURS ARE VANILLA'S OWN. EquipmentOutline.lua:17-27 already maps weapon class to a colour
--- for the outline you see on a dropped weapon in the world, sampled by index out of
--- ui/marine_outline_lookup.dds. Those exact five values are reused here, so a shotgun is the same
--- green on the map as it is on the floor and there is one mapping to learn rather than two.
+-- THE COLOURS ARE THE COMMANDER'S OWN, AND ARE READ FROM THE GAME. NS2 has three per-weapon
+-- palettes and they are not shown to the same people:
 --
--- Confirmed against a SECOND vanilla palette. GUIInsight_PlayerHealthbars.kAmmoColors:42-54 colours
--- the ammo bar under a marine in the SPECTATOR overhead view, and on these four weapons it is
--- identical: shotgun (0,1,0), grenade launcher (1,0,1), flamethrower (1,1,0), HMG (1,0,0). So this
--- is vanilla's answer in two independent places, not one file's opinion.
+--   the outline glow on the model   ui/marine_outline_lookup.dds, indexed from EquipmentOutline.lua
+--                                   everyone, the commander included (CommanderGlowMixin.lua:32)
+--   the ammo bar, top-down          GUIUnitStatus.lua:57-64, keyed by kTechId
+--                                   THE COMMANDER
+--   the ammo bar, spectating        GUIInsight_PlayerHealthbars.lua:42-56, keyed by kMapName
+--                                   spectators only (GUIInsight_Overhead.lua:224)
 --
--- The two palettes DO disagree about the rifle - outline default #00EFFF against the ammo bar's
--- #0000FF - which costs nothing here, because rifles and sidearms are left alone entirely and keep
--- the player's own playercolor_m. That is what the outline palette does with them and what the user
--- asked for.
+-- The middle one is what this uses. A commander reading this map is reading those bars on the same
+-- screen at the same moment, so the map agreeing with them is worth more than agreeing with either
+-- of the others. All three match exactly on shotgun, grenade launcher and flamethrower anyway; they
+-- differ on HMG by a shade, and on the rifle three ways, which costs nothing here because rifles
+-- are never recoloured.
 --
 -- WHY THE BASE COLOUR IS FED RATHER THAN THE RESULT RETURNED. Vanilla's GetMapBlipColor picks a
 -- colour by blip type and THEN transforms it (MapBlip.lua:301):
@@ -41,7 +42,7 @@
 --
 -- EXOS ARE LEFT ON THE PLAIN MARINE COLOUR, deliberately, but not for the reason first written
 -- here. Vanilla DOES have exo colours - GUIInsight_PlayerHealthbars.kAmmoColors:53-54 gives minigun
--- red and railgun orange for those spectator ammo bars. The reason is CBM: an exo there is modular
+-- red and railgun orange on those ammo bars. The reason is CBM: an exo there is modular
 -- and can carry any combination of guns, so there is no single weapon to colour one by and a
 -- minigun/railgun split would be wrong the moment CBM retuned a loadout. Only Marine and
 -- JetpackMarine blips are touched; kMinimapBlipType.Exo falls through to the flat marine colour.
@@ -62,18 +63,35 @@ end
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
 
 local IT = ImprovedTooltips
-
--- Built rather than written as a literal table, because kPlayerStatus is an ordinary Lua enum that
--- a mod is free to reshape. A missing name yields nil and is skipped rather than raising on
--- t[nil] = v.
-local kWeaponColors = { }
+-- THE COLOURS ARE READ FROM THE GAME, NOT WRITTEN DOWN, whenever that is possible.
+--
+-- GUIUnitStatus.lua:57-64 holds kAmmoBarColors, keyed by kTechId: it is what colours the ammo bar
+-- under each marine in the COMMANDER's top-down view, and it is therefore the palette a commander
+-- is already reading on the same screen as this map. CBM extends it with kTechId.Submachinegun,
+-- and any other mod adding a weapon would do the same, so reading it means never hardcoding a mod's
+-- colours here.
+--
+-- It is a file-local, so it cannot simply be indexed. It CAN be pulled out of the upvalues of a
+-- function that closes over it - GUIUnitStatus:UpdateUnitStatusBlip, which uses it at :678 - with
+-- debug.getupvalue. That is a normal technique in this ecosystem rather than a trick: Shine ships a
+-- wrapper for it (shine/lib/debug.lua) and NSL uses it too.
+--
+-- The bridge from a blip to that table is by NAME. kPlayerStatus and kTechId use identical names
+-- for every weapon that matters - Shotgun, GrenadeLauncher, Flamethrower, HeavyMachineGun, and
+-- CBM's Submachinegun - so a status resolves to a techId with no table of our own. kTechId is an
+-- ENGINE enum that RAISES on an unknown name, hence IT.GetTechIdByName, which rawgets.
+--
+-- The written-down table below is the fallback for when that read fails: an NS2 build that drops
+-- the debug library, a scoreboard mod that replaces GUIUnitStatus with something shaped
+-- differently, or a rename. Its values are the commander palette's, copied.
+local kFallbackColors = { }
 
 local function MapWeapon(statusName, color)
 
 	local status = kPlayerStatus and rawget(kPlayerStatus, statusName)
 
 	if status ~= nil and color ~= nil then
-		kWeaponColors[status] = color
+		kFallbackColors[status] = color
 	end
 
 end
@@ -84,42 +102,69 @@ MapWeapon("Flamethrower",    IT.kMapBlipColorFlamethrower)
 MapWeapon("HeavyMachineGun", IT.kMapBlipColorHeavyMachineGun)
 MapWeapon("Submachinegun",   IT.kMapBlipColorSubmachinegun)
 
--- WHAT CAN AND CANNOT BE READ AT RUNTIME. The outline palette is the authoritative per-weapon one,
--- and it is unreachable: EquipmentOutline.lua keeps its weapon list in a file-local (`local lookup`)
--- and its colours in ui/marine_outline_lookup.dds, so neither the mapping nor the RGB is visible to
--- Lua. That is why the values above are read out of the texture and written down.
---
--- GUIInsight_PlayerHealthbars.kAmmoColors IS reachable - a public table on a public script, keyed by
--- weapon kMapName - and it is the same palette on every weapon that appears in both. So anything not
--- named above falls back to it, which is what lets a mod that adds a weapon and gives it an ammo
--- colour get a map colour here without a patch to this file.
---
--- The bridge from a kPlayerStatus name to a kMapName is lowercase, which is right for rifle,
--- shotgun, grenadelauncher and flamethrower. Two do not follow it and are aliased.
-local kStatusToMapName =
+-- RIFLES ARE DELIBERATELY NOT COLOURED, even though the commander palette has an entry for them
+-- (teal). Taking it would repaint every ordinary marine and throw away the player's own
+-- playercolor_m, which is the colour they chose for their team. Only the loud weapons deviate from
+-- it; a plain marine looks like a marine. Settled with the user, and the same reason sidearms are
+-- left alone.
+local kNeverColored =
 {
-	HeavyMachineGun = "hmg",
-	Submachinegun   = "smg",
+	Rifle = true,
+	Pistol = true,
+	Axe = true,
+	Welder = true,
 }
 
-local function GetAmmoBarColor(statusName)
+local commanderPalette = nil
+local paletteResolved = false
 
-	if not IT.kMapBlipUseAmmoColorFallback then
+local function GetCommanderPalette()
+
+	if paletteResolved then
+		return commanderPalette
+	end
+
+	if not IT.kMapBlipReadCommanderPalette then
+		paletteResolved = true
 		return nil
 	end
 
-	local colors = GUIInsight_PlayerHealthbars and GUIInsight_PlayerHealthbars.kAmmoColors
-
-	if not colors then
+	-- Not an error yet: GUIUnitStatus may simply not have loaded. Try again next time rather than
+	-- giving up and falling back for the rest of the session.
+	if not GUIUnitStatus or type(GUIUnitStatus.UpdateUnitStatusBlip) ~= "function" then
 		return nil
 	end
 
-	return colors[kStatusToMapName[statusName] or string.lower(statusName)]
+	paletteResolved = true
+
+	if type(debug) ~= "table" or type(debug.getupvalue) ~= "function" then
+		return nil
+	end
+
+	local index = 1
+
+	while true do
+
+		local name, value = debug.getupvalue(GUIUnitStatus.UpdateUnitStatusBlip, index)
+
+		if name == nil then
+			break
+		end
+
+		if name == "kAmmoBarColors" and type(value) == "table" then
+			commanderPalette = value
+			break
+		end
+
+		index = index + 1
+
+	end
+
+	return commanderPalette
 
 end
 
--- Resolved once per status rather than per blip: the fallback walks two table lookups and a
--- string.lower, and this runs inside the minimap's per-blip loop.
+-- Resolved once per status rather than per blip: this runs inside the minimap's per-blip loop.
 local resolvedColors = { }
 
 local function GetColorForStatus(status)
@@ -130,22 +175,33 @@ local function GetColorForStatus(status)
 		return cached or nil
 	end
 
-	local color = kWeaponColors[status]
+	local statusName = kPlayerStatus and kPlayerStatus[status]
 
-	if not color then
+	if type(statusName) ~= "string" or kNeverColored[statusName] then
+		resolvedColors[status] = false
+		return nil
+	end
 
-		-- enum tables carry their own reverse mapping, so this recovers the name to bridge with.
-		local statusName = kPlayerStatus and kPlayerStatus[status]
+	local palette = GetCommanderPalette()
+	local color
 
-		if type(statusName) == "string" then
-			color = GetAmmoBarColor(statusName)
+	if palette then
+
+		local techId = IT.GetTechIdByName(statusName)
+
+		if techId then
+			color = palette[techId]
 		end
 
 	end
 
-	-- false rather than nil, so a weapon with no colour is remembered as "none" instead of being
-	-- looked up again every time a blip carrying it is drawn.
-	resolvedColors[status] = color or false
+	color = color or kFallbackColors[status]
+
+	-- Only remembered once the palette question is settled. Caching before GUIUnitStatus has loaded
+	-- would pin every weapon to the fallback for the rest of the session.
+	if paletteResolved then
+		resolvedColors[status] = color or false
+	end
 
 	return color
 

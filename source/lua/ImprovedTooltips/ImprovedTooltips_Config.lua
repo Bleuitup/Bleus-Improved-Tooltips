@@ -326,41 +326,37 @@ IT.kReadyLabelGap = 0.5
 
 IT.kColorMarineBlipsByWeapon = false
 
--- Vanilla's own weapon colours, lifted from the dropped-weapon outlines: EquipmentOutline.lua maps
--- the class to an index and ui/marine_outline_lookup.dds holds the palette. Read out of that
--- texture rather than guessed, so a shotgun on the map is the exact green of a shotgun on the floor.
+-- These are the COMMANDER's palette, GUIUnitStatus.lua:57-64 - the colours already under each
+-- marine's ammo bar in the top-down view, which is the same screen this map is read from. They are
+-- normally read out of the game at runtime rather than used from here; see
+-- kMapBlipReadCommanderPalette below. This table is the fallback for when that read cannot happen,
+-- so keep it in step with the game's own values if they ever change.
 --
--- There is deliberately NO entry for the rifle, pistol, welder or axe. Vanilla's palette leaves
--- them on its default and so does this: they keep whatever the player set for playercolor_m, and
--- only the four loud weapons deviate from it.
+-- There is deliberately NO entry for the rifle, pistol, welder or axe. The commander palette does
+-- colour a rifle - teal - but taking it would repaint every ordinary marine and throw away the
+-- player's own playercolor_m. Only the loud weapons deviate from it.
 --
--- Exos are left alone too. Vanilla DOES colour them elsewhere - GUIInsight_PlayerHealthbars gives
--- minigun red and railgun orange for those spectator ammo bars - but under CBM an exo is modular
--- and can carry any combination, so there is no single weapon to colour one by.
+-- Exos are left alone too. Vanilla colours them elsewhere (minigun red, railgun orange), but under
+-- CBM an exo is modular and can carry any combination, so there is no single weapon to colour by.
 IT.kMapBlipColorShotgun         = Color(0, 1, 0, 1)          -- #00FF00
 IT.kMapBlipColorGrenadeLauncher = Color(1, 0, 1, 1)          -- #FF00FF
 IT.kMapBlipColorFlamethrower    = Color(1, 1, 0, 1)          -- #FFFF00
-IT.kMapBlipColorHeavyMachineGun = Color(1, 0, 0, 1)          -- #FF0000
+IT.kMapBlipColorHeavyMachineGun = Color(0.9, 0, 0, 1)        -- #E60000
 
--- CBM adds a sixth weapon and colours it in the palette a commander actually reads:
--- GUIUnitStatus.lua:64 gives kTechId.Submachinegun Color(1,0.4,0,1), orange, on the ammo bar under
--- each marine in the top-down view. That is the value used here.
---
--- CBM colours it in the outline palette too, at #D37300, a darker orange. The commander's own bar
--- wins because the map is read from the same seat and at the same moment, and #FF6600 carries
--- further at blip size.
+-- CBM's sixth weapon. Normally never used: the runtime read below picks CBM's own
+-- kTechId.Submachinegun entry straight out of GUIUnitStatus, so this only matters if that read
+-- fails. Value copied from CBM's GUIUnitStatus.lua:64.
 --
 -- Costs nothing when CBM is absent: kPlayerStatus has no Submachinegun value there, so this never
--- resolves to a status and is never used.
+-- resolves to a status.
 IT.kMapBlipColorSubmachinegun = Color(1, 0.4, 0, 1)          -- #FF6600
 
--- After the table above, fall back to GUIInsight_PlayerHealthbars.kAmmoColors, which is a public
--- table any mod can add to and is what colours the ammo bar under a marine in the commander and
--- spectator views. That is the only per-weapon palette in the game readable at runtime: the outline
--- one keeps its class list in a file-local and its colours in a texture, so neither can be reached
--- from Lua. This is what lets a mod that adds a weapon AND gives it an ammo colour get a map colour
--- here with no patch to this mod.
-IT.kMapBlipUseAmmoColorFallback = true
+-- Read the commander's palette out of the running game rather than using the table above.
+-- GUIUnitStatus keeps kAmmoBarColors as a file-local, so it is pulled from the upvalues of
+-- GUIUnitStatus:UpdateUnitStatusBlip with debug.getupvalue - the same technique Shine and NSL use.
+-- This is what makes the mod pick up a weapon ANY mod adds, CBM's SMG included, with nothing
+-- hardcoded here. Set false to force the written-down values above.
+IT.kMapBlipReadCommanderPalette = true
 
 -- Seconds between rebuilds of the blip-owner to weapon table. GetMapBlipColor runs once per blip
 -- per minimap update, so this must not be per call. A quarter second is far below the time it

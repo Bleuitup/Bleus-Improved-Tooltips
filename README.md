@@ -475,14 +475,13 @@ and `mod.settings` names the file by extension.
 - `kColorMarineBlipsByWeapon` — colour marine map blips by the weapon each player carries. Off by
   default, and exposed in the settings panel
 - `kMapBlipColorShotgun` / `kMapBlipColorGrenadeLauncher` / `kMapBlipColorFlamethrower` /
-  `kMapBlipColorHeavyMachineGun` — the four colours, read out of `ui/marine_outline_lookup.dds` so
-  they match the outlines on dropped weapons. There is deliberately no entry for rifles, sidearms
-  or exos: they keep the player's own `playercolor_m`
-- `kMapBlipColorSubmachinegun` — CBM's sixth weapon, in CBM's own orange. Unused without CBM, since
-  `kPlayerStatus` has no `Submachinegun` value there
-- `kMapBlipUseAmmoColorFallback` — for any weapon not named above, consult
-  `GUIInsight_PlayerHealthbars.kAmmoColors` at runtime, so a mod that adds a weapon and lists an
-  ammo colour for it is picked up with no patch here
+  `kMapBlipColorHeavyMachineGun` / `kMapBlipColorSubmachinegun` — the **fallback** palette, used only
+  when the runtime read below fails. Values copied from the commander's own `GUIUnitStatus`
+  `kAmmoBarColors`. No entry for rifles, sidearms or exos: they keep the player's `playercolor_m`
+- `kMapBlipReadCommanderPalette` — read the commander's palette straight out of the running game
+  instead, so a weapon any mod adds is picked up with nothing hardcoded here. `GUIUnitStatus` keeps
+  that table as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
+  `debug.getupvalue`, the same technique Shine and NSL use. Set false to force the values above
 - `kMapBlipColorRefreshInterval` — seconds between rebuilds of the blip-owner to weapon table.
   `GetMapBlipColor` runs once per blip per minimap update, so this cannot be per call
 
@@ -530,11 +529,16 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 **1.03**
 - **Marine blips on the map can be coloured by weapon.** Optional, off by default, in the settings
-  panel. A shotgun blip is green, a grenade launcher fuchsia, a flamethrower yellow, an HMG red —
-  the same colours the game already outlines a dropped weapon with, read out of
-  `ui/marine_outline_lookup.dds` rather than invented, so there is one mapping to learn and it holds
-  in the world and on the map. Rifles and sidearms keep whatever the player set for `playercolor_m`,
-  which is what vanilla's own palette does with them.
+  panel. The colours are the commander's own — `GUIUnitStatus`'s `kAmmoBarColors`, the palette
+  already under each marine's ammo bar in the top-down view — so the map agrees with what a
+  commander is reading on the same screen. Rifles and sidearms keep whatever the player set for
+  `playercolor_m`; only the loud weapons deviate from it.
+- **The palette is read out of the running game, not hardcoded.** `GUIUnitStatus` keeps that table
+  as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
+  `debug.getupvalue` — the same technique Shine and NSL use — and the bridge from a blip to it is by
+  name, since `kPlayerStatus` and `kTechId` agree on every weapon name that matters. **A weapon any
+  mod adds is picked up with nothing written here**, CBM's SMG included. A written-down copy in
+  config takes over only if that read cannot happen.
 - **Only marines and spectators ever see it.** Gating on the blip type would have leaked loadouts:
   `MapBlip.lua:326` deliberately shows Steam friends across teams, so an alien can see a marine
   blip. The gate is on the viewer's team instead.
@@ -545,12 +549,6 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - Exosuits keep the plain marine colour. Vanilla does colour them elsewhere — the spectator ammo
   bars give minigun red and railgun orange — but under CBM an exo is modular and can carry any
   combination, so there is no single weapon to colour one by.
-- **CBM's SMG is coloured too, in CBM's own orange.** `GUIUnitStatus.lua:64` gives
-  `kTechId.Submachinegun` the colour a commander already sees on that marine's ammo bar (`#FF6600`),
-  and the map now matches it. Anything not named in config falls back at runtime to
-  `GUIInsight_PlayerHealthbars.kAmmoColors` — the only per-weapon palette in the game readable and
-  extendable from Lua — so a mod that adds a weapon and lists an ammo colour for it gets a map
-  colour with no patch here.
 - NS2 has **three** per-weapon palettes, not one: the outline glow on the model (everyone,
   commander included), the ammo bar under a marine in the commander's view, and the ammo bar in the
   spectator's. All three agree exactly on shotgun, grenade launcher and flamethrower; HMG differs by
