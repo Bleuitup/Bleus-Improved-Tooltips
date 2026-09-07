@@ -30,6 +30,22 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
 	-- The spectator top bar, for its biomass counter's colour.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
+	-- The same bar again, for a supply counter per team. A separate file so the biomass tint and the
+	-- supply counter can be switched off independently, and so neither breaks if the other is wrong.
+	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightSupply.lua", "post")
+	-- Marine HUD: keep researched-but-inactive weapon and armour icons on screen in alert red
+	-- when the arms lab is destroyed or unpowered, instead of hiding them.
+	ModLoader.SetupFileHook("lua/Hud/Marine/GUIMarineHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_ArmsLabAlert.lua", "post")
+	-- The twelve-bead biomass bar shown with the map, buy menu or tech map open: a partial fill on
+	-- each bead being researched, and progress meters under the ability icons.
+	ModLoader.SetupFileHook("lua/GUIBioMassDisplay.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassOverlay.lua", "post")
+	-- The mod's own settings panel under Options, Mods. Hooked on the file that declares
+	-- gModsCategories, so by the time we append, the table exists and manageMods is already first
+	-- in it - which GUIMenuOptions.lua:425 asserts.
+	ModLoader.SetupFileHook("lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua", "lua/ImprovedTooltips/ImprovedTooltips_ModsMenu.lua", "post")
+	-- Scoreboard: a glyph and a green or red label at the front of each team header while Shine's
+	-- tournament mode is waiting for both teams. Inert when that plugin is not running.
+	ModLoader.SetupFileHook("lua/GUIScoreboard.lua", "lua/ImprovedTooltips/ImprovedTooltips_TournamentReady.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and

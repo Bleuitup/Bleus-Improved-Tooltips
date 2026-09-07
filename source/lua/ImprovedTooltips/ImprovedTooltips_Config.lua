@@ -138,7 +138,7 @@ IT.kHiveResearchDnaScale = 0.55
 -- means the same thing wherever it is seen.
 --
 -- A compatibility module can claim a different colour for one specific research; CBM's biomass 5
--- takes CBM purple this way. See IT.RegisterIconColor.
+-- takes CBM's advanced alien colour this way. See IT.RegisterIconColor.
 IT.kBiomassIconColor = Color(1, 0.9, 0.4, 1)
 
 -- Colour the spectator top bar's biomass counter too. Separate because reaching it takes more work
@@ -181,11 +181,137 @@ IT.kEnableCBMCompat = true
 -- Tint the biomass 5 research icon on the hive HUD, which CBM marks out in purple.
 IT.kColorCBMBiomassFive = true
 
--- The shade to use. This is CBM's own UI purple - the colour it draws tech map and minimap
--- connector lines in - chosen over sampling the hive model because this is a UI element sitting
--- among other UI, and because it is a colour CBM picked deliberately rather than one averaged out
--- of a texture.
+-- CBM's own colour for advanced ALIEN content: kAdvancedAlienColor in its GUIMinimap.lua, the
+-- counterpart to kAdvancedMarineColor = Color(0.4, 0, 1, 1) for advanced marine content. Confirmed
+-- by one of CBM's developers, 2026-09-05.
 --
--- If the model's own shade reads better in game, CBM's biomass 5 hive glows a deeper magenta,
--- roughly Color(0.85, 0.25, 0.45, 1); swapping this line is the whole change.
-IT.kCBMBiomassFiveColor = Color(0.7, 0.3, 1, 1)
+-- It used to be Color(0.7, 0.3, 1, 1) here, taken from CBM's tech map and minimap connector lines.
+-- That was the closest thing to a deliberate CBM colour at the time, but it is a generic UI purple
+-- and, as it turns out, nearer their advanced MARINE shade than their alien one - so an alien
+-- research was being marked in almost the marine colour. This is the semantic one.
+--
+-- Mirrored rather than read at runtime. CBM declares both as file-locals in its own copy of
+-- GUIMinimap.lua and keys them into self.blipColorTable through kBlipColorType, which it also
+-- redeclares as a file-local with two entries appended. Nothing about that is reachable by name
+-- from a post-hook, and indexing the table by a guessed enum position would break the moment CBM
+-- reorders it. If these ever drift, that file is where to look.
+IT.kCBMBiomassFiveColor = Color(0.93, 0, 0.65, 1)
+
+------------------------------------------------------------------------------------------------
+-- Lost arms lab upgrades
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_ArmsLabAlert.lua. Vanilla hides the weapon and armour upgrade icons when the
+-- team has no working arms lab, which looks exactly like never having researched them. It also
+-- contains the code to paint them red instead - unreachable, because the icons are hidden first.
+
+-- Keep the icons on screen, in alert red, while the upgrades are researched but inactive.
+IT.kShowLostArmsLabUpgrades = true
+
+-- Vanilla's own alert red, from GUIMarineHUD:Update. Kept as a setting only so it can be toned
+-- down; the default is deliberately the shade the game already chose for this state.
+IT.kArmsLabLostColor = Color(1, 0, 0, 1)
+-- The twelve-bead biomass overlay
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_BiomassOverlay.lua. The bar in the top left, shown with the map, the buy
+-- menu or the tech map open. Vanilla reads a single integer for it, so a bead can only pop from
+-- empty to full; these draw the research that is already in flight.
+
+-- Partial fill on the beads being researched, and progress meters under the ability icons.
+IT.kShowBiomassOverlayProgress = true
+
+-- Tint for the partial bead. It draws the same slice of the same texture as the filled bar, so
+-- this is what tells "being researched" apart from "done" - dimmer and slightly transparent, in
+-- the manner of a ghost.
+IT.kBiomassBeadProgressColor = Color(1, 1, 1, 0.5)
+
+-- Height of an ability progress meter, as a fraction of the icon. GUITechMap uses 10px against its
+-- own larger icons; these are a twelfth of the bar, so a fraction keeps the proportion rather than
+-- the pixel count.
+IT.kBiomassAbilityMeterFraction = 0.18
+
+-- White, to match the tech map. Vanilla never calls SetColor on its own progress meter anywhere in
+-- GUITechMap.lua, so it renders at the GUI default - plain white - and the same research reads the
+-- same way in both places. Do not "correct" this to the alien palette: the meter is a mechanism,
+-- not team furniture, and it was alien yellow here until 2026-09-05 when the inconsistency showed
+-- up in game.
+IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
+
+-- Colour for an ability icon while its research is in flight. Vanilla's overlay only knows locked
+-- and unlocked, so a research under way sits greyed out until the moment it finishes.
+--
+-- The tech map does not: GUITechMap promotes any node with partial progress straight to
+-- kTechStatus.Available - "if researchProgress ~= 0 and researchProgress ~= 1 then status =
+-- kTechStatus.Available" - so the icon lights up the moment work starts. This is that same colour,
+-- kTechMapIconColors[kAlienTeamType][kTechStatus.Available], so a research in progress looks the
+-- same in both places.
+--
+-- Deliberately its own constant rather than sharing IT.kBiomassIconColor, which happens to hold the
+-- same value: that one means "a biomass icon", this one means "being researched". Changing one
+-- should not silently change the other.
+IT.kBiomassAbilityResearchingColor = Color(1, 0.9, 0.4, 1)
+
+------------------------------------------------------------------------------------------------
+-- Spectator top bar supply
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_InsightSupply.lua. The spectator bar shows resources, resource towers and
+-- alien biomass, but never supply. No new networking: TeamInfo carries it already.
+
+IT.kShowSpectatorSupply = true
+
+-- Positions, pre-GUIScale, written exactly as vanilla writes them: marine measured from the bar's
+-- LEFT edge, alien leftward from its RIGHT edge, so a negative alien number is inside the bar and a
+-- positive one is out past it.
+--
+-- Vanilla sits at marine extractors 50, marine resources 130, centre 256, alien resources 317,
+-- harvesting 397, biomass 507 - all within a bar only 512 wide, on a screen that is not. The first
+-- attempt put both counters inside those 512 pixels and they collided. These use the empty space
+-- either side instead.
+--
+--   marine supply    outside the bar's left edge
+--   alien supply     the slot biomass used to sit in, hard against the right edge
+--   biomass shift    how far right vanilla's biomass pair moves to free that slot
+IT.kSpectatorSupplyMarineX = -95
+IT.kSpectatorSupplyAlienX = -5
+IT.kSpectatorBiomassShiftX = 110
+
+------------------------------------------------------------------------------------------------
+-- Tournament mode ready labels
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_TournamentReady.lua. A glyph and a coloured label at the front of each
+-- team's scoreboard header while Shine's tournament mode waits for both teams to ready up, in
+-- place of the corner pip 1.02 drew on the skill badge. Inert unless that plugin is running, and
+-- removed entirely once the round starts.
+
+IT.kShowTournamentReadyLabels = true
+
+-- The labels themselves. Brackets included deliberately: they read as a status marker rather than
+-- as part of the team's name, which is the thing immediately to their right.
+IT.kReadyLabelText = "[Ready]"
+IT.kNotReadyLabelText = "[Not Ready]"
+
+-- Full green and full red. These are the one pair a red/green dichromat cannot separate, which is
+-- why the tick and the cross are kept beside them: the shape carries the meaning and the colour
+-- only reinforces it.
+IT.kReadyLabelColor = Color(0, 1, 0, 1)
+IT.kNotReadyLabelColor = Color(1, 0, 0, 1)
+
+-- Glyph height as a fraction of the label's own measured text height, so it squares off against
+-- the text rather than against the row.
+--
+-- Two things pull in opposite directions here. A measured text height includes descender space the
+-- bracketed label never uses, which argues for a value below 1; but cells 5 and 6 draw their plate
+-- inset to pixels 6..52 of a 64 cell, so only 0.72 of whatever this sets is actually inked. At 0.8
+-- the visible square came out at 0.58 of the text height and read a shade small beside it. 0.92
+-- puts it at 0.66, which sits level with the label's cap height.
+IT.kReadyGlyphHeightScale = 0.92
+
+-- Gaps as fractions of the label's own text height: glyph to label, and label to the team name
+-- after it. Fractions rather than pixels because a scoreboard mod can set the header in a font of
+-- its own choosing, and a gap that stays in proportion to the text looks right in any of them.
+-- These reproduce the 6 and 10 pixels they replaced at vanilla's font size.
+IT.kReadyGlyphGap = 0.3
+IT.kReadyLabelGap = 0.5

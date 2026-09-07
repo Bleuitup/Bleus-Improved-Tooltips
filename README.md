@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.0. Published to the Steam Workshop as
+Version 1.02b. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -446,6 +446,32 @@ and `mod.settings` names the file by extension.
 - `kUseTopBarSupplyIcon` — mark supply on the tooltip with the HUD top bar's icon instead of vanilla's
   MAC / Drifter
 - `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
+- `kCooldownPanelMarineBackgroundAlpha` / `kCooldownPanelAlienBackgroundAlpha` — panel backing
+  opacity per team; both default to 0, meaning no backing at all
+- `kShowLostArmsLabUpgrades` — keep researched weapon and armour icons on the marine HUD when every
+  arms lab is dead or unpowered, instead of hiding them
+- `kArmsLabLostColor` — the shade they take in that state. Defaults to vanilla's own alert red, the
+  one `GUIMarineHUD:Update` defines and can never reach
+- `kShowBiomassOverlayProgress` — partial fills on the twelve bead bar, and progress meters under
+  its ability icons
+- `kBiomassBeadProgressColor` — tint for a bead being researched. It draws the same slice of the
+  same texture as a finished bead, so this is the only thing telling the two apart
+- `kBiomassAbilityMeterFraction` — meter height as a fraction of the ability icon, rather than a
+  pixel count, since these icons are a twelfth of the bar
+- `kBiomassAbilityMeterColor` / `kBiomassAbilityResearchingColor` — the meter, and the tint an
+  ability icon takes while its research is running. Both match the tech map
+- `kShowSpectatorSupply` — supply counters for both teams on the spectator top bar
+- `kSpectatorSupplyMarineX` / `kSpectatorSupplyAlienX` / `kSpectatorBiomassShiftX` — their positions,
+  and how far vanilla's biomass pair shifts right to make room. Written the way vanilla writes the
+  rest of that bar: marine from the left edge, alien leftward from the right
+- `kShowTournamentReadyLabels` — the glyph and green/red label at the front of each team's
+  scoreboard header under Shine's tournament mode. Inert when that plugin is not running
+- `kReadyLabelText` / `kNotReadyLabelText` — the label strings, brackets included
+- `kReadyLabelColor` / `kNotReadyLabelColor` — full green and full red. The tick and cross beside
+  them are what carry the meaning for a red/green dichromat
+- `kReadyGlyphHeightScale` — glyph height as a fraction of the label's measured text height
+- `kReadyGlyphGap` / `kReadyLabelGap` — gaps as fractions of the label's text height, glyph to
+  label and label to team name, so they stay in proportion under a scoreboard mod's own font
 
 ## Building the assets
 
@@ -488,6 +514,66 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.02b**
+- **The tournament mode ready state moved from the skill badge to the front of the header row.**
+  1.02 drew a pip in the badge's corner; it worked, but it was small and took two rounds of
+  resizing to be legible at all. Each team's header now reads `[tick] [Ready] Frontiersmen
+  (6 Players)`, green for ready and red for not, with the glyph squared off to the height of the
+  label beside it. No art change — cells 5 and 6 were already a coloured square with a white mark.
+- Two things in vanilla made that harder than it looks, both recorded in
+  `docs/tournament-ready-label.md`. The skill badge's x is derived from the team name's width but
+  only recomputed when the team's summed skill changes, so shifting the name strands the badge on
+  top of it unless the mod drives that position itself. And there is little room before the player
+  column headers — 400 unscaled pixels on a wide screen, 275 below 1280 — and a full team's
+  `Frontiersmen (12 Players)` plus glyph plus label plus badge is close to the first and past the
+  second. The row is therefore measured every update, and the label drops to glyph-only rather than
+  overlapping the Score column.
+- **Compatible with scoreboard mods that replace `GUIScoreboard.lua` wholesale**, Devnull's
+  Enhanced Scoreboard in particular. The first cut of this hardcoded vanilla's header order and so
+  moved that mod's skill badge from the front of the row to the back, and set the label in a font
+  the mod does not use. Nothing about the row is assumed now: the host's own item positions are
+  read back and only ever shifted, so whichever order it chose survives, and the label's font is
+  copied off the team name rather than taken from a constant the host may have left unused.
+
+**1.02**
+- **Supply on the spectator top bar.** That bar carries resources, resource towers and alien
+  biomass but never supply, on a screen far wider than the 512 pixel bar vanilla lays out inside.
+  Both teams' supply now sits in the space either side, used against maximum, with vanilla's biomass
+  pair shifted right to free the slot. No new networking: `TeamInfo` already carries the numbers.
+- **A ready tick or a not-ready cross on the scoreboard's team skill badges** while Shine's
+  tournament mode waits for both teams, so the scoreboard says who is being waited on. Inert on a
+  server not running that plugin, and off entirely once the round starts. Shine does not send one
+  canonical ready message — `ReadyTeam` picks between `TeamReadyChange` and `TeamReadyWaiting`
+  depending on what the other team is doing, and a player backing out of a ready team produces only
+  `TeamPlayerNotReady` — so all three are tracked. Listening to `TeamReadyChange` alone misses the
+  first team to ready up, which is the most common event there is.
+- The `Config` section of this README now lists every constant. Ten added in 1.01 were never
+  documented there.
+
+**1.01**
+- **Lost arms lab upgrades stay on screen, in red.** When a team loses every arms lab, or they all
+  lose power, the marine HUD's weapon and armour icons simply vanished — indistinguishable from
+  never having researched them. Vanilla already contains the alert red for this state but can never
+  show it: `GUIMarineHUD:Update` hides the icons fifteen lines before it colours them, and both
+  tests come from the same arms lab. The icons now stay, using vanilla's own colour, driven by the
+  `researched` flag `PlayerUI_GetArmorLevel` accepts and the HUD never passes.
+- **The biomass bar shows research as it happens.** The twelve bead bar knew only whole beads —
+  empty until a research finished, then full — because it reads a single integer. Each bead being
+  researched now fills as the work goes in, several at once when several hives are working, drawn
+  from the per-level progress the 0.92 fix has been publishing all along. Bead positions are
+  measured from the texture rather than assumed even; they are not.
+- **Ability icons on that bar light up while being researched** and carry a progress bar, matching
+  the tech map, which promotes any node with partial progress to its "available" colour. They used
+  to stay greyed out until the instant the research completed.
+- **A settings panel under Options, Mods**, alongside CBM's and anyone else's: the In Cooldown panel
+  can be switched off, and a slider sets the shortest cooldown it will list. Both apply immediately.
+- **CBM's biomass 5 tint now uses CBM's own advanced alien colour.** It previously used the purple
+  from CBM's tech map connector lines, which is in fact nearer their advanced *marine* shade — an
+  alien research marked in almost the marine colour.
+- The Workshop description no longer claims movement speed "picks up whatever the loaded mods set it
+  to". It does not: the figure is read off the unit's own class, so mods that compute speed live
+  from game state read low or blank. Known, and stated plainly rather than overclaimed.
 
 **1.0**
 - **Speed is stated plainly and never dimmed.** Structures whose movement is conditional used to be

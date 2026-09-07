@@ -1,9 +1,10 @@
 # Bleu's Improved Tooltips - icon atlas generator
 #
-# Produces source/ui/bleu_tooltip_icons.dds: a 320x64 sheet of five 64x64 cells, in this order:
+# Produces source/ui/bleu_tooltip_icons.dds: a 448x64 sheet of seven 64x64 cells, in this order:
 #
 #   0 research (hourglass)  1 cooldown (stopwatch)  2 speed, marine (chevron)
 #   3 health (cross)        4 armour (shield)
+#   5 ready (tick)          6 not ready (cross)
 #
 # The cell order is what ImprovedTooltips_TooltipGUI.lua's kOwnIconCoords indexes into - change one
 # and change the other.
@@ -41,7 +42,9 @@ $dds = Join-Path $outDir "bleu_tooltip_icons.dds"
 $CELL = 64
 $SS   = 4     # supersample factor; glyphs are drawn at 4x and downsampled for clean edges
 
-$atlas = New-Object System.Drawing.Bitmap(($CELL*5), $CELL, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$CELLS = 7
+
+$atlas = New-Object System.Drawing.Bitmap(($CELL*$CELLS), $CELL, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 $ag = [System.Drawing.Graphics]::FromImage($atlas)
 $ag.Clear([System.Drawing.Color]::Transparent)
 $ag.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
@@ -282,6 +285,57 @@ function Add-CommanderGlyph($cellX, $bx1, $by1, $bx2, $by2, $slot) {
 
 Add-CommanderGlyph 0  10 8  38 36  3    # health cross
 Add-CommanderGlyph 48 11 11 37 36  4    # armour shield
+
+# ---------------------------------------------------------------------------------------------
+# Slots 5 and 6: the tournament mode ready pip - a tick, and a cross.
+#
+# Unlike every other cell here these are drawn IN COLOUR rather than white. The rest are baked white
+# and opaque so SetColor can tint them per team; green and red are semantic, never team colours, so
+# there is nothing to tint and a two-item shape-plus-glyph construction would be wasted on a pip
+# roughly sixteen pixels across.
+#
+# Shape carries the meaning and colour only reinforces it: a tick against a cross survives red-green
+# colour blindness, a green square against a red one does not.
+#
+# The rounded plate is deliberately not the full cell. These sit in the corner of the scoreboard's
+# team skill badge, so the glyph needs to read at a third of that badge's height.
+# ---------------------------------------------------------------------------------------------
+
+function Add-ReadyPip($slot, $fill, $tick) {
+
+    $c = New-Canvas
+    $bmp = $c[0]
+    $g = $c[1]
+
+    $plate = RoundRect 6 6 52 52 14
+    $brush = New-Object System.Drawing.SolidBrush($fill)
+    $g.FillPath($brush, $plate)
+    $brush.Dispose()
+    $plate.Dispose()
+
+    $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (7 * $SS))
+    $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $pen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Round
+    $pen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+
+    if ($tick) {
+        # Steep upstroke, so it never reads as the speed chevron in slot 2.
+        $g.DrawLines($pen, @( (Pt 18 33), (Pt 28 43), (Pt 46 21) ))
+    } else {
+        $g.DrawLine($pen, (Pt 21 21), (Pt 43 43))
+        $g.DrawLine($pen, (Pt 43 21), (Pt 21 43))
+    }
+
+    $pen.Dispose()
+    $g.Dispose()
+    Commit $bmp $slot
+
+}
+
+# Green and red chosen for contrast against the dark scoreboard rather than sampled from vanilla,
+# which has no equivalent pair.
+Add-ReadyPip 5 ([System.Drawing.Color]::FromArgb(255, 46, 168, 74))  $true    # ready, tick
+Add-ReadyPip 6 ([System.Drawing.Color]::FromArgb(255, 208, 48, 48))  $false   # not ready, cross
 
 $ag.Dispose()
 $atlas.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)

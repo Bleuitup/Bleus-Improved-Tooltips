@@ -163,7 +163,9 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   (4,5) of `ui/buildmenu.dds`. Greyscale, already points right, and CBM assigns the same index to
   `SpurPassive`.
 - **Icon indices in `buildmenu.dds` are `y*12 + x`, 80px cells**, sheet is 960 wide.
-- The mod's own sheet is now **192x64, three cells**: hourglass, stopwatch, marine speed chevron.
+- The mod's own sheet is **448x64, seven cells**: hourglass, stopwatch, marine speed chevron,
+  health cross, armour shield, ready tick, not-ready cross. `tools/build_icons.ps1` builds it, and
+  the cell ORDER is what `kOwnIconCoords` indexes - append, never reorder.
 - **The marine chevron is lifted, not drawn**: `marine_buildmenu_insight.dds` row 2 col 4
   (x 240-320, y 80-160), mirrored to point right. Its button plate is **opaque**, so unlike the
   buy-menu glyphs the alpha channel is useless — luminance becomes the mask instead. Luminance alone
@@ -304,15 +306,32 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
    0.81 commit swept the wiped `mod.settings` in unnoticed. `git status` + `git diff --cached` on
    `mod.settings` before committing.
 
+**The Workshop description has a hard 8000-byte cap, and this one is close to it.** Steam's
+`k_cchPublishedDocumentDescriptionMax` is 8000; over that, publish fails with a Launch Pad dialog
+reading `steam result InvalidParam(8)` and nothing else. It gives no hint that length is the cause,
+and nothing local is wrong. **It bit the first 1.02 publish attempt (2026-09-06):** 1.01 published
+at 7209 bytes, the two new features took it to 8250, and Steam refused the call. Measure before
+publishing, counting only what is between `[=[` and `]=]`:
+
+```
+awk '/description = \[=\[/{sub(/^description = \[=\[/,"");f=1} f{if(/\]=\]$/){sub(/\]=\]$/,"");print;exit} print}' mod.settings | wc -c
+```
+
+**From here every release spends from a fixed budget.** Adding a section means compressing an
+existing one. When a publish fails with InvalidParam and nothing about the files has changed
+structurally, check the byte count first — preview size, tags and `publish_id` were all fine here
+and cost time to rule out.
+
 ## Status
 
 > Tag namespaces: `v*` = published and tested; `pending-test/*` = compiles but never run. If a
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- Version 0.9, tested in game (client and dedicated server) and published. (There is no published
-  0.81 — that was the working version number while the stat row was moved and the hourglass redrawn;
-  it shipped as 0.85.)
+- **1.01 is published and tagged `v1.01`.** 1.02 is assembled on `release/1.02` and has NOT been
+  tested with both of its features running together — spectator supply and the tournament ready
+  pips were each verified alone. (There is no published 0.81 — that was the working version number
+  while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
 - `preview.jpg` is the user's own artwork (added 2026-08-26), replacing the generated placeholder.
   `tools/build_preview.ps1`, which produced that placeholder, has been deleted — do not recreate a
@@ -324,8 +343,13 @@ the description emptied to `[=[]=]`, both tags emptied, the apostrophe stripped 
 - **The Workshop description was brought current with 0.91** (2026-08-30, `83ec3fa`) — it now covers
   the "In Cooldown" panel, speed and its dimming, health/armour colour matching and ARC stances, and
   no longer claims the mod "sends nothing", which stopped being true in 0.86. When editing it,
-  remember Launch Pad must be fully closed and reopened first or it writes its stale copy back, and
-  keep `mod.settings` CRLF — it is the one CRLF file in the repo.
+  remember Launch Pad must be fully closed and reopened first or it writes its stale copy back.
+  **Line endings are a non-issue here, and two earlier notes got it wrong.** `core.autocrlf` is
+  `true` in this clone, so git stores LF in the index and checks out CRLF in the working tree.
+  Launch Pad writes `mod.settings` back as CRLF on publish, which is why `git status` shows it
+  modified afterwards while `git diff` shows nothing: the content is identical once normalised.
+  `mod.settings` is not special either way — nineteen tracked files sit in the same state. Do not
+  "preserve CRLF" and do not "convert to LF"; just edit the file.
 - Discussed but not built: ARC range feedback, settled on drawing the 7m minimum-range circle
   (`[kVisualRange] = { ARC.kFireRange, ARC.kMinFireRange }`, since `kVisualRange` accepts a table)
   plus an origin marker on nearby targets whose state encodes both distance rules. See the ARC notes
@@ -459,6 +483,21 @@ mkdir -p output && cp -r source/. output/
 Drive mount, and deleting a whole directory tree and recreating it at the same path in the same
 instant is exactly the pattern Drive's sync can reconcile badly -- the delete propagates, the
 recreate does not. The command above never removes the directory itself.
+
+**If it has already been broken, the symptom is `Access is denied` on every read**, from bash and
+PowerShell alike, while `Test-Path` returns false and `Get-Item` denies -- the directory is
+simultaneously "there" and "not there". It happened again on 2026-09-07, from an `rm -rf output`
+that this section already warns against. Recovery, in order:
+
+1. Ask the user to quit and relaunch Google Drive. Necessary, but on its own it was not enough.
+2. `cmd /c rmdir /s /q "<path>"` -- reports `Access is denied` and exit 5, but appears to queue the
+   delete anyway.
+3. `cmd /c move "<path>" "<path>_broken"` -- reports "cannot find the file specified", and the path
+   is then clear. Between 2 and 3 the entry resolves.
+4. `mkdir -p output && cp -r source/. output/`, then `diff -r source output`.
+
+Nothing is at risk while this is going on: `output/` is a build artefact, regenerable from `source/`
+in one command, and git holds the only copy that matters. Do not panic-commit around it.
 
 If a file is renamed or deleted in `source/`, that copy leaves the old one behind in `output/`, so
 after a rename check for strays:
@@ -691,3 +730,42 @@ Removed on 2026-08-30 at the user's direction. Do not reintroduce any of these w
 
 What survives of the CBM module is the biomass 5 purple tint and nothing else. The user confirmed
 that one in game and explicitly kept it when the rest was rolled back.
+
+## Shine integration (1.02)
+
+**Shine's Lua is not under the server folder.** `NS2 Server/Server/Server/shine` holds configs only.
+The readable source of what the server actually runs is its Workshop copy, on this machine
+`D:\SteamLibrary\steamapps\workshop\content\4920\117887554`. Read it before assuming anything about
+a plugin's messages; searching the server folder finds nothing and looks like Shine is absent.
+
+**Enabling a plugin for local testing** is `BaseConfig.json`, the plugin list around `:36-48`.
+`tournamentmode` is now `true` there for the ready-pip work; `BaseConfig.json.bak` holds the
+original. `pregameplus` is also true and both want the pre-round, so check the server console for a
+conflict line if either stops loading.
+
+**Wrapping a plugin's receiver is safe and late-bound.** Shine's dispatcher does
+`self[ FuncName ]( ... )` — a lookup on the plugin table at call time, not a captured reference
+(`core/shared/base_plugin/networking.lua:97-102`). So a wrapper installed long after the message was
+registered still runs, which is what lets this mod hook Shine with no load-order relationship at
+all. Find the plugin with `Shine:IsExtensionEnabled( name )`, which returns `enabled, plugin`.
+
+**A plugin does not necessarily have one canonical message per state change.** Tournament mode
+sends three different messages for "a team's readiness changed", picked by situation — see
+`docs/tournament-ready-badge.md` for the table. Listening to the obvious one alone missed the most
+common case in the game and cost a round of testing. Read the *server* half to see what is actually
+sent; the shared half only tells you what exists.
+
+## The spectator top bar is 512 wide on a screen that is not (1.02)
+
+`GUIInsight_TopBar` lays every item out inside a 512-wide centred bar, and vanilla fills it: marine
+extractors 50, marine resources 130, centre 256, alien resources 317, harvesters 397, biomass 507.
+There is no room left inside it. **The space either side of the bar is empty and unused**, and that
+is where anything new has to go — the first spectator supply attempt put both counters inside those
+512 pixels and they collided with what was already there.
+
+Marine items anchor `GUIItem.Left` from the bar's left edge; everything else anchors `GUIItem.Right`
+and is positioned leftward from its right edge, so the two sides' offsets look mirrored.
+
+**To move one of vanilla's existing pairs, move the holder, not the icon.** `CreateIconTextItem`
+parents both the icon and its number to a holder; shifting the icon strands the number. Reach the
+holder with `icon:GetParent()`, having found the icon by its texture.
