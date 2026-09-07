@@ -537,8 +537,14 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   desaturation applied after the colour is chosen, not a colour of its own, so the mod feeds the
   base colour and lets that compose — a friend with an HMG is half-saturated red. Returning a final
   colour from the hook would have wiped it.
-- Exosuits keep the plain marine colour. Vanilla has no exo entry in that palette, and under CBM an
-  exo is modular, so there is no single weapon to colour one by.
+- Exosuits keep the plain marine colour. Vanilla does colour them elsewhere — the commander's ammo
+  bars give minigun red and railgun orange — but under CBM an exo is modular and can carry any
+  combination, so there is no single weapon to colour one by.
+- **The palette was corroborated against a second vanilla source.**
+  `GUIInsight_PlayerHealthbars.kAmmoColors`, which colours the ammo bar under a marine in the
+  commander and spectator views, gives exactly the same four values: green shotgun, fuchsia GL,
+  yellow flamethrower, red HMG. The two disagree only about the rifle — cyan in one, blue in the
+  other — which costs nothing here, since rifles keep the player's own colour either way.
 - The Workshop description lost two sentences to make room under Steam's 8000-byte cap: the quoted
   Lua stub in the "In Cooldown" paragraph, and a clause about display versus enforcement. Both were
   implementation detail on a page meant for players.

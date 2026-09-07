@@ -332,8 +332,11 @@ IT.kColorMarineBlipsByWeapon = false
 --
 -- There is deliberately NO entry for the rifle, pistol, welder or axe. Vanilla's palette leaves
 -- them on its default and so does this: they keep whatever the player set for playercolor_m, and
--- only the four loud weapons deviate from it. Exos are left alone too - vanilla has no exo colour,
--- and under CBM an exo can carry any combination of guns.
+-- only the four loud weapons deviate from it.
+--
+-- Exos are left alone too. Vanilla DOES colour them elsewhere - GUIInsight_PlayerHealthbars gives
+-- minigun red and railgun orange for the commander's ammo bars - but under CBM an exo is modular
+-- and can carry any combination, so there is no single weapon to colour one by.
 IT.kMapBlipColorShotgun         = Color(0, 1, 0, 1)          -- #00FF00
 IT.kMapBlipColorGrenadeLauncher = Color(1, 0, 1, 1)          -- #FF00FF
 IT.kMapBlipColorFlamethrower    = Color(1, 1, 0, 1)          -- #FFFF00

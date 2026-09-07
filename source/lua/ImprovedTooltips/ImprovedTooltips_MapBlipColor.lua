@@ -9,9 +9,16 @@
 -- for the outline you see on a dropped weapon in the world, sampled by index out of
 -- ui/marine_outline_lookup.dds. Those exact five values are reused here, so a shotgun is the same
 -- green on the map as it is on the floor and there is one mapping to learn rather than two.
--- Anything not in that list - rifle, pistol, welder, axe - is left alone entirely and keeps the
--- player's own playercolor_m, which is both what vanilla's palette does with them and what the
--- user asked for.
+--
+-- Confirmed against a SECOND vanilla palette. GUIInsight_PlayerHealthbars.kAmmoColors:42-54 colours
+-- the ammo bar under a marine in the commander and spectator views, and on these four weapons it is
+-- identical: shotgun (0,1,0), grenade launcher (1,0,1), flamethrower (1,1,0), HMG (1,0,0). So this
+-- is vanilla's answer in two independent places, not one file's opinion.
+--
+-- The two palettes DO disagree about the rifle - outline default #00EFFF against the ammo bar's
+-- #0000FF - which costs nothing here, because rifles and sidearms are left alone entirely and keep
+-- the player's own playercolor_m. That is what the outline palette does with them and what the user
+-- asked for.
 --
 -- WHY THE BASE COLOUR IS FED RATHER THAN THE RESULT RETURNED. Vanilla's GetMapBlipColor picks a
 -- colour by blip type and THEN transforms it (MapBlip.lua:301):
@@ -32,9 +39,12 @@
 -- only applies when the local player is on the marine team, or spectating, where every loadout is
 -- visible anyway.
 --
--- EXOS ARE LEFT ON THE PLAIN MARINE COLOUR, deliberately. Vanilla's palette has no exo entry, and
--- under CBM an exo is modular - any combination of guns - so there is no one weapon to colour it
--- by. Only Marine and JetpackMarine blips are touched; kMinimapBlipType.Exo falls through.
+-- EXOS ARE LEFT ON THE PLAIN MARINE COLOUR, deliberately, but not for the reason first written
+-- here. Vanilla DOES have exo colours - GUIInsight_PlayerHealthbars.kAmmoColors:53-54 gives minigun
+-- red and railgun orange for the commander's ammo bars. The reason is CBM: an exo there is modular
+-- and can carry any combination of guns, so there is no single weapon to colour one by and a
+-- minigun/railgun split would be wrong the moment CBM retuned a loadout. Only Marine and
+-- JetpackMarine blips are touched; kMinimapBlipType.Exo falls through to the flat marine colour.
 --
 -- THE LOCAL PLAYER'S OWN MARKER IS NOT A MapBlip and cannot be reached from here. It is a separate
 -- player icon with its own setting, AdvancedOptions["minimaparrowcolor"] (AdvancedOptions.lua:1066)

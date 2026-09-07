@@ -11,7 +11,7 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 
 | | |
 | --- | --- |
-| Which blips | Marine and JetpackMarine only. **Exos keep the plain marine colour** — vanilla has no exo entry in the palette, and under CBM an exo is modular, so there is no single weapon to colour one by |
+| Which blips | Marine and JetpackMarine only. **Exos keep the plain marine colour** — under CBM an exo is modular and can carry any combination, so there is no single weapon to colour one by. Vanilla DOES colour exos in `GUIInsight_PlayerHealthbars` (minigun red, railgun orange); the CBM reason is the one that decides it |
 | Which weapons | The four vanilla already distinguishes. Rifle, pistol, welder and axe keep the player's own `playercolor_m` |
 | Who sees it | Marines and spectators only |
 | Friend tinting | Composes on top: a friend with an HMG is half-saturated red |
@@ -45,8 +45,36 @@ Reusing them means one mapping to learn, holding in the world and on the map. Th
 applied here: leaving rifles on `playercolor_m` respects a setting the player already chose, and
 that colour (`#00D8FF`) is near enough to `#00EFFF` that the two read as the same family anyway.
 
-**Not verified:** the commander's per-weapon ammo bars. If those use a different palette, vanilla
-disagrees with itself and we would have to pick a side.
+**Corroborated against the commander's ammo bars, and they agree.**
+`GUIInsight_PlayerHealthbars.kAmmoColors` (`:42-54`) is a second, independent per-weapon palette,
+used for the ammo bar under a marine in the commander and spectator views. On the four weapons this
+feature colours, the two systems are identical:
+
+| weapon | outline lookup | ammo bar | |
+| --- | --- | --- | --- |
+| Shotgun | `#00FF00` | `Color(0,1,0,1)` | same |
+| Grenade Launcher | `#FF00FF` | `Color(1,0,1,1)` | same |
+| Flamethrower | `#FFFF00` | `Color(1,1,0,1)` | same |
+| Heavy Machine Gun | `#FF0000` | `Color(1,0,0,1)` | same |
+
+So there is no side to pick: green shotgun, fuchsia GL, yellow flamethrower and red HMG are
+vanilla's answer in both places, and now on the map too.
+
+Where the two do differ is everything else, and it is worth knowing:
+
+- **Rifle.** The outline palette defaults it to `#00EFFF` cyan; the ammo bars give it `#0000FF`
+  blue. Vanilla is not self-consistent here. It costs us nothing, because rifles are deliberately
+  left on the player's own `playercolor_m` rather than taking either.
+- **Sidearms.** The ammo bars colour a pistol teal and axe, welder, builder and mines white. The
+  outline palette has none of them. Again untouched here.
+- **Exos.** The ammo bars DO distinguish them: minigun red `#FF0000`, railgun orange `#FF8000`.
+  Only the outline palette lacks exo colours.
+
+That last point corrects a claim made elsewhere in this document and in the commit for this branch:
+"vanilla has no exo colour" is true of the outline palette and **false in general**. The reason exos
+keep the plain marine colour is the CBM one on its own — an exo there is modular and can carry any
+combination, so there is no single weapon to colour it by, and a minigun/railgun split would be
+wrong the moment CBM changed a loadout. That reasoning stands without the false premise.
 
 ## Feed the base colour, do not return the result
 
