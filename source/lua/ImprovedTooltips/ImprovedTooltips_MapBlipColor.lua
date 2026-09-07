@@ -278,9 +278,22 @@ local function GetWeaponColor(blip)
 
 end
 
-local originalGetMapBlipColor = MapBlip.GetMapBlipColor
+-- PLAYERS ARE NOT MapBlip ENTITIES, and assigning to MapBlip.GetMapBlipColor does not reach them.
+-- Two facts have to line up here, and missing either one makes this file silently do nothing:
+--
+--   1. MapBlipMixin.lua:59-64 gives a Player a PlayerMapBlip, not a MapBlip. PlayerMapBlip is
+--      declared at MapBlip.lua:461 and does not override GetMapBlipColor.
+--   2. NS2's class system COPIES methods into derived classes at declaration rather than
+--      delegating through __index. PlayerMapBlip therefore holds its own copy of the function
+--      taken at line 461, and a later `MapBlip.GetMapBlipColor = f` leaves that copy untouched.
+--
+-- Class_ReplaceMethod (core/lua/Class.lua:18) is the sanctioned answer: it swaps the method and
+-- then walks Script.GetDerivedClasses, replacing it in every subclass that still holds the
+-- original. It returns the original, which is what this wraps. ScanMapBlip gets the wrapper too and
+-- is unaffected by it, since a scan's blip type is never Marine or JetpackMarine.
+local originalGetMapBlipColor
 
-function MapBlip:GetMapBlipColor(minimap, item)
+local function ColorMapBlipByWeapon(self, minimap, item)
 
 	if not IT.kColorMarineBlipsByWeapon then
 		return originalGetMapBlipColor(self, minimap, item)
@@ -297,7 +310,9 @@ function MapBlip:GetMapBlipColor(minimap, item)
 	end
 
 	-- Swapped in only for the duration of the call, and restored even if that call raises, so a
-	-- fault inside vanilla cannot leave every marine on the map stuck at one weapon's colour.
+	-- fault inside vanilla cannot leave every marine on the map stuck at one weapon's colour. The
+	-- original reads MapBlip.kCustomMarineColor by name whichever class it was copied onto, so
+	-- setting it here reaches every one of them.
 	local saved = MapBlip.kCustomMarineColor
 	MapBlip.kCustomMarineColor = color
 
@@ -312,6 +327,9 @@ function MapBlip:GetMapBlipColor(minimap, item)
 	return result
 
 end
+
+originalGetMapBlipColor = Class_ReplaceMethod("MapBlip", "GetMapBlipColor", ColorMapBlipByWeapon)
+
 
 -- A console dump, because the risky half of this file cannot be seen on the map. Reading the
 -- commander's palette out of a file-local either works or silently falls back to the written-down
@@ -368,7 +386,9 @@ Event.Hook("Console_it_blipstate", function()
 	Say("setting kColorMarineBlipsByWeapon = %s", tostring(IT.kColorMarineBlipsByWeapon))
 
 	-- 1. Is our wrapper actually the function the game will call?
-	Say("hook installed = %s", tostring(MapBlip.GetMapBlipColor ~= originalGetMapBlipColor))
+	Say("hook on MapBlip = %s, on PlayerMapBlip = %s",
+		tostring(MapBlip.GetMapBlipColor == ColorMapBlipByWeapon),
+		tostring(PlayerMapBlip ~= nil and PlayerMapBlip.GetMapBlipColor == ColorMapBlipByWeapon))
 
 	-- 2. Would we be allowed to colour anything from where we are sitting?
 	local player = Client.GetLocalPlayer()
@@ -393,7 +413,8 @@ Event.Hook("Console_it_blipstate", function()
 	-- 4. Do the blips join up to it? This is the join that has to work.
 	local blipCount, marineBlips, matched = 0, 0, 0
 
-	for _, blip in ientitylist(Shared.GetEntitiesWithClassname("MapBlip")) do
+	-- PlayerMapBlip, not MapBlip: players get the subclass (MapBlipMixin.lua:59-64).
+	for _, blip in ientitylist(Shared.GetEntitiesWithClassname("PlayerMapBlip")) do
 
 		blipCount = blipCount + 1
 
@@ -421,6 +442,6 @@ Event.Hook("Console_it_blipstate", function()
 
 	end
 
-	Say("MapBlips: %d total, %d marine or jetpacker, %d resolved to a colour", blipCount, marineBlips, matched)
+	Say("PlayerMapBlips: %d total, %d marine or jetpacker, %d resolved to a colour", blipCount, marineBlips, matched)
 
 end)

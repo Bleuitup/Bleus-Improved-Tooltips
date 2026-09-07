@@ -102,6 +102,45 @@ Only the spectator table is reachable from Lua, which is why every value here is
 than read: the two authoritative palettes keep their lists in file-locals and their colours in a
 texture.
 
+## Why the first build coloured nothing
+
+Two facts have to line up, and missing either makes the whole file silently inert. The first build
+missed both, and the symptom was simply no colour at all.
+
+**Players are not `MapBlip` entities.** `MapBlipMixin.lua:59-64`:
+
+```lua
+if self:isa("Player") then
+    mapName = PlayerMapBlip.kMapName
+```
+
+`PlayerMapBlip` is declared at `MapBlip.lua:461` and does **not** override `GetMapBlipColor`.
+
+**And NS2's class system copies methods into derived classes rather than delegating.** That is
+exactly why `Class_ReplaceMethod` exists (`core/lua/Class.lua:18`) — it swaps a method and then
+walks `Script.GetDerivedClasses` replacing it in every subclass that still holds the original. So
+`PlayerMapBlip` holds its **own copy** of `GetMapBlipColor`, taken when the class was declared at
+line 461, and a plain `MapBlip.GetMapBlipColor = wrapper` leaves that copy untouched. Every marine
+on the map kept calling vanilla's version.
+
+The fix is one line, and it is the idiomatic one:
+
+```lua
+originalGetMapBlipColor = Class_ReplaceMethod("MapBlip", "GetMapBlipColor", ColorMapBlipByWeapon)
+```
+
+`ScanMapBlip` picks up the wrapper too and is unaffected by it: a scan's blip type is never Marine
+or JetpackMarine, so it falls straight through to the original.
+
+**This is worth remembering beyond this feature.** Everywhere else this mod hooks a plain function
+on a table — `GUIScoreboard:UpdateTeam`, `GUIInsight_TopBar:Initialize` — reassignment is correct,
+because nothing derives from those. The moment a hook targets a class that has subclasses, plain
+assignment is wrong and silently so.
+
+The rest of the chain was right all along: `MinimapMappableMixin:UpdateMinimapItem:130` calls
+`GetMapBlipColor` every update rather than caching, and `PlayerInfoEntity.playerId` really is the
+entity id `SetOwner` was given.
+
 ## Feed the base colour, do not return the result
 
 `GetMapBlipColor` (`MapBlip.lua:272`) picks a colour by blip type and **then** transforms it:
