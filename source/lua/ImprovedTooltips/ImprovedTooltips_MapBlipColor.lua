@@ -11,7 +11,7 @@
 -- green on the map as it is on the floor and there is one mapping to learn rather than two.
 --
 -- Confirmed against a SECOND vanilla palette. GUIInsight_PlayerHealthbars.kAmmoColors:42-54 colours
--- the ammo bar under a marine in the commander and spectator views, and on these four weapons it is
+-- the ammo bar under a marine in the SPECTATOR overhead view, and on these four weapons it is
 -- identical: shotgun (0,1,0), grenade launcher (1,0,1), flamethrower (1,1,0), HMG (1,0,0). So this
 -- is vanilla's answer in two independent places, not one file's opinion.
 --
@@ -41,7 +41,7 @@
 --
 -- EXOS ARE LEFT ON THE PLAIN MARINE COLOUR, deliberately, but not for the reason first written
 -- here. Vanilla DOES have exo colours - GUIInsight_PlayerHealthbars.kAmmoColors:53-54 gives minigun
--- red and railgun orange for the commander's ammo bars. The reason is CBM: an exo there is modular
+-- red and railgun orange for those spectator ammo bars. The reason is CBM: an exo there is modular
 -- and can carry any combination of guns, so there is no single weapon to colour one by and a
 -- minigun/railgun split would be wrong the moment CBM retuned a loadout. Only Marine and
 -- JetpackMarine blips are touched; kMinimapBlipType.Exo falls through to the flat marine colour.

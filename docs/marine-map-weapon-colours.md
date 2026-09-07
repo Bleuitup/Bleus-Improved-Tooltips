@@ -45,9 +45,9 @@ Reusing them means one mapping to learn, holding in the world and on the map. Th
 applied here: leaving rifles on `playercolor_m` respects a setting the player already chose, and
 that colour (`#00D8FF`) is near enough to `#00EFFF` that the two read as the same family anyway.
 
-**Corroborated against the commander's ammo bars, and they agree.**
+**Corroborated against the spectator ammo bars, and they agree.**
 `GUIInsight_PlayerHealthbars.kAmmoColors` (`:42-54`) is a second, independent per-weapon palette,
-used for the ammo bar under a marine in the commander and spectator views. On the four weapons this
+used for the ammo bar under a marine in the SPECTATOR overhead view. On the four weapons this
 feature colours, the two systems are identical:
 
 | weapon | outline lookup | ammo bar | |
@@ -122,11 +122,27 @@ ammo bar therefore falls through to `kEnergyColor`, which is yellow — the flam
 to the fallback we would inherit that collision. Naming it in config keeps the map agreeing with
 CBM's world outline instead, which is the colour a player actually associates with the weapon.
 
-Worth telling the CBM developers about, since it is a small inconsistency on their side: the SMG's
-outline is orange and its ammo bar is flamethrower yellow.
+Worth telling the CBM developers about, since it is a small inconsistency on their side: a spectator's
+SMG ammo bar reads flamethrower yellow while the same weapon's outline glow is correctly orange.
 
 Everything here costs nothing without CBM: `rawget(kPlayerStatus, "Submachinegun")` is nil in
 vanilla, so the entry never resolves to a status and is never used.
+
+
+## Who sees which palette
+
+The two palettes are not shown to the same people, which matters when reasoning about what a
+mismatch would actually look like:
+
+| | palette | seen by |
+| --- | --- | --- |
+| Weapon outline glow in the world | outline lookup (`.dds`) | everyone, **including the commander** — `CommanderGlowMixin.lua:32` adds the model to `EquipmentOutline` so equipment can be picked out of the darkness from above |
+| Ammo bar under a marine | `kAmmoColors` | **spectators only**. Both health bar scripts are created and destroyed by `GUIInsight_Overhead.lua:224,227`, the spectator overhead view, and nowhere else |
+| Map blip | this mod | marines and spectators |
+
+So CBM's SMG gap shows up for **spectators**, not commanders: a spectator's SMG ammo bar falls
+through to `kEnergyColor` yellow, the flamethrower's colour, while the commander's outline glow for
+the same weapon is correctly orange.
 
 ## Feed the base colour, do not return the result
 

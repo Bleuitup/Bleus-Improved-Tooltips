@@ -335,7 +335,7 @@ IT.kColorMarineBlipsByWeapon = false
 -- only the four loud weapons deviate from it.
 --
 -- Exos are left alone too. Vanilla DOES colour them elsewhere - GUIInsight_PlayerHealthbars gives
--- minigun red and railgun orange for the commander's ammo bars - but under CBM an exo is modular
+-- minigun red and railgun orange for those spectator ammo bars - but under CBM an exo is modular
 -- and can carry any combination, so there is no single weapon to colour one by.
 IT.kMapBlipColorShotgun         = Color(0, 1, 0, 1)          -- #00FF00
 IT.kMapBlipColorGrenadeLauncher = Color(1, 0, 1, 1)          -- #FF00FF
