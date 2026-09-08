@@ -179,12 +179,21 @@ $g.DrawEllipse($ringPen, (Rct 11 17 42 42))
 $g.FillPath($white, (RoundRect 28 11 8 8 1.5))
 $g.FillPath($white, (RoundRect 25 5 14 7 2.5))
 
-# Start button, on the shoulder at 45 degrees. The ring's edge at that angle is (32 + 21*cos45,
-# 38 - 21*sin45) = (46.8, 23.2), so the bar runs outward from just inside it.
+# Start button: a stub on the shoulder at 45 degrees, sitting entirely OUTSIDE the ring. The first
+# attempt started it at radius 19 and it crossed the stroke, reading as a line drawn through the
+# watch rather than a button on it.
+#
+# Geometry so it touches and does not cross: centre (32, 38), ring radius 21 with a 5-wide stroke,
+# so the outer edge is at radius 23.5 - at 45 degrees that is (32 + 23.5*cos45, 38 - 23.5*sin45) =
+# (48.6, 21.4). A round cap extends half the pen width beyond the endpoint, so with a 6-wide pen the
+# line would have to START 3 further out along the radius for its cap to land exactly on that edge.
+# It starts fractionally inside that instead, at (50, 20), so the cap overlaps the stroke by about a
+# pixel and the stub reads as attached rather than as a floating speck at 32px. It still stops well
+# clear of the stroke's inner edge at radius 18.5, which is where crossing would start.
 $btnPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (6*$SS))
 $btnPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
 $btnPen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Round
-$g.DrawLine($btnPen, (Pt 45.5 24.5), (Pt 52 18))
+$g.DrawLine($btnPen, (Pt 50 20), (Pt 53.5 16.5))
 
 $handPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (4.5*$SS))
 $handPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
