@@ -333,9 +333,10 @@ and cost time to rule out.
   pips were each verified alone. (There is no published 0.81 — that was the working version number
   while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
-- `preview.jpg` is the user's own artwork (added 2026-08-26), replacing the generated placeholder.
+- `preview.jpg` was generated in an earlier conversation with Claude (the user corrected this on
+  2026-09-08; an older note here called it their own artwork). It replaced a rougher placeholder.
   `tools/build_preview.ps1`, which produced that placeholder, has been deleted — do not recreate a
-  script that writes `preview.jpg`, it would silently clobber real artwork.
+  script that writes `preview.jpg` - it would clobber the current one.
   **It must stay 512x512 and stay a JPEG**: Steam rejects other sizes for this item, and
   `mod.settings` names the file by extension, so a `.png` beside it does nothing.
 - **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
