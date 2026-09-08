@@ -278,19 +278,6 @@ local function GetWeaponColor(blip)
 
 end
 
--- PLAYERS ARE NOT MapBlip ENTITIES, and assigning to MapBlip.GetMapBlipColor does not reach them.
--- Two facts have to line up here, and missing either one makes this file silently do nothing:
---
---   1. MapBlipMixin.lua:59-64 gives a Player a PlayerMapBlip, not a MapBlip. PlayerMapBlip is
---      declared at MapBlip.lua:461 and does not override GetMapBlipColor.
---   2. NS2's class system COPIES methods into derived classes at declaration rather than
---      delegating through __index. PlayerMapBlip therefore holds its own copy of the function
---      taken at line 461, and a later `MapBlip.GetMapBlipColor = f` leaves that copy untouched.
---
--- Class_ReplaceMethod (core/lua/Class.lua:18) is the sanctioned answer: it swaps the method and
--- then walks Script.GetDerivedClasses, replacing it in every subclass that still holds the
--- original. It returns the original, which is what this wraps. ScanMapBlip gets the wrapper too and
--- is unaffected by it, since a scan's blip type is never Marine or JetpackMarine.
 local originalGetMapBlipColor
 
 local function ColorMapBlipByWeapon(self, minimap, item)
@@ -328,7 +315,57 @@ local function ColorMapBlipByWeapon(self, minimap, item)
 
 end
 
-originalGetMapBlipColor = Class_ReplaceMethod("MapBlip", "GetMapBlipColor", ColorMapBlipByWeapon)
+-- INSTALLING THE HOOK, DEFENSIVELY, AND SAYING SO.
+--
+-- Two things have to be true and neither is guaranteed:
+--
+--   1. Players get a PlayerMapBlip, not a MapBlip (MapBlipMixin.lua:59-64), and NS2's class system
+--      COPIES methods into derived classes rather than delegating through __index. So assigning to
+--      MapBlip.GetMapBlipColor alone leaves PlayerMapBlip holding its own copy and does nothing.
+--   2. Class_ReplaceMethod (core/lua/Class.lua) is the sanctioned way to do it, but it asserts on
+--      both `original ~= nil` and `Script.GetDerivedClasses(...) ~= nil` as it recurses. An assert
+--      here would abort this file part way, taking the console commands with it and leaving no
+--      trace but a log line - which is exactly what a silent failure looks like from the outside.
+--
+-- So the replacement is done by hand: set it on MapBlip, then on each known subclass that is still
+-- holding the original. Same effect, no assert, and the result is reported rather than assumed.
+local kInstallResult = "not attempted"
+
+local function InstallHook()
+
+	if type(MapBlip) ~= "table" or type(MapBlip.GetMapBlipColor) ~= "function" then
+		kInstallResult = "FAILED - MapBlip.GetMapBlipColor is missing"
+		return
+	end
+
+	originalGetMapBlipColor = MapBlip.GetMapBlipColor
+	MapBlip.GetMapBlipColor = ColorMapBlipByWeapon
+
+	local patched = { "MapBlip" }
+
+	-- Named rather than discovered, because Script.GetDerivedClasses is the part of
+	-- Class_ReplaceMethod that can assert. These are the only two subclasses MapBlip.lua declares
+	-- (:461 and :497); a third would simply keep vanilla's colour and be no worse than today.
+	for _, name in ipairs({ "PlayerMapBlip", "ScanMapBlip" }) do
+
+		local class = _G[name]
+
+		if type(class) == "table" and rawget(class, "GetMapBlipColor") == originalGetMapBlipColor then
+			class.GetMapBlipColor = ColorMapBlipByWeapon
+			patched[#patched + 1] = name
+		end
+
+	end
+
+	kInstallResult = "installed on " .. table.concat(patched, ", ")
+
+end
+
+local ok, err = pcall(InstallHook)
+
+if not ok then
+	kInstallResult = "FAILED - " .. tostring(err)
+end
 
 
 -- A console dump, because the risky half of this file cannot be seen on the map. Reading the
@@ -386,6 +423,7 @@ Event.Hook("Console_it_blipstate", function()
 	Say("setting kColorMarineBlipsByWeapon = %s", tostring(IT.kColorMarineBlipsByWeapon))
 
 	-- 1. Is our wrapper actually the function the game will call?
+	Say("install: %s", kInstallResult)
 	Say("hook on MapBlip = %s, on PlayerMapBlip = %s",
 		tostring(MapBlip.GetMapBlipColor == ColorMapBlipByWeapon),
 		tostring(PlayerMapBlip ~= nil and PlayerMapBlip.GetMapBlipColor == ColorMapBlipByWeapon))
@@ -446,16 +484,17 @@ Event.Hook("Console_it_blipstate", function()
 
 end)
 
--- A one-line banner at load, so "did this file even load?" is answerable from the console log
--- rather than by inference. It matters because the two halves of this mod live in different VMs:
--- the settings panel is hooked onto a menu file and loads in the MAIN MENU VM, while this file is
--- hooked onto lua/MapBlip.lua and only ever loads in the CLIENT VM, once a map is running. Seeing
--- the option in the menu therefore says nothing about whether this file loaded, and it_blipstate
--- will not exist at the main menu even when everything is correct.
+
+-- Reporting kInstallResult rather than recomputing it, and the install above is wrapped in pcall so
+-- it cannot throw and take these down with it. The previous version called Class_ReplaceMethod at
+-- the top level, and an assert inside it would have aborted the file part way, killing the console
+-- commands that exist to report exactly that fault.
 --
--- Devnull's Enhanced Scoreboard prints a version line the same way, so a single line here is in
--- keeping rather than noise. REMOVE OR GATE THIS BEFORE 1.03 SHIPS.
-Shared.Message(string.format(
-	"[Improved Tooltips] map blip colours loaded. hook on MapBlip=%s PlayerMapBlip=%s. Type it_blipstate for detail.",
-	tostring(MapBlip.GetMapBlipColor == ColorMapBlipByWeapon),
-	tostring(PlayerMapBlip ~= nil and PlayerMapBlip.GetMapBlipColor == ColorMapBlipByWeapon)))
+-- Note which VM this is. The settings panel is hooked onto a menu data file and loads in the MAIN
+-- MENU VM; this file is hooked onto lua/MapBlip.lua and only ever loads in the CLIENT VM, once a
+-- map is running. Seeing the option in the menu says nothing about whether this file loaded, and
+-- neither command exists at the main menu even when everything is correct.
+--
+-- REMOVE OR GATE THE BANNER BEFORE 1.03 SHIPS. Devnull's Enhanced Scoreboard prints a version line
+-- the same way, so one line is in keeping, but it is here to debug a specific failure.
+Shared.Message("[Improved Tooltips] map blip colours: " .. kInstallResult)
