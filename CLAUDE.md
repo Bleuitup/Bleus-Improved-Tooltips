@@ -701,11 +701,18 @@ the cell (52/64 = 81.25%). Measuring rather than hand-tuning coordinates means t
 change without the sizes drifting apart again. Slot 2 (the chevron) still uses plain `Commit`; it is
 lifted vanilla art and was never out of step.
 
-**`CommitFitted` fits the LONGEST side, so aspect decides perceived size.** A narrow glyph ends up
-52 tall and much less than 52 wide, and reads smaller than the square cross and shield beside it
-even though both are "52". In 1.02 the hourglass was 40x52 -- aspect 0.77 -- which is the "slightly
-off-size" the user reported. **Widen the drawing, never the fit**: stretching to a literal square
-ovals the hourglass's round caps.
+**`CommitFitted` fits the LONGEST side, so a narrow glyph is narrower than a square one at the same
+"52".** The hourglass is 40x52, aspect 0.77, against the cross's square. **Widening it was tried on
+2026-09-08 and rejected on sight** - the user called it "entirely stretched horizontally, as if the
+aspect ratio was botched". A narrow hourglass is what an hourglass looks like; making it square makes
+it wrong, not bigger. An older version of this section recommended widening. It was wrong. Leave the
+proportions alone.
+
+**And the sizes already match in game**, which is worth checking before believing a size report.
+`kOwnIconCoords` samples health and armour through a centred 48px window of their 64px cell, so their
+39px glyph renders at 39/48 = 81%; research, cooldown and speed are sampled over the whole cell and
+`CommitFitted` puts them at 52/64 = 81.25%. Comparing raw sheet cells makes the cross look small
+because it has not been magnified yet - compare through the real sample windows instead.
 
 ### Glyph detail (1.03)
 
@@ -718,8 +725,7 @@ Redrawn to match the artwork in `preview.jpg`, which is more detailed than what 
   instead was tried first and reads as a thick cap. It is clipped as a `Region` intersected with the
   bulb path rather than drawn as a second path, so the sand's edges follow the glass exactly however
   the curve is retuned.
-- **Also widened**: caps 42 -> 52, bulbs 32 -> 40. Aspect 0.77 -> 0.92, so it now carries the same
-  visual weight as the cross.
+- **Not widened.** Squaring up the aspect was tried and rejected; see the sizing note above.- **Hands stay at 12 and 3 o'clock.** Up and up-right was tried to match the preview art; the user  preferred the original pairing.
 - **Stopwatch.** 1.02 was a bare ring with a rectangular stem and read as a wall clock. It now has a
   crown (stem plus a wider cap) and a start button on the shoulder at 45 degrees, which is what
   names it as a stopwatch. The ring's edge at 45 degrees is `(32 + 21*cos45, 38 - 21*sin45)` =
