@@ -700,9 +700,36 @@ the cell (52/64 = 81.25%). Measuring rather than hand-tuning coordinates means t
 change without the sizes drifting apart again. Slot 2 (the chevron) still uses plain `Commit`; it is
 lifted vanilla art and was never out of step.
 
-Aspect is preserved rather than forced: the hourglass is 0.77 and the stopwatch 0.88 against the
-vanilla glyphs' 1.00. Stretching them to literal squares would oval the hourglass's round caps. If
-true 1:1 is ever wanted, widen the drawing coordinates rather than the fit.
+**`CommitFitted` fits the LONGEST side, so aspect decides perceived size.** A narrow glyph ends up
+52 tall and much less than 52 wide, and reads smaller than the square cross and shield beside it
+even though both are "52". In 1.02 the hourglass was 40x52 -- aspect 0.77 -- which is the "slightly
+off-size" the user reported. **Widen the drawing, never the fit**: stretching to a literal square
+ovals the hourglass's round caps.
+
+### Glyph detail (1.03)
+
+Redrawn to match the artwork in `preview.jpg`, which is more detailed than what shipped.
+
+- **Hourglass.** 1.02 filled the upper bulb solid, which reads as "not started" rather than "time
+  passing". The sand is now partial, and it rests **on the neck, not under the cap** -- in a
+  half-run hourglass the top bulb is empty above the sand line and full below it, so the fill is the
+  LOWER part of that bulb and comes out as a wedge narrowing into the neck. Filling the top band
+  instead was tried first and reads as a thick cap. It is clipped as a `Region` intersected with the
+  bulb path rather than drawn as a second path, so the sand's edges follow the glass exactly however
+  the curve is retuned.
+- **Also widened**: caps 42 -> 52, bulbs 32 -> 40. Aspect 0.77 -> 0.92, so it now carries the same
+  visual weight as the cross.
+- **Stopwatch.** 1.02 was a bare ring with a rectangular stem and read as a wall clock. It now has a
+  crown (stem plus a wider cap) and a start button on the shoulder at 45 degrees, which is what
+  names it as a stopwatch. The ring's edge at 45 degrees is `(32 + 21*cos45, 38 - 21*sin45)` =
+  `(46.8, 23.2)`, so the button bar runs outward from just inside that.
+- **Hands point up and up-right.** Drawn down-right first, which reads as four o'clock rather than a
+  clock that is running.
+
+**Check any change at tooltip size, not just magnified.** These render at roughly 32px in game, and
+detail that reads at 5x can turn to mush. Decompress the built sheet with `utils/nvdecompress.exe`
+and draw it at both scales -- note that `System.Drawing` cannot open NS2's TGAs (`FromFile` throws
+"Out of memory"), so read the bytes and blit past the 18-byte header yourself.
 
 ## SHELVED for 1.0: upgrade stats, speed dimming, CBM speed corrections
 
