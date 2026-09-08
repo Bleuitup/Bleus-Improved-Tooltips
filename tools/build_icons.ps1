@@ -127,20 +127,20 @@ $white = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
 # a band still in the upper bulb, a mound in the lower one, a stream between them. A full upper bulb
 # reads as "not started" rather than "time passing", which is what it looked like in 1.02.
 #
-# Wider than 1.02's drawing. CommitFitted scales the longest side to 52, so a narrow glyph ends up
-# 52 tall and only 40 wide and reads thinner than the square cross and shield beside it. Widening
-# the drawing rather than the fit is the fix noted in CLAUDE.md.
+# Width is deliberately 1.02's. Widening it to square up the aspect was tried on 2026-09-08 and the
+# user rejected it on sight - it reads as a stretched glyph, not a bigger one. The narrow proportion
+# is the hourglass. Do not widen it again.
 $r = New-Canvas; $b = $r[0]; $g = $r[1]
 $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-$g.FillPath($white, (RoundRect 6 4 52 7 2.5))      # top cap
-$g.FillPath($white, (RoundRect 6 53 52 7 2.5))     # bottom cap
+$g.FillPath($white, (RoundRect 11 4 42 7 2.5))     # top cap
+$g.FillPath($white, (RoundRect 11 53 42 7 2.5))    # bottom cap
 $glassPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (3.5*$SS))
 $glassPen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
 
 $upper = New-Object System.Drawing.Drawing2D.GraphicsPath
-$upper.AddLine((Pt 12 11), (Pt 52 11))
-$upper.AddBezier((Pt 52 11), (Pt 51 22), (Pt 36 27), (Pt 32 31))
-$upper.AddBezier((Pt 32 31), (Pt 28 27), (Pt 13 22), (Pt 12 11))
+$upper.AddLine((Pt 16 11), (Pt 48 11))
+$upper.AddBezier((Pt 48 11), (Pt 47 22), (Pt 36 27), (Pt 32 31))
+$upper.AddBezier((Pt 32 31), (Pt 28 27), (Pt 17 22), (Pt 16 11))
 
 # The sand still to fall. It rests ON the neck, not under the cap: in a half-run hourglass the top
 # bulb is empty above the sand line and full below it, so the fill is the LOWER part of that bulb
@@ -153,15 +153,15 @@ $sand.Dispose()
 $g.DrawPath($glassPen, $upper)
 
 $lower = New-Object System.Drawing.Drawing2D.GraphicsPath
-$lower.AddLine((Pt 12 53), (Pt 52 53))
-$lower.AddBezier((Pt 52 53), (Pt 51 42), (Pt 36 37), (Pt 32 33))
-$lower.AddBezier((Pt 32 33), (Pt 28 37), (Pt 13 42), (Pt 12 53))
+$lower.AddLine((Pt 16 53), (Pt 48 53))
+$lower.AddBezier((Pt 48 53), (Pt 47 42), (Pt 36 37), (Pt 32 33))
+$lower.AddBezier((Pt 32 33), (Pt 28 37), (Pt 17 42), (Pt 16 53))
 $g.DrawPath($glassPen, $lower)
 
 $mound = New-Object System.Drawing.Drawing2D.GraphicsPath
-$mound.AddLine((Pt 15 51.5), (Pt 49 51.5))
-$mound.AddBezier((Pt 49 51.5), (Pt 44 43.5), (Pt 36 41), (Pt 32 41))
-$mound.AddBezier((Pt 32 41), (Pt 28 41), (Pt 20 43.5), (Pt 15 51.5))
+$mound.AddLine((Pt 19 51.5), (Pt 45 51.5))
+$mound.AddBezier((Pt 45 51.5), (Pt 41 44.5), (Pt 35 42), (Pt 32 42))
+$mound.AddBezier((Pt 32 42), (Pt 29 42), (Pt 23 44.5), (Pt 19 51.5))
 $g.FillPath($white, $mound)
 $g.FillRectangle($white, (Rct 31.25 30 1.5 11))    # falling stream
 $g.Dispose(); CommitFitted $b 0
@@ -189,8 +189,8 @@ $g.DrawLine($btnPen, (Pt 45.5 24.5), (Pt 52 18))
 $handPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (4.5*$SS))
 $handPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
 $handPen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Round
-$g.DrawLine($handPen, (Pt 32 38), (Pt 32 26))      # up
-$g.DrawLine($handPen, (Pt 32 38), (Pt 41 32))      # and up-right, so the pair reads as a running clock
+$g.DrawLine($handPen, (Pt 32 38), (Pt 32 26))      # 12 o'clock
+$g.DrawLine($handPen, (Pt 32 38), (Pt 43 38))      # and 3 o'clock; the user settled this pairing
 $g.Dispose(); CommitFitted $b 1
 
 # 2 - speed, marine: the double chevron from ui/marine_buildmenu_insight.dds row 2 column 4
