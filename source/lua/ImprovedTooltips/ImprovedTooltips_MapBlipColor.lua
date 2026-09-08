@@ -445,3 +445,17 @@ Event.Hook("Console_it_blipstate", function()
 	Say("PlayerMapBlips: %d total, %d marine or jetpacker, %d resolved to a colour", blipCount, marineBlips, matched)
 
 end)
+
+-- A one-line banner at load, so "did this file even load?" is answerable from the console log
+-- rather than by inference. It matters because the two halves of this mod live in different VMs:
+-- the settings panel is hooked onto a menu file and loads in the MAIN MENU VM, while this file is
+-- hooked onto lua/MapBlip.lua and only ever loads in the CLIENT VM, once a map is running. Seeing
+-- the option in the menu therefore says nothing about whether this file loaded, and it_blipstate
+-- will not exist at the main menu even when everything is correct.
+--
+-- Devnull's Enhanced Scoreboard prints a version line the same way, so a single line here is in
+-- keeping rather than noise. REMOVE OR GATE THIS BEFORE 1.03 SHIPS.
+Shared.Message(string.format(
+	"[Improved Tooltips] map blip colours loaded. hook on MapBlip=%s PlayerMapBlip=%s. Type it_blipstate for detail.",
+	tostring(MapBlip.GetMapBlipColor == ColorMapBlipByWeapon),
+	tostring(PlayerMapBlip ~= nil and PlayerMapBlip.GetMapBlipColor == ColorMapBlipByWeapon)))
