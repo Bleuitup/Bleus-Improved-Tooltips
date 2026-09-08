@@ -725,13 +725,14 @@ Redrawn to match the artwork in `preview.jpg`, which is more detailed than what 
   instead was tried first and reads as a thick cap. It is clipped as a `Region` intersected with the
   bulb path rather than drawn as a second path, so the sand's edges follow the glass exactly however
   the curve is retuned.
-- **Not widened.** Squaring up the aspect was tried and rejected; see the sizing note above.- **Hands stay at 12 and 3 o'clock.** Up and up-right was tried to match the preview art; the user  preferred the original pairing.
+- **Not widened.** Squaring up the aspect was tried and rejected; see the sizing note above.
 - **Stopwatch.** 1.02 was a bare ring with a rectangular stem and read as a wall clock. It now has a
   crown (stem plus a wider cap) and a start button on the shoulder at 45 degrees, which is what
-  names it as a stopwatch. The ring's edge at 45 degrees is `(32 + 21*cos45, 38 - 21*sin45)` =
-  `(46.8, 23.2)`, so the button bar runs outward from just inside that.
-- **Hands point up and up-right.** Drawn down-right first, which reads as four o'clock rather than a
-  clock that is running.
+  names it as a stopwatch and is the detail the user specifically asked for - it is what a real one
+  is started with. The ring's edge at 45 degrees is `(32 + 21*cos45, 38 - 21*sin45)` = `(46.8,
+  23.2)`, so the button bar runs outward from just inside that.
+- **Hands stay at 12 and 3 o'clock.** Up and up-right was tried to match the preview art and the
+  user preferred the original pairing.
 
 **Check any change at tooltip size, not just magnified.** These render at roughly 32px in game, and
 detail that reads at 5x can turn to mush. Decompress the built sheet with `utils/nvdecompress.exe`
