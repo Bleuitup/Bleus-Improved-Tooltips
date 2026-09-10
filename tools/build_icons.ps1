@@ -123,10 +123,13 @@ function CommitFitted($bmp, $slot) {
 }
 $white = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
 
-# 0 - research time: hourglass. Rounded caps, concave glass drawn as an outline, upper bulb solid
-# with sand, lower bulb holding a mound with a stream falling into it. The first version of this
-# was a flat bowtie - two bars and two solid triangles - which read as too plain; the sand and the
-# curved glass are what make it recognisable at the ~32px it actually renders at.
+# 0 - research time: hourglass. Caps, concave glass as an outline, and sand that is PARTLY through:
+# a band still in the upper bulb, a mound in the lower one, a stream between them. A full upper bulb
+# reads as "not started" rather than "time passing", which is what it looked like in 1.02.
+#
+# Width is deliberately 1.02's. Widening it to square up the aspect was tried on 2026-09-08 and the
+# user rejected it on sight - it reads as a stretched glyph, not a bigger one. The narrow proportion
+# is the hourglass. Do not widen it again.
 $r = New-Canvas; $b = $r[0]; $g = $r[1]
 $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
 $g.FillPath($white, (RoundRect 11 4 42 7 2.5))     # top cap
@@ -138,7 +141,15 @@ $upper = New-Object System.Drawing.Drawing2D.GraphicsPath
 $upper.AddLine((Pt 16 11), (Pt 48 11))
 $upper.AddBezier((Pt 48 11), (Pt 47 22), (Pt 36 27), (Pt 32 31))
 $upper.AddBezier((Pt 32 31), (Pt 28 27), (Pt 17 22), (Pt 16 11))
-$g.FillPath($white, $upper)                        # bulb full of sand
+
+# The sand still to fall. It rests ON the neck, not under the cap: in a half-run hourglass the top
+# bulb is empty above the sand line and full below it, so the fill is the LOWER part of that bulb
+# and comes out as a wedge narrowing into the neck. Clipped as a region rather than drawn as a
+# second path, so its edges follow the glass exactly however the curve is retuned.
+$sand = New-Object System.Drawing.Region($upper)
+$sand.Intersect((Rct 10 20.5 44 11))
+$g.FillRegion($white, $sand)
+$sand.Dispose()
 $g.DrawPath($glassPen, $upper)
 
 $lower = New-Object System.Drawing.Drawing2D.GraphicsPath
@@ -155,16 +166,40 @@ $g.FillPath($white, $mound)
 $g.FillRectangle($white, (Rct 31.25 30 1.5 11))    # falling stream
 $g.Dispose(); CommitFitted $b 0
 
-# 1 - cooldown: stopwatch, ring plus stem plus two hands.
+# 1 - cooldown: stopwatch. Ring, a crown on top, and a start button on the shoulder at 45 degrees.
+# 1.02 drew a bare ring with a rectangular stem, which read as a wall clock rather than a stopwatch;
+# the crown and the angled button are what name it, and they cost two shapes.
 $r = New-Canvas; $b = $r[0]; $g = $r[1]
+$g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+
 $ringPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (5*$SS))
-$g.FillRectangle($white, (Rct 27 5 10 7))
-$g.DrawEllipse($ringPen, (Rct 9 13 46 46))
+$g.DrawEllipse($ringPen, (Rct 11 17 42 42))
+
+# Crown: a stem off the top of the ring and a wider cap above it, the way a real one is knurled.
+$g.FillPath($white, (RoundRect 28 11 8 8 1.5))
+$g.FillPath($white, (RoundRect 25 5 14 7 2.5))
+
+# Start button: a stub on the shoulder at 45 degrees, sitting entirely OUTSIDE the ring. The first
+# attempt started it at radius 19 and it crossed the stroke, reading as a line drawn through the
+# watch rather than a button on it.
+#
+# Geometry so it touches and does not cross: centre (32, 38), ring radius 21 with a 5-wide stroke,
+# so the outer edge is at radius 23.5 - at 45 degrees that is (32 + 23.5*cos45, 38 - 23.5*sin45) =
+# (48.6, 21.4). A round cap extends half the pen width beyond the endpoint, so with a 6-wide pen the
+# line would have to START 3 further out along the radius for its cap to land exactly on that edge.
+# It starts fractionally inside that instead, at (50, 20), so the cap overlaps the stroke by about a
+# pixel and the stub reads as attached rather than as a floating speck at 32px. It still stops well
+# clear of the stroke's inner edge at radius 18.5, which is where crossing would start.
+$btnPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (6*$SS))
+$btnPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+$btnPen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Round
+$g.DrawLine($btnPen, (Pt 50 20), (Pt 53.5 16.5))
+
 $handPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, (4.5*$SS))
 $handPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
 $handPen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Round
-$g.DrawLine($handPen, (Pt 32 36), (Pt 32 22))
-$g.DrawLine($handPen, (Pt 32 36), (Pt 43 36))
+$g.DrawLine($handPen, (Pt 32 38), (Pt 32 26))      # 12 o'clock
+$g.DrawLine($handPen, (Pt 32 38), (Pt 43 38))      # and 3 o'clock; the user settled this pairing
 $g.Dispose(); CommitFitted $b 1
 
 # 2 - speed, marine: the double chevron from ui/marine_buildmenu_insight.dds row 2 column 4

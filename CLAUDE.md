@@ -333,9 +333,10 @@ and cost time to rule out.
   pips were each verified alone. (There is no published 0.81 — that was the working version number
   while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
-- `preview.jpg` is the user's own artwork (added 2026-08-26), replacing the generated placeholder.
+- `preview.jpg` was generated in an earlier conversation with Claude (the user corrected this on
+  2026-09-08; an older note here called it their own artwork). It replaced a rougher placeholder.
   `tools/build_preview.ps1`, which produced that placeholder, has been deleted — do not recreate a
-  script that writes `preview.jpg`, it would silently clobber real artwork.
+  script that writes `preview.jpg` - it would clobber the current one.
   **It must stay 512x512 and stay a JPEG**: Steam rejects other sizes for this item, and
   `mod.settings` names the file by extension, so a `.png` beside it does nothing.
 - **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
@@ -700,9 +701,43 @@ the cell (52/64 = 81.25%). Measuring rather than hand-tuning coordinates means t
 change without the sizes drifting apart again. Slot 2 (the chevron) still uses plain `Commit`; it is
 lifted vanilla art and was never out of step.
 
-Aspect is preserved rather than forced: the hourglass is 0.77 and the stopwatch 0.88 against the
-vanilla glyphs' 1.00. Stretching them to literal squares would oval the hourglass's round caps. If
-true 1:1 is ever wanted, widen the drawing coordinates rather than the fit.
+**`CommitFitted` fits the LONGEST side, so a narrow glyph is narrower than a square one at the same
+"52".** The hourglass is 40x52, aspect 0.77, against the cross's square. **Widening it was tried on
+2026-09-08 and rejected on sight** - the user called it "entirely stretched horizontally, as if the
+aspect ratio was botched". A narrow hourglass is what an hourglass looks like; making it square makes
+it wrong, not bigger. An older version of this section recommended widening. It was wrong. Leave the
+proportions alone.
+
+**And the sizes already match in game**, which is worth checking before believing a size report.
+`kOwnIconCoords` samples health and armour through a centred 48px window of their 64px cell, so their
+39px glyph renders at 39/48 = 81%; research, cooldown and speed are sampled over the whole cell and
+`CommitFitted` puts them at 52/64 = 81.25%. Comparing raw sheet cells makes the cross look small
+because it has not been magnified yet - compare through the real sample windows instead.
+
+### Glyph detail (1.03)
+
+Redrawn to match the artwork in `preview.jpg`, which is more detailed than what shipped.
+
+- **Hourglass.** 1.02 filled the upper bulb solid, which reads as "not started" rather than "time
+  passing". The sand is now partial, and it rests **on the neck, not under the cap** -- in a
+  half-run hourglass the top bulb is empty above the sand line and full below it, so the fill is the
+  LOWER part of that bulb and comes out as a wedge narrowing into the neck. Filling the top band
+  instead was tried first and reads as a thick cap. It is clipped as a `Region` intersected with the
+  bulb path rather than drawn as a second path, so the sand's edges follow the glass exactly however
+  the curve is retuned.
+- **Not widened.** Squaring up the aspect was tried and rejected; see the sizing note above.
+- **Stopwatch.** 1.02 was a bare ring with a rectangular stem and read as a wall clock. It now has a
+  crown (stem plus a wider cap) and a start button on the shoulder at 45 degrees, which is what
+  names it as a stopwatch and is the detail the user specifically asked for - it is what a real one
+  is started with. The ring's edge at 45 degrees is `(32 + 21*cos45, 38 - 21*sin45)` = `(46.8,
+  23.2)`, so the button bar runs outward from just inside that.
+- **Hands stay at 12 and 3 o'clock.** Up and up-right was tried to match the preview art and the
+  user preferred the original pairing.
+
+**Check any change at tooltip size, not just magnified.** These render at roughly 32px in game, and
+detail that reads at 5x can turn to mush. Decompress the built sheet with `utils/nvdecompress.exe`
+and draw it at both scales -- note that `System.Drawing` cannot open NS2's TGAs (`FromFile` throws
+"Out of memory"), so read the bytes and blit past the 18-byte header yourself.
 
 ## SHELVED for 1.0: upgrade stats, speed dimming, CBM speed corrections
 
