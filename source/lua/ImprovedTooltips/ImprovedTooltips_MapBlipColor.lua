@@ -18,8 +18,7 @@
 -- The middle one is what this uses. A commander reading this map is reading those bars on the same
 -- screen at the same moment, so the map agreeing with them is worth more than agreeing with either
 -- of the others. All three match exactly on shotgun, grenade launcher and flamethrower anyway; they
--- differ on HMG by a shade, and on the rifle three ways, which costs nothing here because rifles
--- are never recoloured.
+-- differ on HMG by a shade, and on the rifle three ways, where the map takes the commander's teal.
 --
 -- WHY THE BASE COLOUR IS FED RATHER THAN THE RESULT RETURNED. Vanilla's GetMapBlipColor picks a
 -- colour by blip type and THEN transforms it (MapBlip.lua:301):
@@ -494,7 +493,3 @@ end)
 -- MENU VM; this file is hooked onto lua/MapBlip.lua and only ever loads in the CLIENT VM, once a
 -- map is running. Seeing the option in the menu says nothing about whether this file loaded, and
 -- neither command exists at the main menu even when everything is correct.
---
--- REMOVE OR GATE THE BANNER BEFORE 1.03 SHIPS. Devnull's Enhanced Scoreboard prints a version line
--- the same way, so one line is in keeping, but it is here to debug a specific failure.
-Shared.Message("[Improved Tooltips] map blip colours: " .. kInstallResult)

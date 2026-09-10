@@ -63,7 +63,7 @@ Each bead being researched now fills as the work goes in, and more than one fill
 [h1]Map, spectating and tournament play[/h1]
 
 [list]
-[*] [b]Marine blips coloured by weapon.[/b] Optional, off by default. Marine blips on the map take a colour per weapon, using the game's own dropped-weapon colours, so a glance says where the shotguns are. Exosuits keep the normal marine colour, and only marines and spectators see it.
+[*] [b]Marine blips coloured by weapon.[/b] Optional, off by default. Marine blips on the map take the colour of each marine's primary weapon, the same colours the commander sees on the ammo bars, so a glance says where the shotguns are. Exosuits keep the normal marine colour, and only marines and spectators see it.
 [*] [b]Supply on the spectator bar.[/b] That bar never showed supply. Both teams' supply now sits on it, used against maximum.
 [*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header is marked ready in green or not ready in red, with a tick or a cross beside it. Both come off at round start, and nothing is drawn on a server without that plugin. Shine only announces readiness when it changes, so a client joining mid pre game may show a team as not ready until the next change.
 [/list]

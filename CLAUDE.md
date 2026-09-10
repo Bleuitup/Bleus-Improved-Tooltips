@@ -328,9 +328,10 @@ and cost time to rule out.
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- **1.01 is published and tagged `v1.01`.** 1.02 is assembled on `release/1.02` and has NOT been
-  tested with both of its features running together — spectator supply and the tournament ready
-  pips were each verified alone. (There is no published 0.81 — that was the working version number
+- **1.02b is published and tagged `v1.02b`.** 1.03 is assembled on `release/1.03` (weapon-coloured
+  marine map blips, and the redrawn hourglass and stopwatch) and has NOT been tested with both
+  running together. The two debug banners are gone; the `it_blipcolors` and `it_blipstate` console
+  commands are still in, pending the user's call on keeping them. (There is no published 0.81 — that was the working version number
   while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
 - `preview.jpg` was generated in an earlier conversation with Claude (the user corrected this on

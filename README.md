@@ -554,8 +554,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - NS2 has **three** per-weapon palettes, not one: the outline glow on the model (everyone,
   commander included), the ammo bar under a marine in the commander's view, and the ammo bar in the
   spectator's. All three agree exactly on shotgun, grenade launcher and flamethrower; HMG differs by
-  a shade; rifle has three different values, which costs nothing here because rifles are never
-  recoloured. Recorded in `docs/marine-map-weapon-colours.md`.
+  a shade; rifle has three different values, and the map takes the commander's teal. Recorded in
+  `docs/marine-map-weapon-colours.md`.
+- **The hourglass and stopwatch glyphs were redrawn with more detail**, to match the artwork in
+  the Workshop preview. The hourglass is part full at the top and part full at the bottom, so it
+  reads as time running rather than not started, and keeps its old width. The stopwatch gains a
+  crown and a start button at 45 degrees, clear of the ring, so it no longer reads as a wall clock;
+  its hands stay at 12 and 3. Health, armour and the marine speed chevron are unchanged.
 - The Workshop description lost two sentences to make room under Steam's 8000-byte cap: the quoted
   Lua stub in the "In Cooldown" paragraph, and a clause about display versus enforcement. Both were
   implementation detail on a page meant for players.
