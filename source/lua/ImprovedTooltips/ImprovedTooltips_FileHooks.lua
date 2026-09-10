@@ -46,6 +46,13 @@ if Client then
 	-- Scoreboard: a glyph and a green or red label at the front of each team header while Shine's
 	-- tournament mode is waiting for both teams. Inert when that plugin is not running.
 	ModLoader.SetupFileHook("lua/GUIScoreboard.lua", "lua/ImprovedTooltips/ImprovedTooltips_TournamentReady.lua", "post")
+	-- The map, both the minimap and the big one: marine blips coloured by the weapon each player
+	-- carries. Off by default, and only ever shown to the marine side or to a spectator.
+	ModLoader.SetupFileHook("lua/MapBlip.lua", "lua/ImprovedTooltips/ImprovedTooltips_MapBlipColor.lua", "post")
+	-- TEMPORARY, remove before 1.03 ships. Pairs with the banner the hooked file prints: this line
+	-- says the hook was REGISTERED in this VM, that one says it FIRED. Seeing the first without the
+	-- second means ModLoader never ran the hook, which is a different fault from the file erroring.
+	Shared.Message("[Improved Tooltips] registered the lua/MapBlip.lua hook")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and

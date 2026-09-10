@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.02b. Published to the Steam Workshop as
+Version 1.03. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -472,6 +472,18 @@ and `mod.settings` names the file by extension.
 - `kReadyGlyphHeightScale` — glyph height as a fraction of the label's measured text height
 - `kReadyGlyphGap` / `kReadyLabelGap` — gaps as fractions of the label's text height, glyph to
   label and label to team name, so they stay in proportion under a scoreboard mod's own font
+- `kColorMarineBlipsByWeapon` — colour marine map blips by the weapon each player carries. Off by
+  default, and exposed in the settings panel
+- `kMapBlipColorRifle` / `kMapBlipColorShotgun` / `kMapBlipColorGrenadeLauncher` / `kMapBlipColorFlamethrower` /
+  `kMapBlipColorHeavyMachineGun` / `kMapBlipColorSubmachinegun` — the **fallback** palette, used only
+  when the runtime read below fails. Values copied from the commander's own `GUIUnitStatus`
+  `kAmmoBarColors`. Every primary weapon is here, rifle included; exos are the one exclusion
+- `kMapBlipReadCommanderPalette` — read the commander's palette straight out of the running game
+  instead, so a weapon any mod adds is picked up with nothing hardcoded here. `GUIUnitStatus` keeps
+  that table as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
+  `debug.getupvalue`, the same technique Shine and NSL use. Set false to force the values above
+- `kMapBlipColorRefreshInterval` — seconds between rebuilds of the blip-owner to weapon table.
+  `GetMapBlipColor` runs once per blip per minimap update, so this cannot be per call
 
 ## Building the assets
 
@@ -514,6 +526,39 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.03**
+- **Marine blips on the map can be coloured by primary weapon.** Optional, off by default, in the
+  settings panel. The colours are the commander's own — `GUIUnitStatus`'s `kAmmoBarColors`, the
+  palette already under each marine's ammo bar in the top-down view — so the map agrees with what a
+  commander is reading on the same screen. A rifleman is teal, a shotgunner green, and so on.
+- **It follows the primary weapon, not the one in hand.** A shotgunner who switches to a welder or a
+  pistol stays green: `Marine:GetPlayerStatusDesc` reads the primary HUD slot, so the map says what
+  a marine can bring rather than what is momentarily raised.
+- **The palette is read out of the running game, not hardcoded.** `GUIUnitStatus` keeps that table
+  as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
+  `debug.getupvalue` — the same technique Shine and NSL use — and the bridge from a blip to it is by
+  name, since `kPlayerStatus` and `kTechId` agree on every weapon name that matters. **A weapon any
+  mod adds is picked up with nothing written here**, CBM's SMG included. A written-down copy in
+  config takes over only if that read cannot happen.
+- **Only marines and spectators ever see it.** Gating on the blip type would have leaked loadouts:
+  `MapBlip.lua:326` deliberately shows Steam friends across teams, so an alien can see a marine
+  blip. The gate is on the viewer's team instead.
+- **Steam friend highlighting still works on top of it.** Vanilla's friend treatment is a
+  desaturation applied after the colour is chosen, not a colour of its own, so the mod feeds the
+  base colour and lets that compose — a friend with an HMG is half-saturated red. Returning a final
+  colour from the hook would have wiped it.
+- Exosuits keep the plain marine colour. Vanilla does colour them elsewhere — the spectator ammo
+  bars give minigun red and railgun orange — but under CBM an exo is modular and can carry any
+  combination, so there is no single weapon to colour one by.
+- NS2 has **three** per-weapon palettes, not one: the outline glow on the model (everyone,
+  commander included), the ammo bar under a marine in the commander's view, and the ammo bar in the
+  spectator's. All three agree exactly on shotgun, grenade launcher and flamethrower; HMG differs by
+  a shade; rifle has three different values, which costs nothing here because rifles are never
+  recoloured. Recorded in `docs/marine-map-weapon-colours.md`.
+- The Workshop description lost two sentences to make room under Steam's 8000-byte cap: the quoted
+  Lua stub in the "In Cooldown" paragraph, and a clause about display versus enforcement. Both were
+  implementation detail on a page meant for players.
 
 **1.02b**
 - **The tournament mode ready state moved from the skill badge to the front of the header row.**

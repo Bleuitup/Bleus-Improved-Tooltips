@@ -769,3 +769,37 @@ and is positioned leftward from its right edge, so the two sides' offsets look m
 **To move one of vanilla's existing pairs, move the holder, not the icon.** `CreateIconTextItem`
 parents both the icon and its number to a holder; shifting the icon strands the number. Reach the
 holder with `icon:GetParent()`, having found the icon by its texture.
+
+## Hooking a method on a class that has SUBCLASSES needs Class_ReplaceMethod (1.03)
+
+**NS2's class system copies methods into derived classes at declaration time.** It does not delegate
+through `__index`. So this, which is right everywhere else in this mod:
+
+```lua
+local original = SomeClass.SomeMethod
+function SomeClass:SomeMethod(...) ... end
+```
+
+**silently fails to reach any subclass** that was declared after the method existed. The subclass is
+holding its own copy.
+
+`core/lua/Class.lua:18` provides the answer, and its existence is the proof of the rule:
+
+```lua
+originalMethod = Class_ReplaceMethod("MapBlip", "GetMapBlipColor", myWrapper)
+```
+
+It swaps the method, returns the original, and walks `Script.GetDerivedClasses` replacing it in
+every subclass that still holds that original.
+
+**It bit the marine map blip colours in 1.03, and the symptom was nothing at all happening.** Players
+do not get a `MapBlip`: `MapBlipMixin.lua:59-64` gives a `Player` a **`PlayerMapBlip`**, declared at
+`MapBlip.lua:461`, which does not override `GetMapBlipColor` and therefore holds a copy of it. Plain
+assignment to `MapBlip.GetMapBlipColor` left every player blip calling vanilla.
+
+Plain reassignment stays correct for the mod's other hooks - `GUIScoreboard:UpdateTeam`,
+`GUIInsight_TopBar:Initialize`, `GUIMarineHUD:Update` - because nothing derives from those. The test
+is whether the class has subclasses, not whether the hook looks like the others.
+
+**Also worth knowing while debugging that one:** `Shared.GetEntitiesWithClassname("MapBlip")` will
+not list player blips either; they are `"PlayerMapBlip"`.
