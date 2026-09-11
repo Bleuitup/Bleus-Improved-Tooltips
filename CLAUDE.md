@@ -328,9 +328,11 @@ and cost time to rule out.
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- **1.03 is published and tagged `v1.03`** (2026-09-10): weapon-colored marine map blips, and the
-  redrawn hourglass and stopwatch. It shipped with the `it_blipcolors` and `it_blipstate` console
-  commands still in; they are inert unless typed and are how a "no colors" report gets diagnosed.
+- **1.04 is published and tagged `v1.04`** (2026-09-11): separate weapon-color switches for the big
+  map and the minimap, and American spelling throughout. 1.03 (`v1.03`) added the weapon-colored
+  marine map blips and the redrawn hourglass and stopwatch. The `it_blipcolors` and `it_blipstate`
+  console commands are still in; they are inert unless typed and are how a "no colors" report gets
+  diagnosed.
   (There is no published 0.81 — that was the working version number
   while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
