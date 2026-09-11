@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.03. Published to the Steam Workshop as
+Version 1.04. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -472,8 +472,10 @@ and `mod.settings` names the file by extension.
 - `kReadyGlyphHeightScale` — glyph height as a fraction of the label's measured text height
 - `kReadyGlyphGap` / `kReadyLabelGap` — gaps as fractions of the label's text height, glyph to
   label and label to team name, so they stay in proportion under a scoreboard mod's own font
-- `kColorMarineBlipsByWeapon` — colour marine map blips by the weapon each player carries. Off by
-  default, and exposed in the settings panel
+- `kColorMarineBlipsByWeapon` — colour marine blips on the big map, the one on the map key, by the
+  weapon each player carries. Off by default, and exposed in the settings panel
+- `kColorMarineMinimapBlipsByWeapon` — the same on every minimap: the marine HUD's corner map, and
+  the commander's and spectator's. Off by default, and exposed in the settings panel
 - `kMapBlipColorRifle` / `kMapBlipColorShotgun` / `kMapBlipColorGrenadeLauncher` / `kMapBlipColorFlamethrower` /
   `kMapBlipColorHeavyMachineGun` / `kMapBlipColorSubmachinegun` — the **fallback** palette, used only
   when the runtime read below fails. Values copied from the commander's own `GUIUnitStatus`
@@ -526,6 +528,15 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.04**
+- **The big map and the minimap have a weapon colour switch each.** COLOUR MAP BLIPS BY WEAPON now
+  covers only the big map, the one on the map key, and keeps its 1.03 setting, so a player who had
+  it on still does. The new COLOUR MINIMAP BLIPS BY WEAPON covers the minimap in the corner of the
+  marine HUD, and the commander's and spectator's corner map. Off by default.
+- Each map is a `GUIMinimapFrame` whose `comMode` says which one it is: `kModeBig` for the map key,
+  `kModeZoom` for the marine HUD's minimap, `kModeMini` for the overhead corner map. The big map
+  switch applies to `kModeBig`; everything else is a minimap.
 
 **1.03**
 - **Marine blips on the map can be coloured by primary weapon.** Optional, off by default, in the

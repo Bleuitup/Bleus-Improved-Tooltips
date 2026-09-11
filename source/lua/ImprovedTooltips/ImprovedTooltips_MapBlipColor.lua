@@ -3,7 +3,8 @@
 --
 -- Post-hook on lua/MapBlip.lua. Colours marine player blips on the map by the weapon each one is
 -- carrying, so a glance at the map says where the shotguns are rather than only where bodies are.
--- Off by default: it is more to read, and not everyone wants it.
+-- Off by default: it is more to read, and not everyone wants it. The big map and the minimaps are
+-- switched separately; see GetIsEnabledFor.
 --
 -- THE COLOURS ARE THE COMMANDER'S OWN, AND ARE READ FROM THE GAME. NS2 has three per-weapon
 -- palettes and they are not shown to the same people:
@@ -277,11 +278,33 @@ local function GetWeaponColor(blip)
 
 end
 
+-- One toggle for the big map, one for every minimap (1.04). Every map on screen is a
+-- GUIMinimapFrame, and the frame passed in says which one it is by its mode (GUIMinimapFrame.lua:30-32):
+--
+--   kModeBig    the map on the map key, for field players and commanders alike
+--   kModeZoom   the marine HUD's own minimap, top left - a second instance that never leaves this
+--               mode (GUIMarineHUD.lua:372, and the note at GUIMinimapFrame.lua:228)
+--   kModeMini   the commander's and the spectator's corner minimap (Commander_Client.lua:767)
+--
+-- So "big" is the one test and anything else counts as a minimap. Read per call rather than cached
+-- per frame, because an overhead view flips a single instance between mini and big.
+local function GetIsEnabledFor(minimap)
+
+	local isBigMap = minimap ~= nil and GUIMinimapFrame ~= nil and minimap.comMode == GUIMinimapFrame.kModeBig
+
+	if isBigMap then
+		return IT.kColorMarineBlipsByWeapon
+	end
+
+	return IT.kColorMarineMinimapBlipsByWeapon
+
+end
+
 local originalGetMapBlipColor
 
 local function ColorMapBlipByWeapon(self, minimap, item)
 
-	if not IT.kColorMarineBlipsByWeapon then
+	if not GetIsEnabledFor(minimap) then
 		return originalGetMapBlipColor(self, minimap, item)
 	end
 
@@ -376,8 +399,9 @@ Event.Hook("Console_it_blipcolors", function()
 
 	local palette = GetCommanderPalette()
 
-	Shared.Message(string.format("[Improved Tooltips] setting: %s",
-		IT.kColorMarineBlipsByWeapon and "ON" or "off"))
+	Shared.Message(string.format("[Improved Tooltips] setting: big map %s, minimap %s",
+		IT.kColorMarineBlipsByWeapon and "ON" or "off",
+		IT.kColorMarineMinimapBlipsByWeapon and "ON" or "off"))
 
 	Shared.Message(string.format("[Improved Tooltips] palette: %s",
 		palette and "read from GUIUnitStatus at runtime" or "CONFIG FALLBACK - the runtime read failed"))
@@ -419,7 +443,8 @@ Event.Hook("Console_it_blipstate", function()
 		Shared.Message("[Improved Tooltips] " .. string.format(fmt, ...))
 	end
 
-	Say("setting kColorMarineBlipsByWeapon = %s", tostring(IT.kColorMarineBlipsByWeapon))
+	Say("setting kColorMarineBlipsByWeapon (big map) = %s, kColorMarineMinimapBlipsByWeapon = %s",
+		tostring(IT.kColorMarineBlipsByWeapon), tostring(IT.kColorMarineMinimapBlipsByWeapon))
 
 	-- 1. Is our wrapper actually the function the game will call?
 	Say("install: %s", kInstallResult)

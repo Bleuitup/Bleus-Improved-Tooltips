@@ -33,13 +33,16 @@ local kMainVM = decoda_name == "Main"
 -- Prefixed so we can never collide with NS2+'s CHUD_ keys or another mod's.
 local kOptionCooldownPanel   = "BIT_CooldownPanel"
 local kOptionCooldownMinTime = "BIT_CooldownMinTime"
-local kOptionWeaponBlips     = "BIT_WeaponBlips"
+-- BIT_WeaponBlips is the big map only from 1.04, and keeps its 1.03 key so a stored ON carries over.
+local kOptionWeaponBlips        = "BIT_WeaponBlips"
+local kOptionWeaponBlipsMinimap = "BIT_WeaponBlipsMinimap"
 
 -- Repeated here rather than read from the config, because in the main menu VM the config is not
 -- loaded. Keep in step with ImprovedTooltips_Config.lua.
-local kDefaultCooldownPanel   = true
-local kDefaultCooldownMinTime = 5
-local kDefaultWeaponBlips     = false
+local kDefaultCooldownPanel      = true
+local kDefaultCooldownMinTime    = 5
+local kDefaultWeaponBlips        = false
+local kDefaultWeaponBlipsMinimap = false
 
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
@@ -61,6 +64,7 @@ local function ApplyStoredOptions()
 
 	IT.kShowCooldownPanel = Client.GetOptionBoolean(kOptionCooldownPanel, kDefaultCooldownPanel)
 	IT.kColorMarineBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlips, kDefaultWeaponBlips)
+	IT.kColorMarineMinimapBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlipsMinimap, kDefaultWeaponBlipsMinimap)
 
 	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
 	-- feeds compares against whole seconds, so round rather than truncate.
@@ -144,12 +148,30 @@ local kContents =
 			-- WILL notice theirs staying the team colour and wonder whether it is broken; the
 			-- rifle and the sidearms are not, because keeping the colour you already chose reads
 			-- as normal rather than as an omission.
-			tooltip = "Colour marine blips on the map by each player's primary weapon, in the same colours the commander already sees on their ammo bars. It does not change when they switch to a pistol or a welder. Exosuits keep the normal marine colour. Only ever shown to marines and spectators.",
+			tooltip = "Colour marine blips on the big map, the one on the map key, by each player's primary weapon, in the same colours the commander already sees on their ammo bars. It does not change when they switch to a pistol or a welder. Exosuits keep the normal marine colour. Only ever shown to marines and spectators.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =
 		{
 			{ "Label", "COLOUR MAP BLIPS BY WEAPON" },
+		},
+	},
+
+	{
+		name = "bitWeaponBlipsMinimap",
+		class = OP_TT_Checkbox,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionWeaponBlipsMinimap,
+			optionType = "bool",
+			default = kDefaultWeaponBlipsMinimap,
+			tooltip = "The same weapon colours on the minimap: the one in the corner of the marine HUD, and the commander's and spectator's corner map. Set separately from the big map.",
+			immediateUpdate = ApplyStoredOptions,
+		},
+		properties =
+		{
+			{ "Label", "COLOUR MINIMAP BLIPS BY WEAPON" },
 		},
 	},
 }

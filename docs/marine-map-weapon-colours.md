@@ -1,6 +1,7 @@
 # Marine map blips coloured by weapon
 
-Branch `feature/marine-weapon-colours`, for 1.03. **Built and parsing; never run in game.**
+Shipped in 1.03 and confirmed working in game. 1.04 split the one toggle into two: the big map and
+the minimaps are switched separately (see [Big map and minimap](#big-map-and-minimap-switched-apart-104)).
 
 Marine player blips on the map take a colour per weapon, so the map says where the shotguns are
 rather than only where bodies are. Optional and off by default.
@@ -16,7 +17,7 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 | Who sees it | Marines and spectators only |
 | Friend tinting | Composes on top: a friend with an HMG is half-saturated red |
 | Own blip | Untouched. Not a `MapBlip` at all |
-| Setting | In the Mods panel, default **off** |
+| Setting | In the Mods panel, default **off**. Two since 1.04: big map, and minimap |
 | Colourblind | Nothing to do |
 | Art | **None.** This branch ships no `.dds` |
 
@@ -199,6 +200,30 @@ Not a `MapBlip`, and unreachable from this hook. It is a separate player icon wi
 `AdvancedOptions["minimaparrowcolor"]` (`AdvancedOptions.lua:1066`, default `0xFFFF00`), applied
 through `minimapScript:SetPlayerIconColor`. No exclusion needed.
 
+## Big map and minimap, switched apart (1.04)
+
+The user asked for the 1.03 toggle to cover the big map only, with a second one for the minimap in
+the corner of the marine HUD.
+
+Every map on screen is a `GUIMinimapFrame`, and the `minimap` argument `GetMapBlipColor` receives is
+that frame (`MinimapMappableMixin.lua:130`). Its `comMode` says which map it is
+(`GUIMinimapFrame.lua:30-32`):
+
+| Mode | Map | Where it is set |
+| --- | --- | --- |
+| `kModeBig` | The map on the map key, field players and commanders alike | `GUIMinimapFrame.lua:230`, `Player_Client.lua:2707` |
+| `kModeZoom` | The marine HUD's corner minimap, a second instance that never leaves this mode | `GUIMarineHUD.lua:372`; see the note at `GUIMinimapFrame.lua:228` |
+| `kModeMini` | The commander's and the spectator's corner minimap | `Commander_Client.lua:767` |
+
+So the test is `comMode == kModeBig`, and everything else counts as a minimap. That puts the
+commander's and spectator's corner map under the minimap switch, which is what a player would call
+it. The mode is read on every call, not cached per frame, because an overhead view flips a single
+instance between mini and big.
+
+The big map keeps the 1.03 option key, `BIT_WeaponBlips`, so a player who had it on still does. The
+minimap is `BIT_WeaponBlipsMinimap`, default off, which means a 1.03 player who had colours
+everywhere now has them on the big map only until they tick the second box.
+
 ## No art in this branch
 
 An earlier cut shipped `source/ui/minimap_blip.dds` — vanilla's sheet with the jetpacker cell
@@ -221,7 +246,7 @@ matters most, because the runtime read either works or silently falls back to th
 the two look nearly identical in game:
 
 ```
-[Improved Tooltips] setting: off
+[Improved Tooltips] setting: big map off, minimap off
 [Improved Tooltips] palette: read from GUIUnitStatus at runtime
 [Improved Tooltips]   Rifle              #00FFFF
 [Improved Tooltips]   Shotgun            #00FF00
@@ -273,11 +298,15 @@ invisible from the marine side.
 
 ## Test checklist
 
-**Never run in game.** `luac -p` passes, which proves the files parse and nothing more.
+Confirmed in game for 1.03: colours appear on the map with bots carrying dropped weapons. The
+friend and CBM cases below are still unverified.
 
-- Setting off, the default: the map looks exactly like vanilla.
-- Setting on, as a marine: shotgun green, GL fuchsia, flamethrower yellow, HMG red; rifles and
-  sidearms unchanged from `playercolor_m`.
+- Both settings off, the default: every map looks exactly like vanilla.
+- Setting on, as a marine: rifle teal, shotgun green, GL fuchsia, flamethrower yellow, HMG red. A
+  marine holding a pistol, axe or welder keeps their primary weapon's colour.
+- **1.04: big map on, minimap off.** Coloured on the map key; the HUD's corner minimap stays plain.
+- **1.04: minimap on, big map off.** The reverse, and the same for a commander's corner map.
+- **1.04: a 1.03 player who had it on** still has the big map coloured after updating.
 - A jetpacker with a shotgun: green, and still the jetpack glyph.
 - An exo: plain marine colour, both flavours, and under CBM with a mixed loadout.
 - A Steam friend on your own team carrying an HMG: red at half saturation, not full red.

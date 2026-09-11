@@ -323,8 +323,13 @@ IT.kReadyLabelGap = 0.5
 -- See ImprovedTooltips_MapBlipColor.lua. Marine player blips on the map take a colour per weapon,
 -- so the map says where the shotguns are. Off by default: it is more to read at a glance than the
 -- one flat team colour, and not everyone wants that.
+--
+-- Two switches since 1.04. The first is the big map, the one on the map key, and keeps the option
+-- key it had in 1.03 so anyone who turned it on still has it. The second is every minimap: the
+-- marine HUD's corner map, and the commander's and spectator's.
 
 IT.kColorMarineBlipsByWeapon = false
+IT.kColorMarineMinimapBlipsByWeapon = false
 
 -- These are the COMMANDER's palette, GUIUnitStatus.lua:57-64 - the colours already under each
 -- marine's ammo bar in the top-down view, which is the same screen this map is read from. They are
