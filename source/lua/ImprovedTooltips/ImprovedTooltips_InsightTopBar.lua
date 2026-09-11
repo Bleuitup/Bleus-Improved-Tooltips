@@ -1,9 +1,9 @@
 -- Bleu's Improved Tooltips
 -- lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua
 --
--- Post-hook on lua/GUIInsight_TopBar.lua, the bar across the top of spectator view. Colours its
+-- Post-hook on lua/GUIInsight_TopBar.lua, the bar across the top of spectator view. Colors its
 -- biomass counter to match the biomass icons everywhere else, which vanilla leaves as the bare
--- greyscale atlas cell.
+-- grayscale atlas cell.
 --
 -- This one costs more machinery than it looks like it should, because nothing in GUIInsight_TopBar
 -- is reachable from outside it. Every item is a file-local - `background`, `alienBiomass` and the

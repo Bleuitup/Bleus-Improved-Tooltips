@@ -28,12 +28,12 @@ if Client then
 	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownDial.lua", "post")
 	-- The alien hive status panel in the top-left corner: biomass icons and a researching ring.
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
-	-- The spectator top bar, for its biomass counter's colour.
+	-- The spectator top bar, for its biomass counter's color.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
 	-- The same bar again, for a supply counter per team. A separate file so the biomass tint and the
 	-- supply counter can be switched off independently, and so neither breaks if the other is wrong.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightSupply.lua", "post")
-	-- Marine HUD: keep researched-but-inactive weapon and armour icons on screen in alert red
+	-- Marine HUD: keep researched-but-inactive weapon and armor icons on screen in alert red
 	-- when the arms lab is destroyed or unpowered, instead of hiding them.
 	ModLoader.SetupFileHook("lua/Hud/Marine/GUIMarineHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_ArmsLabAlert.lua", "post")
 	-- The twelve-bead biomass bar shown with the map, buy menu or tech map open: a partial fill on
@@ -46,7 +46,7 @@ if Client then
 	-- Scoreboard: a glyph and a green or red label at the front of each team header while Shine's
 	-- tournament mode is waiting for both teams. Inert when that plugin is not running.
 	ModLoader.SetupFileHook("lua/GUIScoreboard.lua", "lua/ImprovedTooltips/ImprovedTooltips_TournamentReady.lua", "post")
-	-- The map, both the minimap and the big one: marine blips coloured by the weapon each player
+	-- The map, both the minimap and the big one: marine blips colored by the weapon each player
 	-- carries. Off by default, and only ever shown to the marine side or to a spectator.
 	ModLoader.SetupFileHook("lua/MapBlip.lua", "lua/ImprovedTooltips/ImprovedTooltips_MapBlipColor.lua", "post")
 end

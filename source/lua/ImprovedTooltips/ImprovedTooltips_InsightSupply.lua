@@ -14,11 +14,11 @@
 -- background is caught the same way here, by its texture, and the supply items are parented to it.
 --
 -- GEOMETRY, measured from vanilla (GUIInsight_TopBar.lua:139, :219-224). The bar is 512 wide and
--- centred, so its own middle is at 256. Marine items anchor Left and are positioned from the bar's
+-- centered, so its own middle is at 256. Marine items anchor Left and are positioned from the bar's
 -- left edge; everything else anchors Right and is positioned leftward from its right edge. In
 -- absolute terms across the bar:
 --
---   marine extractors  50      marine resources 130      CENTRE 256
+--   marine extractors  50      marine resources 130      CENTER 256
 --   alien resources   317      alien harvesters 397      alien biomass 507
 --
 -- The first attempt squeezed both counters INSIDE those 512 pixels and they collided with what was

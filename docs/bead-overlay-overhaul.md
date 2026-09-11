@@ -33,7 +33,7 @@ ships that to clients through its own `TechNodeUpdate`. Ability nodes carry `res
 same way, which is exactly what `GUITechMap:305-309` reads for its own meters.
 
 So this branch is a client-side read of work that shipped in 0.92 and has been sitting unused by
-this overlay ever since. The multi-research behaviour comes for free: the server fix already fills
+this overlay ever since. The multi-research behavior comes for free: the server fix already fills
 several level nodes at once, so several beads fill at once.
 
 ## What this branch adds
@@ -80,7 +80,7 @@ them individually. Our `Uninitialize` hook only clears the references.
 - One hive researching: one bead fills; the bar otherwise looks exactly as it did.
 - A research completing: the partial fill should vanish as vanilla's solid bar grows into it, with
   no flicker or double-drawn bead at the boundary.
-- A research cancelled: the partial fill disappears.
+- A research canceled: the partial fill disappears.
 - Abilities — start Leap or Bile Bomb and watch the icon; the meter should fill and then disappear
   when it completes.
 - Several abilities at once from different hives.

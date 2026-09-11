@@ -3,22 +3,22 @@ source_dir  = "source"
 output_dir  = "output"
 description = [=[mod id 3790290682
 
-[b]Puts the numbers a commander actually needs into the commander tooltips.[/b] Research times, ability cooldowns, structure health and armour, and movement speed, on the tooltip you are already looking at — no alt-tabbing to a wiki mid-round.
+[b]Puts the numbers a commander actually needs into the commander tooltips.[/b] Research times, ability cooldowns, structure health and armor, and movement speed, on the tooltip you are already looking at — no alt-tabbing to a wiki mid-round.
 
 [h1]What it adds to tooltips[/h1]
 
 [list]
-[*] [b]Research time[/b] — an hourglass and a number on every research and upgrade. Armour 3 reads "40 res, 120 seconds" instead of just "40 res".
+[*] [b]Research time[/b] — an hourglass and a number on every research and upgrade. Armor 3 reads "40 res, 120 seconds" instead of just "40 res".
 [*] [b]Cooldown[/b] — a stopwatch on commander abilities: Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst, and the rest.
-[*] [b]Health and armour[/b] — for anything you drop, build or manufacture, on both teams.
+[*] [b]Health and armor[/b] — for anything you drop, build or manufacture, on both teams.
 [*] [b]Movement speed[/b] — for the things that move: ARC, MAC, Drifter, Whip, Shade, Shift, Crag.
 [/list]
 
 All of it sits in one row under the tooltip title, above the description. The card grows to fit, and tooltips with nothing extra to show look exactly as they always did.
 
-Health and armour take the game's own selection-panel colours, so a number means the same thing in the tooltip as it does when you click a structure that already exists. Vanilla's selection panel is brought in line too, where it coloured the two figures differently but drew both icons in one flat team colour.
+Health and armor take the game's own selection-panel colors, so a number means the same thing in the tooltip as it does when you click a structure that already exists. Vanilla's selection panel is brought in line too, where it colored the two figures differently but drew both icons in one flat team color.
 
-[b]ARC stances.[/b] The Deploy and Undeploy buttons describe the state they put the ARC into, so Deploy shows armour dropping to 0 and speed to 0 — the cost of deploying, visible while you are choosing it.
+[b]ARC stances.[/b] The Deploy and Undeploy buttons describe the state they put the ARC into, so Deploy shows armor dropping to 0 and speed to 0 — the cost of deploying, visible while you are choosing it.
 
 [h1]The "In Cooldown" panel[/h1]
 
@@ -44,8 +44,8 @@ Both are visible to every player on the team, not just the commander.
 [list]
 [*] [b]Simultaneous biomass research.[/b] With two hives researching biomass at once the tech map lit up only one icon between them, because the team collapses every hive into a single number before drawing. Two hives now light two icons, three light three.
 [*] [b]Supply icons.[/b] The supply figure on a tooltip was marked with a MAC or a Drifter while the HUD's top bar used a different pair of icons for the same thing. The tooltip now uses the top bar's. The MAC and Drifter icons are untouched wherever they stand for the units themselves.
-[*] [b]Uncoloured biomass icons.[/b] The biomass icon was drawn as bare greyscale wherever it appeared, on the commander tooltip, the spectator counter and the hive panel. Nothing else in a tooltip or the tech tree is left uncoloured, so it read as unfinished. All of them now take the tech map colour for researched alien tech.
-[*] [b]Lost arms lab upgrades.[/b] When a team loses every arms lab, or they all lose power, the weapon and armour icons on the marine HUD simply vanished - which looks exactly like never having researched them. They now stay on screen in the alert red the base game already defined for this and never showed, so "we lost it" reads differently from "we never had it".
+[*] [b]Uncolored biomass icons.[/b] The biomass icon was drawn as bare grayscale wherever it appeared, on the commander tooltip, the spectator counter and the hive panel. Nothing else in a tooltip or the tech tree is left uncolored, so it read as unfinished. All of them now take the tech map color for researched alien tech.
+[*] [b]Lost arms lab upgrades.[/b] When a team loses every arms lab, or they all lose power, the weapon and armor icons on the marine HUD simply vanished - which looks exactly like never having researched them. They now stay on screen in the alert red the base game already defined for this and never showed, so "we lost it" reads differently from "we never had it".
 [/list]
 
 [h1]Live values[/h1]
@@ -58,12 +58,12 @@ Movement speed is read off the unit's own class rather than from a table, so it 
 
 The twelve bead bar in the top left, the one that appears with the map, the buy menu or the tech map open, only ever knew whole beads: a bead was empty until the research finished, then full.
 
-Each bead being researched now fills as the work goes in, and more than one fills at a time when more than one hive is working. The ability icons along the bar light up and carry a progress bar while their research is under way, the same as they do on the tech map, instead of staying greyed out until the moment they finish.
+Each bead being researched now fills as the work goes in, and more than one fills at a time when more than one hive is working. The ability icons along the bar light up and carry a progress bar while their research is under way, the same as they do on the tech map, instead of staying grayed out until the moment they finish.
 
 [h1]Map, spectating and tournament play[/h1]
 
 [list]
-[*] [b]Marine blips coloured by weapon.[/b] Optional, with separate switches for the big map and the minimap, both off by default. Marine blips on the map take the colour of each marine's primary weapon, the same colours the commander sees on the ammo bars, so a glance says where the shotguns are. Exosuits keep the normal marine colour, and only marines and spectators see it.
+[*] [b]Marine blips colored by weapon.[/b] Optional, with separate switches for the big map and the minimap, both off by default. Marine blips on the map take the color of each marine's primary weapon, the same colors the commander sees on the ammo bars, so a glance says where the shotguns are. Exosuits keep the normal marine color, and only marines and spectators see it.
 [*] [b]Supply on the spectator bar.[/b] That bar never showed supply. Both teams' supply now sits on it, used against maximum.
 [*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header is marked ready in green or not ready in red, with a tick or a cross beside it. Both come off at round start, and nothing is drawn on a server without that plugin. Shine only announces readiness when it changes, so a client joining mid pre game may show a team as not ready until the next change.
 [/list]
@@ -76,7 +76,7 @@ Options, Mods, "Bleu's Improved Tooltips". The In Cooldown panel can be turned o
 
 Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here.
 
-[b]Community Balance Mod[/b] is the one mod named anywhere in the code, in a single place: its biomass 5 research is tinted on the hive panel in CBM's own colour for advanced alien tech, matching the way CBM marks that hive out. Everything else about CBM tech, including its own icons for it, arrives through the same path as anything else.
+[b]Community Balance Mod[/b] is the one mod named anywhere in the code, in a single place: its biomass 5 research is tinted on the hive panel in CBM's own color for advanced alien tech, matching the way CBM marks that hive out. Everything else about CBM tech, including its own icons for it, arrives through the same path as anything else.
 
 Modders can register their own value resolvers for anything they compute at runtime — see the README on GitHub.
 

@@ -1,12 +1,12 @@
 -- Bleu's Improved Tooltips
 -- lua/ImprovedTooltips/ImprovedTooltips_MapBlipColor.lua
 --
--- Post-hook on lua/MapBlip.lua. Colours marine player blips on the map by the weapon each one is
+-- Post-hook on lua/MapBlip.lua. Colors marine player blips on the map by the weapon each one is
 -- carrying, so a glance at the map says where the shotguns are rather than only where bodies are.
 -- Off by default: it is more to read, and not everyone wants it. The big map and the minimaps are
 -- switched separately; see GetIsEnabledFor.
 --
--- THE COLOURS ARE THE COMMANDER'S OWN, AND ARE READ FROM THE GAME. NS2 has three per-weapon
+-- THE COLORS ARE THE COMMANDER'S OWN, AND ARE READ FROM THE GAME. NS2 has three per-weapon
 -- palettes and they are not shown to the same people:
 --
 --   the outline glow on the model   ui/marine_outline_lookup.dds, indexed from EquipmentOutline.lua
@@ -21,14 +21,14 @@
 -- of the others. All three match exactly on shotgun, grenade launcher and flamethrower anyway; they
 -- differ on HMG by a shade, and on the rifle three ways, where the map takes the commander's teal.
 --
--- WHY THE BASE COLOUR IS FED RATHER THAN THE RESULT RETURNED. Vanilla's GetMapBlipColor picks a
--- colour by blip type and THEN transforms it (MapBlip.lua:301):
+-- WHY THE BASE COLOR IS FED RATHER THAN THE RESULT RETURNED. Vanilla's GetMapBlipColor picks a
+-- color by blip type and THEN transforms it (MapBlip.lua:301):
 --
 --     if MapBlip.kFriendsHighlightingEnabled and friendTeams[blipTeam] then
 --         sat = sat * .5
 --
--- Steam friends are not a separate colour, they are half the saturation of whatever was chosen. A
--- wrapper that returned a weapon colour would land after that block and wipe it. So this sets
+-- Steam friends are not a separate color, they are half the saturation of whatever was chosen. A
+-- wrapper that returned a weapon color would land after that block and wipe it. So this sets
 -- MapBlip.kCustomMarineColor for the duration of the original call and puts it back afterwards:
 -- the friend tint composes on top by itself, and the hallucination check and the commander's
 -- same-building highlight are untouched. A friend with an HMG comes out half-saturated red.
@@ -36,24 +36,24 @@
 -- IT IS GATED ON THE VIEWER'S TEAM, NOT ON THE BLIP. An alien can see a marine blip: MapBlip.lua:326
 -- deliberately shows Steam friends across teams - "Used to be a bug, now it's a feature" - and
 -- vanilla guards a related leak two lines later with "Don't give the enemy privileged information!"
--- Colouring by blip type alone would tell the alien team what their friend is carrying. So this
+-- Coloring by blip type alone would tell the alien team what their friend is carrying. So this
 -- only applies when the local player is on the marine team, or spectating, where every loadout is
 -- visible anyway.
 --
--- EXOS ARE LEFT ON THE PLAIN MARINE COLOUR, deliberately, but not for the reason first written
--- here. Vanilla DOES have exo colours - GUIInsight_PlayerHealthbars.kAmmoColors:53-54 gives minigun
+-- EXOS ARE LEFT ON THE PLAIN MARINE COLOR, deliberately, but not for the reason first written
+-- here. Vanilla DOES have exo colors - GUIInsight_PlayerHealthbars.kAmmoColors:53-54 gives minigun
 -- red and railgun orange on those ammo bars. The reason is CBM: an exo there is modular
--- and can carry any combination of guns, so there is no single weapon to colour one by and a
+-- and can carry any combination of guns, so there is no single weapon to color one by and a
 -- minigun/railgun split would be wrong the moment CBM retuned a loadout. Only Marine and
--- JetpackMarine blips are touched; kMinimapBlipType.Exo falls through to the flat marine colour.
+-- JetpackMarine blips are touched; kMinimapBlipType.Exo falls through to the flat marine color.
 --
 -- THE LOCAL PLAYER'S OWN MARKER IS NOT A MapBlip and cannot be reached from here. It is a separate
 -- player icon with its own setting, AdvancedOptions["minimaparrowcolor"] (AdvancedOptions.lua:1066)
 -- applied through minimapScript:SetPlayerIconColor. Nothing here needs to exclude it.
 --
--- COLOURBLIND MODE NEEDS NOTHING. NS2 has no Lua-side colourblind handling at all; it is a render
+-- COLORBLIND MODE NEEDS NOTHING. NS2 has no Lua-side colorblind handling at all; it is a render
 -- setting, Client.SetRenderSetting("colorblind_mode", n) in Render.lua:78, applied to the whole
--- frame downstream of everything. These colours get the same filter as every other colour in the
+-- frame downstream of everything. These colors get the same filter as every other color in the
 -- game, for free.
 
 if not Client then
@@ -63,13 +63,13 @@ end
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
 
 local IT = ImprovedTooltips
--- THE COLOURS ARE READ FROM THE GAME, NOT WRITTEN DOWN, whenever that is possible.
+-- THE COLORS ARE READ FROM THE GAME, NOT WRITTEN DOWN, whenever that is possible.
 --
--- GUIUnitStatus.lua:57-64 holds kAmmoBarColors, keyed by kTechId: it is what colours the ammo bar
+-- GUIUnitStatus.lua:57-64 holds kAmmoBarColors, keyed by kTechId: it is what colors the ammo bar
 -- under each marine in the COMMANDER's top-down view, and it is therefore the palette a commander
 -- is already reading on the same screen as this map. CBM extends it with kTechId.Submachinegun,
 -- and any other mod adding a weapon would do the same, so reading it means never hardcoding a mod's
--- colours here.
+-- colors here.
 --
 -- It is a file-local, so it cannot simply be indexed. It CAN be pulled out of the upvalues of a
 -- function that closes over it - GUIUnitStatus:UpdateUnitStatusBlip, which uses it at :678 - with
@@ -105,11 +105,11 @@ MapWeapon("Submachinegun",   IT.kMapBlipColorSubmachinegun)
 
 -- IT IS THE PRIMARY WEAPON, NOT THE ONE IN HAND, and that falls out of the data source rather than
 -- needing work: Marine:GetPlayerStatusDesc reads GetWeaponInHUDSlot(1) - the primary slot - so a
--- shotgunner who switches to a welder or a pistol still reports Shotgun. Which is the behaviour
+-- shotgunner who switches to a welder or a pistol still reports Shotgun. Which is the behavior
 -- wanted: the map should say what that marine can bring, not what is momentarily raised.
 --
 -- Nothing is excluded here. An earlier version held rifles back on the theory that they should stay
--- the plain team colour; the user corrected it. A rifle IS a primary weapon and takes the
+-- the plain team color; the user corrected it. A rifle IS a primary weapon and takes the
 -- commander palette's teal like any other. Pistols, axes and welders never appear at all, since
 -- kPlayerStatus has no value for them - they can only ever sit in slots 2 and 3.
 
@@ -319,7 +319,7 @@ local function ColorMapBlipByWeapon(self, minimap, item)
 	end
 
 	-- Swapped in only for the duration of the call, and restored even if that call raises, so a
-	-- fault inside vanilla cannot leave every marine on the map stuck at one weapon's colour. The
+	-- fault inside vanilla cannot leave every marine on the map stuck at one weapon's color. The
 	-- original reads MapBlip.kCustomMarineColor by name whichever class it was copied onto, so
 	-- setting it here reaches every one of them.
 	local saved = MapBlip.kCustomMarineColor
@@ -367,7 +367,7 @@ local function InstallHook()
 
 	-- Named rather than discovered, because Script.GetDerivedClasses is the part of
 	-- Class_ReplaceMethod that can assert. These are the only two subclasses MapBlip.lua declares
-	-- (:461 and :497); a third would simply keep vanilla's colour and be no worse than today.
+	-- (:461 and :497); a third would simply keep vanilla's color and be no worse than today.
 	for _, name in ipairs({ "PlayerMapBlip", "ScanMapBlip" }) do
 
 		local class = _G[name]
@@ -393,7 +393,7 @@ end
 -- A console dump, because the risky half of this file cannot be seen on the map. Reading the
 -- commander's palette out of a file-local either works or silently falls back to the written-down
 -- copy, and the two look nearly identical in game - the only visible tell is a modded weapon such
--- as CBM's SMG coming out uncoloured. "it_blipcolors" answers it directly, with no bots, no weapons
+-- as CBM's SMG coming out uncolored. "it_blipcolors" answers it directly, with no bots, no weapons
 -- and no round in progress.
 Event.Hook("Console_it_blipcolors", function()
 
@@ -431,11 +431,11 @@ Event.Hook("Console_it_blipcolors", function()
 
 	end
 
-	Shared.Message(string.format("[Improved Tooltips] %d weapon colours resolved. Anything not listed keeps the plain marine colour.", found))
+	Shared.Message(string.format("[Improved Tooltips] %d weapon colors resolved. Anything not listed keeps the plain marine color.", found))
 
 end)
 
--- Live state, for when the colours resolve but nothing changes on the map. Every link in the chain
+-- Live state, for when the colors resolve but nothing changes on the map. Every link in the chain
 -- is checked separately so the answer is which one is broken, not that something is.
 Event.Hook("Console_it_blipstate", function()
 
@@ -452,7 +452,7 @@ Event.Hook("Console_it_blipstate", function()
 		tostring(MapBlip.GetMapBlipColor == ColorMapBlipByWeapon),
 		tostring(PlayerMapBlip ~= nil and PlayerMapBlip.GetMapBlipColor == ColorMapBlipByWeapon))
 
-	-- 2. Would we be allowed to colour anything from where we are sitting?
+	-- 2. Would we be allowed to color anything from where we are sitting?
 	local player = Client.GetLocalPlayer()
 	local team = player and player:GetTeamNumber()
 	Say("local player team = %s (marine is %s), allowed without spectating = %s",
@@ -492,7 +492,7 @@ Event.Hook("Console_it_blipstate", function()
 				matched = matched + 1
 			end
 
-			Say("  marine blip: owner=%s status=%s colour=%s",
+			Say("  marine blip: owner=%s status=%s color=%s",
 				tostring(owner),
 				tostring(status and kPlayerStatus[status]),
 				color and string.format("#%02X%02X%02X",
@@ -504,7 +504,7 @@ Event.Hook("Console_it_blipstate", function()
 
 	end
 
-	Say("PlayerMapBlips: %d total, %d marine or jetpacker, %d resolved to a colour", blipCount, marineBlips, matched)
+	Say("PlayerMapBlips: %d total, %d marine or jetpacker, %d resolved to a color", blipCount, marineBlips, matched)
 
 end)
 

@@ -1,7 +1,7 @@
 -- Bleu's Improved Tooltips
 -- lua/ImprovedTooltips/ImprovedTooltips_ArmsLabAlert.lua
 --
--- Post-hook on lua/Hud/Marine/GUIMarineHUD.lua. Keeps the weapon and armour upgrade icons on screen,
+-- Post-hook on lua/Hud/Marine/GUIMarineHUD.lua. Keeps the weapon and armor upgrade icons on screen,
 -- in vanilla's own alert red, while the team has no working arms lab - instead of hiding them, which
 -- is what vanilla does today and is indistinguishable from never having researched them.
 --
@@ -33,7 +33,7 @@
 -- GetResearched() and have no callers at all - somebody meant to tell "lost" apart from "never had".
 --
 -- To be clear about what the red means: the upgrade really is inactive. Marine:GetArmorAmount
--- (Marine.lua:439) uses the live GetHasTech, so armour genuinely drops without a working arms lab.
+-- (Marine.lua:439) uses the live GetHasTech, so armor genuinely drops without a working arms lab.
 -- Hiding the icon was not a lie - it just could not be told apart from the early game.
 
 if not Client then
@@ -50,7 +50,7 @@ local kOriginalUpdate = GUIMarineHUD.Update
 -- the icon keeps whatever artwork the last real level set. That is why this only has to restore
 -- visibility: the texture is still the right Armor-N or Weapons-N glyph.
 --
--- Vanilla sets the red itself, after the visibility line, so by the time this runs the colour is
+-- Vanilla sets the red itself, after the visibility line, so by the time this runs the color is
 -- already correct. It is re-applied anyway rather than assumed, since a mod loading between us and
 -- vanilla could have set it to something else.
 local function RestoreLostUpgradeIcon(item, researchedLevel, showFn, self)
@@ -74,7 +74,7 @@ function GUIMarineHUD:Update(deltaTime)
 	end
 
 	-- MarineUI_GetHasArmsLab is GetHasTech(player, kTechId.ArmsLab) (Marine_Client.lua:31), the same
-	-- test vanilla uses two lines above for the colour.
+	-- test vanilla uses two lines above for the color.
 	if MarineUI_GetHasArmsLab() then
 		return
 	end

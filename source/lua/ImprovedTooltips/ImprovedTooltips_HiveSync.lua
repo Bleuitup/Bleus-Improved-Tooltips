@@ -32,7 +32,7 @@ local IT = ImprovedTooltips
 -- asking only the Hive misses every ability research, which is exactly what 0.93 did.
 --
 -- The chamber is reached through the hive's public accessor, and Shared.GetEntity returns nil for
--- the -1 the id is initialised to, so an unbuilt hive simply has none.
+-- the -1 the id is initialized to, so an unbuilt hive simply has none.
 local function GetIsEntityResearching(entity)
 
 	if not entity then

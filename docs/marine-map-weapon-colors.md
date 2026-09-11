@@ -1,9 +1,9 @@
-# Marine map blips coloured by weapon
+# Marine map blips colored by weapon
 
 Shipped in 1.03 and confirmed working in game. 1.04 split the one toggle into two: the big map and
 the minimaps are switched separately (see [Big map and minimap](#big-map-and-minimap-switched-apart-104)).
 
-Marine player blips on the map take a colour per weapon, so the map says where the shotguns are
+Marine player blips on the map take a color per weapon, so the map says where the shotguns are
 rather than only where bodies are. Optional and off by default.
 
 NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`.
@@ -12,18 +12,18 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 
 | | |
 | --- | --- |
-| Which blips | Marine and JetpackMarine only. **Exos keep the plain marine colour** — under CBM an exo is modular and can carry any combination, so there is no single weapon to colour one by. Vanilla DOES colour exos in `GUIInsight_PlayerHealthbars` (minigun red, railgun orange); the CBM reason is the one that decides it |
+| Which blips | Marine and JetpackMarine only. **Exos keep the plain marine color** — under CBM an exo is modular and can carry any combination, so there is no single weapon to color one by. Vanilla DOES color exos in `GUIInsight_PlayerHealthbars` (minigun red, railgun orange); the CBM reason is the one that decides it |
 | Which weapons | Every PRIMARY weapon the commander's palette distinguishes, read at runtime — rifle included, plus anything a mod adds such as CBM's SMG. Pistols, axes and welders never appear: `kPlayerStatus` has no value for them |
 | Who sees it | Marines and spectators only |
 | Friend tinting | Composes on top: a friend with an HMG is half-saturated red |
 | Own blip | Untouched. Not a `MapBlip` at all |
 | Setting | In the Mods panel, default **off**. Two since 1.04: big map, and minimap |
-| Colourblind | Nothing to do |
+| Colorblind | Nothing to do |
 | Art | **None.** This branch ships no `.dds` |
 
 ## Read at runtime, not hardcoded
 
-The colours come out of the running game. `GUIUnitStatus.lua:57-64` holds `kAmmoBarColors`, keyed by
+The colors come out of the running game. `GUIUnitStatus.lua:57-64` holds `kAmmoBarColors`, keyed by
 `kTechId` — the palette a commander is already reading on the ammo bar under each marine, on the
 same screen as this map.
 
@@ -48,7 +48,7 @@ CBM's `Submachinegun` — so a blip's status resolves to a techId with no table 
 `IT.GetTechIdByName`, which rawgets.
 
 **Failure is handled, not assumed away.** If `GUIUnitStatus` has not loaded yet the read is retried
-rather than given up on, and results are only memoised once the question is settled — caching early
+rather than given up on, and results are only memoized once the question is settled — caching early
 would pin every weapon to the fallback for the session. If the read genuinely cannot happen (no
 debug library, a mod that replaces `GUIUnitStatus` with something shaped differently, a rename), the
 written-down table in config takes over, holding copies of the same values.
@@ -59,7 +59,7 @@ a shotgunner who switches to a welder or a pistol still reports `Shotgun`. The m
 marine can bring, not what is momentarily raised.
 
 **Nothing is excluded by weapon.** An earlier version held rifles back, on the theory that they
-should stay the plain team colour; the user corrected it, and rightly. A rifle *is* a primary
+should stay the plain team color; the user corrected it, and rightly. A rifle *is* a primary
 weapon and takes the commander palette's teal like any other, so a plain rifleman reads as teal
 rather than as an absence of information. Pistols, axes and welders never come up at all —
 `kPlayerStatus` has no value for them, since they only ever sit in slots 2 and 3.
@@ -68,13 +68,13 @@ Exos remain the one exclusion, and that is by blip type rather than by weapon.
 
 ## Three palettes, not two
 
-There are **three** per-weapon colour tables in NS2, and they are shown to different people. I found
+There are **three** per-weapon color tables in NS2, and they are shown to different people. I found
 the first two and reasoned from them; the user pointed out the third, which is the one a commander
 actually reads.
 
 | | file | seen by | readable at runtime |
 | --- | --- | --- | --- |
-| Outline glow on the model | `ui/marine_outline_lookup.dds`, indexed by `EquipmentOutline.lua:20` | everyone, **including the commander** (`CommanderGlowMixin.lua:32`) | **no** — file-local list, colours in a texture |
+| Outline glow on the model | `ui/marine_outline_lookup.dds`, indexed by `EquipmentOutline.lua:20` | everyone, **including the commander** (`CommanderGlowMixin.lua:32`) | **no** — file-local list, colors in a texture |
 | Ammo bar under a marine, top-down | `GUIUnitStatus.lua:57-64`, keyed by `kTechId` | **the commander** | **no** — `local kAmmoBarColors` |
 | Ammo bar under a marine, spectating | `GUIInsight_PlayerHealthbars.lua:42-56`, keyed by `kMapName` | **spectators** (`GUIInsight_Overhead.lua:224`) | **yes** — public table |
 
@@ -91,22 +91,22 @@ actually reads.
 commander bar being a shade darker. Rifle has three different values, which costs nothing here
 and this takes the commander bar's teal, since that is the palette a commander is reading beside it.
 
-**CBM colours the SMG in two of the three.** The commander bar gets `#FF6600` and the outline gets
+**CBM colors the SMG in two of the three.** The commander bar gets `#FF6600` and the outline gets
 `#D37300`; only the spectator bar is missing an entry, where it falls through to `kEnergyColor`
-yellow — the flamethrower's colour. So the gap is spectator-only, and a commander sees the SMG
+yellow — the flamethrower's color. So the gap is spectator-only, and a commander sees the SMG
 correctly as orange.
 
 **This mod uses the commander bar's `#FF6600`**, because the map is read from the same seat and at
 the same moment as that bar, and the brighter orange carries further at blip size.
 
 Only the spectator table is reachable from Lua, which is why every value here is written down rather
-than read: the two authoritative palettes keep their lists in file-locals and their colours in a
+than read: the two authoritative palettes keep their lists in file-locals and their colors in a
 texture.
 
-## Why the first build coloured nothing
+## Why the first build colored nothing
 
 Two facts have to line up, and missing either makes the whole file silently inert. The first build
-missed both, and the symptom was simply no colour at all.
+missed both, and the symptom was simply no color at all.
 
 **Players are not `MapBlip` entities.** `MapBlipMixin.lua:59-64`:
 
@@ -142,9 +142,9 @@ The rest of the chain was right all along: `MinimapMappableMixin:UpdateMinimapIt
 `GetMapBlipColor` every update rather than caching, and `PlayerInfoEntity.playerId` really is the
 entity id `SetOwner` was given.
 
-## Feed the base colour, do not return the result
+## Feed the base color, do not return the result
 
-`GetMapBlipColor` (`MapBlip.lua:272`) picks a colour by blip type and **then** transforms it:
+`GetMapBlipColor` (`MapBlip.lua:272`) picks a color by blip type and **then** transforms it:
 
 ```lua
 if MapBlip.kFriendsHighlightingEnabled and friendTeams[blipTeam] then
@@ -152,10 +152,10 @@ if MapBlip.kFriendsHighlightingEnabled and friendTeams[blipTeam] then
     sat = sat * .5
 ```
 
-Steam friends are not a separate colour, they are half the saturation of whatever was chosen. **A
-wrapper that returned a weapon colour would land after that block and wipe it.** So the mod sets
+Steam friends are not a separate color, they are half the saturation of whatever was chosen. **A
+wrapper that returned a weapon color would land after that block and wipe it.** So the mod sets
 `MapBlip.kCustomMarineColor` for the duration of the original call and restores it after, inside a
-`pcall` so a fault cannot leave every marine stuck on one weapon's colour. The friend tint, the
+`pcall` so a fault cannot leave every marine stuck on one weapon's color. The friend tint, the
 hallucination check and the commander's same-building highlight all keep working untouched.
 
 ## Gate on the viewer, not on the blip
@@ -166,7 +166,7 @@ An alien **can** see a marine blip. `MapBlip.lua:326`:
 -- Allow enemies to see friends on the other team.  Used to be a bug, now it's a feature. :)
 ```
 
-Colouring by blip type alone would tell the alien team what their Steam friend is carrying. Vanilla
+Coloring by blip type alone would tell the alien team what their Steam friend is carrying. Vanilla
 guards a comparable leak two lines below — `friendshipSecret`, commented *"Don't give the enemy
 privileged information!"* So the gate is `minimap.spectating or localPlayer:GetTeamNumber() ==
 kTeam1Index`.
@@ -185,13 +185,13 @@ The owner-to-status table is rebuilt on an interval, not per call: `GetMapBlipCo
 every blip on every minimap update, and walking the entity list inside that would cost many times
 the drawing it feeds.
 
-## Colourblind mode needs nothing
+## Colorblind mode needs nothing
 
-NS2 has **no Lua-side colourblind handling anywhere**. It is a render setting —
+NS2 has **no Lua-side colorblind handling anywhere**. It is a render setting —
 `Client.SetRenderSetting("colorblind_mode", n)`, `Render.lua:78`, three modes offered in
-`menu2/MenuData.lua:3176` — applied to the whole frame downstream of everything. Any colour set
-here gets the same filter as every other colour in the game. An earlier version of this document
-listed "must react to the colourblind setting" as a requirement, as though there were something to
+`menu2/MenuData.lua:3176` — applied to the whole frame downstream of everything. Any color set
+here gets the same filter as every other color in the game. An earlier version of this document
+listed "must react to the colorblind setting" as a requirement, as though there were something to
 read. There is not.
 
 ## The local player's own marker
@@ -221,13 +221,13 @@ it. The mode is read on every call, not cached per frame, because an overhead vi
 instance between mini and big.
 
 The big map keeps the 1.03 option key, `BIT_WeaponBlips`, so a player who had it on still does. The
-minimap is `BIT_WeaponBlipsMinimap`, default off, which means a 1.03 player who had colours
+minimap is `BIT_WeaponBlipsMinimap`, default off, which means a 1.03 player who had colors
 everywhere now has them on the big map only until they tick the second box.
 
 ## No art in this branch
 
 An earlier cut shipped `source/ui/minimap_blip.dds` — vanilla's sheet with the jetpacker cell
-swapped for Drey's darker edit. **Removed.** Sprite and colour are separate paths
+swapped for Drey's darker edit. **Removed.** Sprite and color are separate paths
 (`BuildClassToGrid` versus `GetMapBlipColor`); this feature changes only the second, so whatever
 sheet is loaded is irrelevant to it. Shipping art here imported an attribution question and a "we
 now override CBM's whole sheet" problem for no gain to the feature.
@@ -254,11 +254,11 @@ the two look nearly identical in game:
 [Improved Tooltips]   Flamethrower       #FFFF00
 [Improved Tooltips]   HeavyMachineGun    #E60000
 [Improved Tooltips]   Submachinegun      #FF6600      <- only with CBM loaded
-[Improved Tooltips] 6 weapon colours resolved.
+[Improved Tooltips] 6 weapon colors resolved.
 ```
 
 `palette: CONFIG FALLBACK` means the `debug.getupvalue` read failed. Everything still works, but a
-weapon a mod added would be uncoloured.
+weapon a mod added would be uncolored.
 
 ### With bots
 
@@ -274,7 +274,7 @@ allfree             -- everything costs nothing
 
 - **Let them buy.** Marine bots have a `BuyWeapons` objective and `HasGoodWeapon` checks their
   primary slot against shotgun, HMG, flamethrower and grenade launcher
-  (`bots/MarineBrain_Data.lua:808-816`). With an armoury and `allfree` they will equip themselves
+  (`bots/MarineBrain_Data.lua:808-816`). With an armory and `allfree` they will equip themselves
   within a minute or so. You get a spread of weapons, not the one you asked for.
 - **Drop weapons at them.** `spawn shotgun` puts one on the ground where you are looking
   (`:2033`), and bots have a `PickupDroppedWeapons` action (`:3406-3445`), so they will collect
@@ -283,7 +283,7 @@ allfree             -- everything costs nothing
 `addpassivebot` gives bots that do not act — useful for a stationary target, but they will not pick
 anything up either.
 
-**You cannot see your own colour.** The local player's marker is the minimap arrow, not a `MapBlip`,
+**You cannot see your own color.** The local player's marker is the minimap arrow, not a `MapBlip`,
 so at least one OTHER marine has to exist for this feature to show anything at all.
 
 ### The cases bots cannot cover
@@ -298,22 +298,22 @@ invisible from the marine side.
 
 ## Test checklist
 
-Confirmed in game for 1.03: colours appear on the map with bots carrying dropped weapons. The
+Confirmed in game for 1.03: colors appear on the map with bots carrying dropped weapons. The
 friend and CBM cases below are still unverified.
 
 - Both settings off, the default: every map looks exactly like vanilla.
 - Setting on, as a marine: rifle teal, shotgun green, GL fuchsia, flamethrower yellow, HMG red. A
-  marine holding a pistol, axe or welder keeps their primary weapon's colour.
-- **1.04: big map on, minimap off.** Coloured on the map key; the HUD's corner minimap stays plain.
+  marine holding a pistol, axe or welder keeps their primary weapon's color.
+- **1.04: big map on, minimap off.** Colored on the map key; the HUD's corner minimap stays plain.
 - **1.04: minimap on, big map off.** The reverse, and the same for a commander's corner map.
-- **1.04: a 1.03 player who had it on** still has the big map coloured after updating.
+- **1.04: a 1.03 player who had it on** still has the big map colored after updating.
 - A jetpacker with a shotgun: green, and still the jetpack glyph.
-- An exo: plain marine colour, both flavours, and under CBM with a mixed loadout.
+- An exo: plain marine color, both flavors, and under CBM with a mixed loadout.
 - A Steam friend on your own team carrying an HMG: red at half saturation, not full red.
 - **As an alien, with a Steam friend on the marine team**: that friend's blip must NOT be weapon
-  coloured. This is the leak the viewer gate exists for.
-- As a spectator: both teams look right, marines coloured, aliens untouched.
+  colored. This is the leak the viewer gate exists for.
+- As a spectator: both teams look right, marines colored, aliens untouched.
 - Your own arrow: unchanged, still `minimaparrowcolor`.
-- Weapon swap mid-round: the colour follows within the refresh interval.
+- Weapon swap mid-round: the color follows within the refresh interval.
 - Toggling the setting in the panel: applies immediately, no restart.
 - With CBM loaded, and with Devnull's ESB loaded, since both are on the server.

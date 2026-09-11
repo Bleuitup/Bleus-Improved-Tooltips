@@ -2,7 +2,7 @@
 -- lua/ImprovedTooltips/ImprovedTooltips_TooltipGUI.lua
 --
 -- Post-hook on lua/GUICommanderTooltip.lua. Inserts one stat row directly under the tooltip's
--- title, above the description, showing health, armour and research time or cooldown:
+-- title, above the description, showing health, armor and research time or cooldown:
 --
 --     Armor #3 ( C )                    40 [res]
 --     [hourglass] 120
@@ -27,7 +27,7 @@ local IT = ImprovedTooltips
 --   speed (alien)  - the Celerity icon in ui/buildmenu.dds, index 64 -> cell (4,5), used straight
 --                    from vanilla. Points right already; CBM uses the same index for SpurPassive.
 --   everything else - ui/bleu_tooltip_icons.dds, the mod's own 320x64 sheet, all white and tinted
---                    at runtime. Health and armour there are vanilla's own glyphs, resampled.
+--                    at runtime. Health and armor there are vanilla's own glyphs, resampled.
 --                    See tools/build_icons.ps1; keep the cell order in step with it.
 local kOwnIconTexture = "ui/bleu_tooltip_icons.dds"
 
@@ -35,11 +35,11 @@ local kOwnIconCoords = {
 	research     = { 0,   0, 64,  64 },
 	cooldown     = { 64,  0, 128, 64 },
 	speedMarine  = { 128, 0, 192, 64 },
-	-- Health and armour sample a centred 48px window of their 64px cell rather than the whole cell.
+	-- Health and armor sample a centered 48px window of their 64px cell rather than the whole cell.
 	-- The glyphs are baked at vanilla's proportion (39px, ~61% of the cell) so that vanilla's own
 	-- selection panel renders them at its usual size; sampling a smaller window here magnifies them
 	-- to 39/48 = 81%, matching the hourglass and stopwatch. Sampling inward is safe - it cannot
-	-- reach the neighbouring cells.
+	-- reach the neighboring cells.
 	health       = { 200, 8, 248, 56 },
 	armor        = { 264, 8, 312, 56 },
 }
@@ -51,9 +51,9 @@ local kBuildMenuTexture = "ui/buildmenu.dds"
 -- Left-to-right order of the stat row.
 local kRowOrder = { "health", "armor", "speed", "research", "cooldown" }
 
--- Health and armour figures are coloured the way vanilla colours them in the selection panel, so a
--- number means the same thing wherever you read it: marine health pale cyan, marine armour deep
--- teal, alien health yellow, alien armour darker orange.
+-- Health and armor figures are colored the way vanilla colors them in the selection panel, so a
+-- number means the same thing wherever you read it: marine health pale cyan, marine armor deep
+-- teal, alien health yellow, alien armor darker orange.
 --
 -- Read from GUISelectionPanel at runtime rather than copied, so the mod follows anything that
 -- changes them. The literals below are only a fallback for the case where that file has not loaded
@@ -88,13 +88,13 @@ local function GetTextColor(field, teamType)
 end
 
 -- Resolves which texture and cell each entry draws from, for the given team. Returns texture,
--- coords, tint - tint nil meaning "leave it alone, the art is already the right colour".
+-- coords, tint - tint nil meaning "leave it alone, the art is already the right color".
 local function GetIconSource(field, teamType, tint)
 
-	-- Health and armour use the mod's resampled copies of vanilla's glyphs rather than the vanilla
+	-- Health and armor use the mod's resampled copies of vanilla's glyphs rather than the vanilla
 	-- atlas directly: those are only ~29px inside a 48px cell, so drawn at icon size they came out
 	-- smaller than everything beside them, and they top out at alpha 233 so they looked faintly
-	-- translucent. Being white, they also take the exact figure colour, which the original amber art
+	-- translucent. Being white, they also take the exact figure color, which the original amber art
 	-- could not - SetColor multiplies, so it can only darken.
 	if field == "health" or field == "armor" then
 		return kOwnIconTexture, kOwnIconCoords[field], GetTextColor(field, teamType)
@@ -162,9 +162,9 @@ local function CreateEntry(field, teamType, tint)
 	icon:SetSize(Vector(GUICommanderTooltip.kResourceIconSize, GUICommanderTooltip.kResourceIconSize, 0))
 	icon:SetTexture(texture)
 	icon:SetTexturePixelCoordinates(GUIUnpackCoords(coords))
-	-- Health and armour take their figure's colour; the rest take the team tint. Alien speed is the
+	-- Health and armor take their figure's color; the rest take the team tint. Alien speed is the
 	-- one icon drawn from vanilla art rather than the mod's white sheet, so its tint compounds with
-	-- the source colour - acceptable, since the Celerity glyph is near-greyscale.
+	-- the source color - acceptable, since the Celerity glyph is near-grayscale.
 	local iconColor = iconTint or Color(1, 1, 1, 1)
 	icon:SetColor(iconColor)
 	icon:SetIsVisible(false)
@@ -258,8 +258,8 @@ function GUICommanderTooltip:Initialize()
 	end
 
 	-- Vanilla builds this icon from GetTextureCoordinatesForIcon(kTechId.Biomass) and never calls
-	-- SetColor, so it draws as the bare greyscale cell while every other icon on the card is
-	-- coloured. Same shade as the hive HUD row, so a biomass icon means one thing everywhere.
+	-- SetColor, so it draws as the bare grayscale cell while every other icon on the card is
+	-- colored. Same shade as the hive HUD row, so a biomass icon means one thing everywhere.
 	if self.biomassIcon and IT.kBiomassIconColor then
 		self.biomassIcon:SetColor(IT.kBiomassIconColor)
 	end
@@ -328,7 +328,7 @@ local function GetDisplayValue(field, values)
 		if values.armor > 0 then
 			return FormatWhole(values.armor)
 		end
-		-- An explicit 0 tells a commander "no armour" rather than "not measured", but only
+		-- An explicit 0 tells a commander "no armor" rather than "not measured", but only
 		-- alongside a health figure - a lone "0" would be meaningless.
 		if values.health > 0 and IT.kShowZeroArmor then
 			return "0"

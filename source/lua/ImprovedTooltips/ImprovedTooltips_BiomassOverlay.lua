@@ -258,10 +258,10 @@ local function UpdateAbilityProgress(self)
 
 					-- Light the icon itself, matching the tech map. Vanilla's overlay knows only
 					-- locked and unlocked (GUIBioMassDisplay.lua:123-135), so a research under way
-					-- stays greyed out until it finishes; GUITechMap instead promotes any node with
-					-- partial progress to kTechStatus.Available and colours it.
+					-- stays grayed out until it finishes; GUITechMap instead promotes any node with
+					-- partial progress to kTechStatus.Available and colors it.
 					--
-					-- Safe to set every frame: vanilla writes this colour from UpdateAbilityList,
+					-- Safe to set every frame: vanilla writes this color from UpdateAbilityList,
 					-- which only runs inside its own Update, and that early-returns on most frames.
 					-- Ours runs after it either way, so the override always lands. When the fraction
 					-- returns to zero we stop touching it and vanilla restores locked or unlocked on
@@ -312,7 +312,7 @@ function GUIBioMassDisplay:Uninitialize()
 
 	-- Everything created here is a child of self.background or of an ability icon, and vanilla
 	-- destroys self.background below, taking the whole tree with it. Only the references are
-	-- dropped, so a re-initialised script does not reuse destroyed items.
+	-- dropped, so a re-initialized script does not reuse destroyed items.
 	self.itBeads = nil
 
 	if self.abilityIcons then

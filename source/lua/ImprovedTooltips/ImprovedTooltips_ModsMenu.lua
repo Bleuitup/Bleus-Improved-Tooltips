@@ -145,15 +145,15 @@ local kContents =
 			optionType = "bool",
 			default = kDefaultWeaponBlips,
 			-- Says what it covers rather than listing exceptions. Exos are named because a player
-			-- WILL notice theirs staying the team colour and wonder whether it is broken; the
-			-- rifle and the sidearms are not, because keeping the colour you already chose reads
+			-- WILL notice theirs staying the team color and wonder whether it is broken; the
+			-- rifle and the sidearms are not, because keeping the color you already chose reads
 			-- as normal rather than as an omission.
-			tooltip = "Colour marine blips on the big map, the one on the map key, by each player's primary weapon, in the same colours the commander already sees on their ammo bars. It does not change when they switch to a pistol or a welder. Exosuits keep the normal marine colour. Only ever shown to marines and spectators.",
+			tooltip = "Colors marines on the map (the one on the map key) by their primary weapon. Weapon color matches the dropped weapon outline. Exosuits are ignored. Seen by marines and spectators only.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =
 		{
-			{ "Label", "COLOUR MAP BLIPS BY WEAPON" },
+			{ "Label", "COLOR MAP BLIPS BY WEAPON" },
 		},
 	},
 
@@ -166,12 +166,12 @@ local kContents =
 			optionPath = kOptionWeaponBlipsMinimap,
 			optionType = "bool",
 			default = kDefaultWeaponBlipsMinimap,
-			tooltip = "The same weapon colours on the minimap: the one in the corner of the marine HUD, and the commander's and spectator's corner map. Set separately from the big map.",
+			tooltip = "The same weapon colors on the minimap: the one in the corner of the marine HUD, and the commander's and spectator's corner map. Set separately from the big map.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =
 		{
-			{ "Label", "COLOUR MINIMAP BLIPS BY WEAPON" },
+			{ "Label", "COLOR MINIMAP BLIPS BY WEAPON" },
 		},
 	},
 }

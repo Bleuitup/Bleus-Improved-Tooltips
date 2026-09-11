@@ -6,7 +6,7 @@ covers things that are easy to get wrong.
 ## What this is
 
 A standalone ModLoader NS2 mod (not a Shine extension) that adds research time, cooldown, health
-and armour to the commander tooltips. All the logic is client-side — every value is readable on the
+and armor to the commander tooltips. All the logic is client-side — every value is readable on the
 client and nothing is networked.
 
 **But it is not a "works on any server" client mod, and must not be described as one.** NS2's
@@ -104,7 +104,7 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
   separately via `kShowOnTeam[kTeamReadyRoom]`.
 - **A GUI script registered for `Player` survives class AND team changes**, so anything cached at
   Initialize from the team (dial texture, tint, smoke) goes stale on a team switch. The panel
-  re-initialises when `PlayerUI_GetTeamType()` no longer matches what it cached.
+  re-initializes when `PlayerUI_GetTeamType()` no longer matches what it cached.
 - **A team has at most ONE commander at a time**, however many command structures it owns — the
   user corrected me on this and the code agrees: `CommandStructure:GetIsPlayerValidForCommander`
   requires `not team:GetHasCommander()` (true if any Commander entity exists on the team), and
@@ -136,35 +136,35 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
 
 ## Icons: prefer vanilla, ship as little as possible
 
-- **Health and armour come from `ui/{marine,alien}_commander_textures.dds`** at `(0,363)-(48,411)`
+- **Health and armor come from `ui/{marine,alien}_commander_textures.dds`** at `(0,363)-(48,411)`
   and `(48,363)-(96,411)` — the cells `GUISelectionPanel.lua:54-55` draws when you click a
-  structure. They are already coloured per team, so **do not tint them**, and they sit in the very
+  structure. They are already colored per team, so **do not tint them**, and they sit in the very
   atlas the tooltip background already loads. 0.86 and earlier drew custom ones after rejecting the
   softer copies in `ui/alien_buymenu.dds`; that was looking at the wrong atlas.
 - **Those cells are baked at VANILLA's proportion, and the tooltip magnifies by sampling inward.**
   The glyph is 39px in a 64px cell (~61%, what vanilla uses); the selection panel draws the full
-  cell, the tooltip samples a centred 48px window giving 39/48 = 81%, matching the other icons.
+  cell, the tooltip samples a centered 48px window giving 39/48 = 81%, matching the other icons.
   Baking at 81% instead made the tooltips right and blew up vanilla's selection panel — same item
   size, bigger glyph inside it (issue #2). Sampling inward is safe; sampling outward to shrink
-  would bleed into neighbouring cells.
+  would bleed into neighboring cells.
 - **The mod ships resampled copies of vanilla's cross and shield** (atlas cells 3 and 4), rather
   than drawing the vanilla atlas directly. Three reasons, all found in testing: the source glyphs
   occupy only ~29px of a 48px cell so they rendered smaller than the other icons; they top out at
   alpha 233 (149 on the marine atlas) so they looked translucent beside the opaque drawn glyphs; and
-  being amber they could not be tinted onto a target colour at all, because `SetColor` multiplies
+  being amber they could not be tinted onto a target color at all, because `SetColor` multiplies
   and can only darken. The baked copies are white and fully opaque, so the tint lands exactly.
   `ImprovedTooltips_SelectionPanel.lua` repoints vanilla's own panel at the same cells - **keep the
   two in step.**
-- **Match the figure colours too**, from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`
-  (`GUISelectionPanel.lua:21-27`): marine health `(0.725, 1, 1)`, marine armour `(0.078, 0.9, 1)`,
-  alien health `(1, 197/255, 71/255)`, alien armour `(1, 143/255, 34/255)`. Read at runtime with
+- **Match the figure colors too**, from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`
+  (`GUISelectionPanel.lua:21-27`): marine health `(0.725, 1, 1)`, marine armor `(0.078, 0.9, 1)`,
+  alien health `(1, 197/255, 71/255)`, alien armor `(1, 143/255, 34/255)`. Read at runtime with
   those literals as fallback, so the mod follows anything that changes them.
 - **Alien speed uses the Celerity icon**, `kTechIdToMaterialOffset[kTechId.Celerity] = 64` → cell
-  (4,5) of `ui/buildmenu.dds`. Greyscale, already points right, and CBM assigns the same index to
+  (4,5) of `ui/buildmenu.dds`. Grayscale, already points right, and CBM assigns the same index to
   `SpurPassive`.
 - **Icon indices in `buildmenu.dds` are `y*12 + x`, 80px cells**, sheet is 960 wide.
 - The mod's own sheet is **448x64, seven cells**: hourglass, stopwatch, marine speed chevron,
-  health cross, armour shield, ready tick, not-ready cross. `tools/build_icons.ps1` builds it, and
+  health cross, armor shield, ready tick, not-ready cross. `tools/build_icons.ps1` builds it, and
   the cell ORDER is what `kOwnIconCoords` indexes - append, never reorder.
 - **The marine chevron is lifted, not drawn**: `marine_buildmenu_insight.dds` row 2 col 4
   (x 240-320, y 80-160), mirrored to point right. Its button plate is **opaque**, so unlike the
@@ -215,7 +215,7 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
 - **A zero speed means two different things.** The default 0 ("does not move") is hidden, or every
   structure would carry a pointless `0`; a 0 from a *registered resolver* is deliberate and is
   shown. `IT.HasResolver(field, techId)` distinguishes them. This is what puts `0` on ARC Deploy.
-- **ARC stance changes armour AND speed**: `kARCArmor = 400` / `kARCDeployedArmor = 0`
+- **ARC stance changes armor AND speed**: `kARCArmor = 400` / `kARCDeployedArmor = 0`
   (`BalanceHealth.lua:100-101`), kept as `undeployedArmor`/`deployedArmor` at `ARC.lua:212-213`.
   `kTechId.ARCDeploy` and `kTechId.ARCUndeploy` have **no TechData entries at all**, so the mod
   registers resolvers making each button describe the state it puts the ARC into.
@@ -249,11 +249,11 @@ so they are not re-derived:
   `circle_alien.material`, shader `shaders/circle_emissive.surface_shader`. That shader tints by
   `input.color` and declares a settable `hiddenAmount` float (opacity). `material:SetParameter` works
   on decal materials (precedent at `Client.lua:1680`), but **nothing in NS2 calls `SetColor` on a
-  decal**, so recolouring likely needs a second `.material` + `.dds` rather than a tint call.
+  decal**, so recoloring likely needs a second `.material` + `.dds` rather than a tint call.
 
 Plan agreed with the user, not implemented: draw the min-range circle, plus a marker at each nearby
 target's origin whose prominence encodes the real answer (both distance rules), computed the same way
-`OnValidateOrder` does. Rejected: recolouring the big circle (says something is in range, not what)
+`OnValidateOrder` does. Rejected: recoloring the big circle (says something is in range, not what)
 and highlighting the hive itself (requires overriding a material on an entity we do not own and
 undoing it on deselect/death — a leaked highlight would read as a mod bug).
 
@@ -264,7 +264,7 @@ undoing it on deselect/death — a leaked highlight would read as a mod bug).
 - **Syntax-check before shipping:** `C:\Users\maost\AppData\Local\Programs\Lua\bin\luac.exe -p <file>`.
   It is **Lua 5.4** and NS2 runs **5.1**, so a pass proves the file parses but not 5.1 compatibility —
   and it says nothing about GUI layout or NS2 API use. Never report a `luac -p` pass as "verified";
-  behaviour is in-game-only.
+  behavior is in-game-only.
 - **`gh` CLI is installed** at `C:\Program Files\GitHub CLI\gh.exe`, authenticated as `Bleuitup`.
   It is *not* on the Bash tool's PATH — call it by full path or from PowerShell.
 - **No ImageMagick and no Python.** `convert` on PATH is Windows' FAT-to-NTFS converter — never
@@ -328,9 +328,9 @@ and cost time to rule out.
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- **1.03 is published and tagged `v1.03`** (2026-09-10): weapon-coloured marine map blips, and the
+- **1.03 is published and tagged `v1.03`** (2026-09-10): weapon-colored marine map blips, and the
   redrawn hourglass and stopwatch. It shipped with the `it_blipcolors` and `it_blipstate` console
-  commands still in; they are inert unless typed and are how a "no colours" report gets diagnosed.
+  commands still in; they are inert unless typed and are how a "no colors" report gets diagnosed.
   (There is no published 0.81 — that was the working version number
   while the stat row was moved and the hourglass redrawn; it shipped as 0.85.)
 - Published: Steam Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips
@@ -343,13 +343,13 @@ and cost time to rule out.
 - **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
   re-propose `M:SS`. `kTimeFormat` keeps the other modes, but `"seconds"` is the decision.
 - **The Workshop description was brought current with 0.91** (2026-08-30, `83ec3fa`) — it now covers
-  the "In Cooldown" panel, speed and its dimming, health/armour colour matching and ARC stances, and
+  the "In Cooldown" panel, speed and its dimming, health/armor color matching and ARC stances, and
   no longer claims the mod "sends nothing", which stopped being true in 0.86. When editing it,
   remember Launch Pad must be fully closed and reopened first or it writes its stale copy back.
   **Line endings are a non-issue here, and two earlier notes got it wrong.** `core.autocrlf` is
   `true` in this clone, so git stores LF in the index and checks out CRLF in the working tree.
   Launch Pad writes `mod.settings` back as CRLF on publish, which is why `git status` shows it
-  modified afterwards while `git diff` shows nothing: the content is identical once normalised.
+  modified afterwards while `git diff` shows nothing: the content is identical once normalized.
   `mod.settings` is not special either way — nineteen tracked files sit in the same state. Do not
   "preserve CRLF" and do not "convert to LF"; just edit the file.
 - Discussed but not built: ARC range feedback, settled on drawing the 7m minimum-range circle
@@ -415,7 +415,7 @@ Facts established while building on it:
   extend them without re-linking the class.
 - **`locationId` is `Shared.GetStringIndex(locationName)`** (`ScriptActor_Server.lua:180`), an
   integer, NOT an entity id -- `AlienTeamInfo` declaring `location1Id = "entityid"` is vanilla being
-  loose. `ScriptActor` initialises it to 0, so 0 is the safe "none" sentinel.
+  loose. `ScriptActor` initializes it to 0, so 0 is the safe "none" sentinel.
 - **Icon indices** (`ui/buildmenu.dds`, 12 columns of 80x80, `index % 12`, `floor(index / 12)`):
   plain biomass ball = 112 (shared by every `BioMassN` **and** `ResearchBioMassTwo`/`Four`), the
   dense cluster = 175 = `ResearchBioMassThree`, the DNA helix = 136 = `LifeFormMenu`. Confirmed by
@@ -432,7 +432,7 @@ Facts established while building on it:
 - **The world "researching" ring** is `ui/unitstatus_alien.dds` region `{256, 68, 384, 196}`, drawn
   by `GUIUnitStatus` with `SetRotation(Vector(0, 0, -2 * math.pi * t))` over
   `kResearchRotationDuration = 2` seconds. The mod reuses the same region and rate.
-- **Alien tech map "researched" colour** is `Color(1, 0.9, 0.4, 1)` --
+- **Alien tech map "researched" color** is `Color(1, 0.9, 0.4, 1)` --
   `kTechMapIconColors[kAlienTeamType][kTechStatus.Available]` in `GUITechMap.lua:39`.
 - **Row geometry** (unscaled, relative to a slot's `background`): row 228x50, location name plate
   141x24 at (-6, -13.2), hive icon 75x72 at (69, 6), hive type 39x36 at (52, 7), eggs 39x36 at
@@ -457,7 +457,7 @@ game.
   off the DNA menu, while being true for biomass and hive type upgrades. Reach it through
   `hive:GetEvolutionChamber()`; `evochamberid` starts at -1, so `Shared.GetEntity` gives nil when
   there is none.
-- **A GUIItem already rotates about its own centre.** Do NOT set a rotation offset to "make sure".
+- **A GUIItem already rotates about its own center.** Do NOT set a rotation offset to "make sure".
   `SetRotationOffsetNormalized(Vector(0.5, 0.5, 0))` moves the pivot to the edge and the item visibly
   orbits a point outside itself. `GUIUnitStatus` spins the same ring with no offset at all, which is
   the thing to copy.
@@ -498,7 +498,7 @@ that this section already warns against. Recovery, in order:
    is then clear. Between 2 and 3 the entry resolves.
 4. `mkdir -p output && cp -r source/. output/`, then `diff -r source output`.
 
-Nothing is at risk while this is going on: `output/` is a build artefact, regenerable from `source/`
+Nothing is at risk while this is going on: `output/` is a build artifact, regenerable from `source/`
 in one command, and git holds the only copy that matters. Do not panic-commit around it.
 
 If a file is renamed or deleted in `source/`, that copy leaves the old one behind in `output/`, so
@@ -528,12 +528,12 @@ Note that `luac -p` passing proves nothing about `output/`; it only checks `sour
 - **Top bar supply icons** live in `ui/hud2/team_info_atlas.dds` (100x250) and are declared in
   `GUIHudSupply.kThemeData`: marine `{50, 100, 100, 150}`, alien `{0, 100, 50, 150}`. Read them from
   that table rather than copying the numbers, so a mod re-theming the top bar re-themes the tooltip
-  too. Marine is blue cogs, alien is amber organic nodes -- both already team-coloured in the art,
+  too. Marine is blue cogs, alien is amber organic nodes -- both already team-colored in the art,
   so they are drawn untinted, exactly like the worker icons they replace.
 - **Vanilla draws biomass untinted.** `GUICommanderTooltip` builds its biomass icon from
   `GetTextureCoordinatesForIcon(kTechId.Biomass)` and never calls `SetColor`. `kTechId.Biomass` and
   `kTechId.BioMassOne` are both atlas index 112 (`TechTreeButtons.lua:341`, `:39`), i.e. the same
-  greyscale cell. `GUITechMap` is the exception, not the rule: it colours every icon by tech status,
+  grayscale cell. `GUITechMap` is the exception, not the rule: it colors every icon by tech status,
   so its warm yellow means "researched", not "biomass".
 
 ### Hive HUD biomass row: researches, not levels (0.93, revised)
@@ -568,9 +568,9 @@ guessing; several assumptions about CBM turned out to be wrong.
   `Shade` / `Shift` -> `FortressCrag` etc. The upgrade tech carries only cost and research time; the
   product carries `kTechDataMaxHealth` / `kTechDataMaxArmor` (`kFortressCragHealth = 800`,
   `kFortressCragArmor = 300` in `BalanceHealth.lua`).
-- **CBM does NOT colour advanced upgrades purple or magenta.** Checked, because the user believed it
+- **CBM does NOT color advanced upgrades purple or magenta.** Checked, because the user believed it
   did. Cells 192-195 (Fortress) and 206 (Bio 5) average RGB 103,103,103 and 126,126,126 -- neutral
-  greyscale, same as vanilla's art. CBM's purple `Color(0.7, 0.3, 1)` is used only for tech map and
+  grayscale, same as vanilla's art. CBM's purple `Color(0.7, 0.3, 1)` is used only for tech map and
   minimap *connector lines* (`GUITechMap.lua:29`, used at `:194`), and its magenta
   `Color(1, 0.25, 1)` is the Plasma Launcher. `kTechMapIconColors` in CBM is identical to vanilla's.
   **Do not add a purple tint on the belief that CBM has one.**
@@ -587,7 +587,7 @@ guessing; several assumptions about CBM turned out to be wrong.
 
 `ImprovedTooltips_CBM.lua` is the **only** mod-specific file, added on the user's explicit call that
 CBM is prevalent enough to be worth the exception ("I believe having good CBM integration is
-paramount to having the developers whitelist the mod"). Keep it that way: new mod-specific behaviour
+paramount to having the developers whitelist the mod"). Keep it that way: new mod-specific behavior
 goes in a module like this, never in the core files.
 
 - **Loaded from the BOTTOM of `ImprovedTooltips_Values.lua`**, not from the file hooks, because it
@@ -607,14 +607,14 @@ goes in a module like this, never in the core files.
   and touches no instance state, so it can be called statically -- that is how the base is read
   without hardcoding.
 - **`IT.RegisterIconColor(techId, color)`** is the public registry the purple goes through. Any mod
-  can claim a colour for its own tech; the hive HUD asks `IT.GetIconColor(techId)` and falls back to
+  can claim a color for its own tech; the hive HUD asks `IT.GetIconColor(techId)` and falls back to
   its own default.
 - The purple used is CBM's **UI** purple `Color(0.7, 0.3, 1, 1)` (its tech map and minimap connector
   lines), not the hive model's. The model's emissive averages a deeper magenta, roughly
   `Color(0.85, 0.25, 0.45)`; swapping `kCBMBiomassFiveColor` is the whole change if that reads
   better.
 
-### Colouring the spectator top bar's biomass counter (1.0 work)
+### Coloring the spectator top bar's biomass counter (1.0 work)
 
 `GUIInsight_TopBar` (spectator view, created by `GUISpectator`) keeps **everything in file-locals**
 and stores **not one field on self** -- `background`, `alienBiomass` and the rest are unreachable
@@ -694,10 +694,10 @@ again while CBM's Fortress upgrades read `+100` / `+200` / `-0.7`.
 
 The hourglass and stopwatch are drawn from scratch and were 57px tall in the 64px cell. The tooltip
 samples their **whole cell**, so they rendered at 57/64 = 89% of the icon, while the vanilla health
-and armour glyphs -- baked at 39px and sampled through a centred 48px window -- render at 39/48 =
+and armor glyphs -- baked at 39px and sampled through a centered 48px window -- render at 39/48 =
 81%. That 8-point gap is what the user spotted by drawing lines across a screenshot.
 
-`CommitFitted` measures the drawn glyph's alpha bounding box and scales it into a 52px box centred in
+`CommitFitted` measures the drawn glyph's alpha bounding box and scales it into a 52px box centered in
 the cell (52/64 = 81.25%). Measuring rather than hand-tuning coordinates means the drawing code can
 change without the sizes drifting apart again. Slot 2 (the chevron) still uses plain `Commit`; it is
 lifted vanilla art and was never out of step.
@@ -710,7 +710,7 @@ it wrong, not bigger. An older version of this section recommended widening. It 
 proportions alone.
 
 **And the sizes already match in game**, which is worth checking before believing a size report.
-`kOwnIconCoords` samples health and armour through a centred 48px window of their 64px cell, so their
+`kOwnIconCoords` samples health and armor through a centered 48px window of their 64px cell, so their
 39px glyph renders at 39/48 = 81%; research, cooldown and speed are sampled over the whole cell and
 `CommitFitted` puts them at 52/64 = 81.25%. Comparing raw sheet cells makes the cross look small
 because it has not been magnified yet - compare through the real sample windows instead.
@@ -793,8 +793,8 @@ sent; the shared half only tells you what exists.
 
 ## The spectator top bar is 512 wide on a screen that is not (1.02)
 
-`GUIInsight_TopBar` lays every item out inside a 512-wide centred bar, and vanilla fills it: marine
-extractors 50, marine resources 130, centre 256, alien resources 317, harvesters 397, biomass 507.
+`GUIInsight_TopBar` lays every item out inside a 512-wide centered bar, and vanilla fills it: marine
+extractors 50, marine resources 130, center 256, alien resources 317, harvesters 397, biomass 507.
 There is no room left inside it. **The space either side of the bar is empty and unused**, and that
 is where anything new has to go — the first spectator supply attempt put both counters inside those
 512 pixels and they collided with what was already there.
@@ -828,7 +828,7 @@ originalMethod = Class_ReplaceMethod("MapBlip", "GetMapBlipColor", myWrapper)
 It swaps the method, returns the original, and walks `Script.GetDerivedClasses` replacing it in
 every subclass that still holds that original.
 
-**It bit the marine map blip colours in 1.03, and the symptom was nothing at all happening.** Players
+**It bit the marine map blip colors in 1.03, and the symptom was nothing at all happening.** Players
 do not get a `MapBlip`: `MapBlipMixin.lua:59-64` gives a `Player` a **`PlayerMapBlip`**, declared at
 `MapBlip.lua:461`, which does not override `GetMapBlipColor` and therefore holds a copy of it. Plain
 assignment to `MapBlip.GetMapBlipColor` left every player blip calling vanilla.

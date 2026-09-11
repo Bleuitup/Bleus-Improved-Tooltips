@@ -34,7 +34,7 @@ The wrapper is restored before anything else, including before re-raising an err
 
 ## Geometry, and the mistake worth recording
 
-Measured from vanilla (`GUIInsight_TopBar.lua:139`, `:219-224`). The bar is 512 wide and centred, so
+Measured from vanilla (`GUIInsight_TopBar.lua:139`, `:219-224`). The bar is 512 wide and centered, so
 its own middle is at 256. Marine items anchor `GUIItem.Left` and are positioned from the bar's left
 edge; everything else anchors `GUIItem.Right` and is positioned leftward from its right edge, which
 is why the two sides' offsets look mirrored.
@@ -43,7 +43,7 @@ is why the two sides' offsets look mirrored.
 | --- | --- |
 | marine extractors | 50 |
 | marine resources | 130 |
-| *centre* | *256* |
+| *center* | *256* |
 | alien resources | 317 |
 | alien harvesters | 397 |
 | alien biomass | 507 |

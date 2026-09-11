@@ -1,7 +1,7 @@
 # Bleu's Improved Tooltips
 
 An NS2 mod that puts the numbers a commander actually needs into the commander tooltips: research
-times, ability cooldowns, and structure health and armour.
+times, ability cooldowns, and structure health and armor.
 
 The tooltip work is entirely client-side. Two things additionally need the server: the "In Cooldown"
 panel, which broadcasts team cooldowns that vanilla never sends to anyone but the commander who
@@ -15,9 +15,9 @@ Version 1.04. Published to the Steam Workshop as
 
 | Value | Icon | Appears on |
 |---|---|---|
-| Research time | hourglass | Researches and upgrades — Armour 3, Stomp, Biomass, weapon upgrades |
+| Research time | hourglass | Researches and upgrades — Armor 3, Stomp, Biomass, weapon upgrades |
 | Cooldown | stopwatch | Commander abilities — Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst |
-| Health / Armour | cross / shield | Anything dropped, built or manufactured, both teams |
+| Health / Armor | cross / shield | Anything dropped, built or manufactured, both teams |
 | Speed | chevrons / celerity | Things that move — ARC, MAC, Drifter, Whip, Shade, Shift |
 
 All of it appears as a single row directly under the tooltip's title, above the description:
@@ -192,7 +192,7 @@ Shield and everything else off the DNA menu — do not. `Hive:OnInitialized` cre
 own `ResearchMixin`; its own file comment says it "handles the life-form researches for the Hive".
 
 So the check asks the Hive and then its `GetEvolutionChamber()`. `Shared.GetEntity` returns nil for
-the `-1` that `evochamberid` is initialised to, so a hive that has not created one yet simply has
+the `-1` that `evochamberid` is initialized to, so a hive that has not created one yet simply has
 none.
 
 ### Why this needs the server
@@ -200,7 +200,7 @@ none.
 Both numbers are already on the Hive and both are already network vars — `bioMassLevel` in
 `Hive.lua`, `researchingId` from `ResearchMixin`. They still cannot simply be read on the client.
 
-A Hive is only relevant to players within `kMaxRelevancyDistance`, 40 metres, plus the team's own
+A Hive is only relevant to players within `kMaxRelevancyDistance`, 40 meters, plus the team's own
 commander (`Hive:SetIncludeRelevancyMask`, `Globals.lua:348`). This panel is shown to field aliens
 and its entire purpose is reporting on hives across the map — exactly the case where the client does
 not have the entity. That is why vanilla feeds it from `AlienTeamInfo`, a team-wide always-relevant
@@ -233,7 +233,7 @@ cannot function without, so reading the key *is* the detection:
 |---|---|---|
 | Research time | `kTechDataResearchTimeKey` | 77 |
 | Health | `kTechDataMaxHealth` | 81 |
-| Armour | `kTechDataMaxArmor` | — |
+| Armor | `kTechDataMaxArmor` | — |
 | Cooldown | `kTechDataCooldown` | 19 |
 
 **Speed is the exception** - it has no TechData key at all. The class is derived the same way:
@@ -266,31 +266,31 @@ Only the hourglass and stopwatch are drawn from scratch. Everything else is vani
 | Icon | Source |
 |---|---|
 | Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds`, used straight from vanilla — CBM assigns the same index to `SpurPassive` |
-| Health, armour | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
+| Health, armor | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
 | Marine speed | `marine_buildmenu_insight.dds` row 2 col 4, mirrored to point right and lifted off its button plate |
 | Hourglass, stopwatch | Drawn in `tools/build_icons.ps1`, then measured and fitted to the same 81% of the icon the vanilla glyphs fill |
-| Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, tinted the tech map's researched-alien colour |
+| Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, tinted the tech map's researched-alien color |
 | Researching ring | `ui/unitstatus_alien.dds` `{256, 68, 384, 196}`, the same region `GUIUnitStatus` spins on a busy hive |
 | DNA | `kTechId.LifeFormMenu` in `ui/buildmenu.dds` |
 | Supply | `ui/hud2/team_info_atlas.dds` via `GUIHudSupply.kThemeData`, replacing vanilla's MAC / Drifter |
 
-Health and armour are resampled rather than drawn from the vanilla atlas at runtime for three
+Health and armor are resampled rather than drawn from the vanilla atlas at runtime for three
 reasons: the source glyphs fill only ~29px of a 48px cell, so at icon size they came out smaller
 than everything beside them; they top out at alpha 233, so they looked translucent next to the
-opaque ones; and being amber they could not be tinted onto a target colour at all, since `SetColor`
+opaque ones; and being amber they could not be tinted onto a target color at all, since `SetColor`
 multiplies and can only darken. The baked copies are white and fully opaque, so the tint lands
 exactly. Vanilla's own selection panel is repointed at the same glyphs, keeping its own size.
 
-The figures are coloured from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`, read at
-runtime — marine health pale cyan, marine armour deep teal, alien health yellow, alien armour darker
-orange — and the icons take the same colour, so a number means the same thing wherever you read it.
+The figures are colored from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`, read at
+runtime — marine health pale cyan, marine armor deep teal, alien health yellow, alien armor darker
+orange — and the icons take the same color, so a number means the same thing wherever you read it.
 
 ### ARC stances
 
 An ARC is a different unit depending on its stance — `kARCArmor = 400` undeployed against
 `kARCDeployedArmor = 0`, and it cannot move once deployed. `kTechId.ARC` already carries the
 undeployed values, but the two stance buttons carry no TechData at all, which leaves them free to
-describe the state they put the ARC *into*. So the Deploy button reads `0` armour and no speed,
+describe the state they put the ARC *into*. So the Deploy button reads `0` armor and no speed,
 making the cost of deploying visible while you are choosing it.
 
 A mod that adds tech has to populate these for the tech to work at all, so CBM's Advanced Shade,
@@ -315,12 +315,12 @@ registers nothing at all — vanilla and B2TP behave exactly as they did before 
 
 **Biomass 5.** CBM's fourth `+1` research needs no support of its own — the hive HUD already draws one
 icon per biomass research and reads its art through `GetTextureCoordinatesForIcon`, so CBM's own icon
-appears unaided. What the module adds is the colour: CBM marks the biomass 5 hive out in purple, and
+appears unaided. What the module adds is the color: CBM marks the biomass 5 hive out in purple, and
 the icon carries that so the HUD agrees with what the player sees standing in the room. Every other
-biomass icon keeps the shared colour.
+biomass icon keeps the shared color.
 
 The tint goes through `ImprovedTooltips.RegisterIconColor(techId, color)`, a public registry, rather
-than a branch inside the drawing code — so any mod can claim a colour for its own tech without this
+than a branch inside the drawing code — so any mod can claim a color for its own tech without this
 mod knowing it exists.
 
 
@@ -362,9 +362,9 @@ through one pair of functions:
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
 | `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client only.** Wraps `CreateStatusContainer` / `UpdateStatusSlot` / `UninitializeStatusSlot` to add biomass icons and a researching ring to each hive row |
-| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightTopBar.lua` | **Client only.** Wraps `Initialize` to colour the spectator bar's biomass counter, catching the item as it is created since nothing in that file is reachable afterwards |
+| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightTopBar.lua` | **Client only.** Wraps `Initialize` to color the spectator bar's biomass counter, catching the item as it is created since nothing in that file is reachable afterwards |
 | `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, so the whole team sees it |
-| `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health/armour icons to match their figures |
+| `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health/armor icons to match their figures |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client only.** Wraps `OnInitialized` to replay synced cooldowns into vanilla's own table, fixing vanilla's button dial |
 | `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's cooldown and hive-state messages in every VM |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
@@ -422,11 +422,11 @@ and `mod.settings` names the file by extension.
 `ImprovedTooltips_Config.lua`:
 
 - `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
-- `kShowZeroArmor` — show an explicit `0` for armourless structures rather than hiding the icon
+- `kShowZeroArmor` — show an explicit `0` for armorless structures rather than hiding the icon
 - `kShowSpeed` — show movement speed for things that move
 - `kTintSelectionPanelIcons` — also tint the icons on vanilla's selection panel to match
 - `kMarineIconColor` / `kAlienIconColor` — per-team tint, applied to the mod's own icons only
-  (vanilla's health and armour art is already team-coloured and is left alone)
+  (vanilla's health and armor art is already team-colored and is left alone)
 - `kShowCooldownPanel` — turn the "In Cooldown" panel off entirely
 - `kCooldownPanelMinDuration` — minimum cooldown, in seconds, to earn a panel entry (default 5)
 - `kCooldownPanelOffset` — panel position, offset from the right edge / vertical middle
@@ -437,7 +437,7 @@ and `mod.settings` names the file by extension.
 - `kShowHiveResearchIcon` — the rotating ring and DNA glyph on a hive that is researching
 - `kHiveBiomassIconOrigin` / `kHiveBiomassIconSize` / `kHiveBiomassIconSpacing` — placement of that row
 - `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
-- `kBiomassIconColor` — the colour of every biomass icon the mod draws or reaches: the hive HUD row,
+- `kBiomassIconColor` — the color of every biomass icon the mod draws or reaches: the hive HUD row,
   the tooltip icon and the spectator counter
 - `kColorSpectatorBiomass` — include the spectator top bar counter in that
 - `kHiveResearchRingColor` / `kHiveResearchDnaColor` — tints for the researching indicator
@@ -448,7 +448,7 @@ and `mod.settings` names the file by extension.
 - `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
 - `kCooldownPanelMarineBackgroundAlpha` / `kCooldownPanelAlienBackgroundAlpha` — panel backing
   opacity per team; both default to 0, meaning no backing at all
-- `kShowLostArmsLabUpgrades` — keep researched weapon and armour icons on the marine HUD when every
+- `kShowLostArmsLabUpgrades` — keep researched weapon and armor icons on the marine HUD when every
   arms lab is dead or unpowered, instead of hiding them
 - `kArmsLabLostColor` — the shade they take in that state. Defaults to vanilla's own alert red, the
   one `GUIMarineHUD:Update` defines and can never reach
@@ -472,7 +472,7 @@ and `mod.settings` names the file by extension.
 - `kReadyGlyphHeightScale` — glyph height as a fraction of the label's measured text height
 - `kReadyGlyphGap` / `kReadyLabelGap` — gaps as fractions of the label's text height, glyph to
   label and label to team name, so they stay in proportion under a scoreboard mod's own font
-- `kColorMarineBlipsByWeapon` — colour marine blips on the big map, the one on the map key, by the
+- `kColorMarineBlipsByWeapon` — color marine blips on the big map, the one on the map key, by the
   weapon each player carries. Off by default, and exposed in the settings panel
 - `kColorMarineMinimapBlipsByWeapon` — the same on every minimap: the marine HUD's corner map, and
   the commander's and spectator's. Off by default, and exposed in the settings panel
@@ -496,7 +496,7 @@ and `mod.settings` names the file by extension.
 Regenerates `source/ui/bleu_tooltip_icons.dds` from vector drawing code and compresses it with
 `nvcompress.exe` from the game's `utils/` folder. Pass `-NS2 <path>` if the game is not at the
 default install path. Output is uncompressed RGBA rather than DXT — the sheet is tiny and DXT
-block artefacts are very visible on hard-edged white glyphs.
+block artifacts are very visible on hard-edged white glyphs.
 
 ## Servers
 
@@ -517,7 +517,7 @@ expected to fail the check. Admins should add the mod to the server's mod list, 
 
 The Workshop item is tagged `Must be run on Server` for this reason.
 
-> The exact engine behaviour of `Server.AddRestrictedFileHashes` is not readable from Lua, so this
+> The exact engine behavior of `Server.AddRestrictedFileHashes` is not readable from Lua, so this
 > is read off the config and NS2's server defaults rather than measured. If it turns out a stock
 > server does accept it, the tag and this section should be revisited.
 
@@ -530,17 +530,20 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **1.04**
-- **The big map and the minimap have a weapon colour switch each.** COLOUR MAP BLIPS BY WEAPON now
+- **The big map and the minimap have a weapon color switch each.** COLOR MAP BLIPS BY WEAPON now
   covers only the big map, the one on the map key, and keeps its 1.03 setting, so a player who had
-  it on still does. The new COLOUR MINIMAP BLIPS BY WEAPON covers the minimap in the corner of the
+  it on still does. The new COLOR MINIMAP BLIPS BY WEAPON covers the minimap in the corner of the
   marine HUD, and the commander's and spectator's corner map. Off by default.
 - Each map is a `GUIMinimapFrame` whose `comMode` says which one it is: `kModeBig` for the map key,
   `kModeZoom` for the marine HUD's minimap, `kModeMini` for the overhead corner map. The big map
   switch applies to `kModeBig`; everything else is a minimap.
+- **American spelling throughout.** The settings labels now read COLOR, not COLOUR, and the
+  Workshop description, this README, the docs and the code comments follow suit (armor, gray,
+  center). `docs/marine-map-weapon-colours.md` is now `docs/marine-map-weapon-colors.md`.
 
 **1.03**
-- **Marine blips on the map can be coloured by primary weapon.** Optional, off by default, in the
-  settings panel. The colours are the commander's own — `GUIUnitStatus`'s `kAmmoBarColors`, the
+- **Marine blips on the map can be colored by primary weapon.** Optional, off by default, in the
+  settings panel. The colors are the commander's own — `GUIUnitStatus`'s `kAmmoBarColors`, the
   palette already under each marine's ammo bar in the top-down view — so the map agrees with what a
   commander is reading on the same screen. A rifleman is teal, a shotgunner green, and so on.
 - **It follows the primary weapon, not the one in hand.** A shotgunner who switches to a welder or a
@@ -556,22 +559,22 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   `MapBlip.lua:326` deliberately shows Steam friends across teams, so an alien can see a marine
   blip. The gate is on the viewer's team instead.
 - **Steam friend highlighting still works on top of it.** Vanilla's friend treatment is a
-  desaturation applied after the colour is chosen, not a colour of its own, so the mod feeds the
-  base colour and lets that compose — a friend with an HMG is half-saturated red. Returning a final
-  colour from the hook would have wiped it.
-- Exosuits keep the plain marine colour. Vanilla does colour them elsewhere — the spectator ammo
+  desaturation applied after the color is chosen, not a color of its own, so the mod feeds the
+  base color and lets that compose — a friend with an HMG is half-saturated red. Returning a final
+  color from the hook would have wiped it.
+- Exosuits keep the plain marine color. Vanilla does color them elsewhere — the spectator ammo
   bars give minigun red and railgun orange — but under CBM an exo is modular and can carry any
-  combination, so there is no single weapon to colour one by.
+  combination, so there is no single weapon to color one by.
 - NS2 has **three** per-weapon palettes, not one: the outline glow on the model (everyone,
   commander included), the ammo bar under a marine in the commander's view, and the ammo bar in the
   spectator's. All three agree exactly on shotgun, grenade launcher and flamethrower; HMG differs by
   a shade; rifle has three different values, and the map takes the commander's teal. Recorded in
-  `docs/marine-map-weapon-colours.md`.
+  `docs/marine-map-weapon-colors.md`.
 - **The hourglass and stopwatch glyphs were redrawn with more detail**, to match the artwork in
   the Workshop preview. The hourglass is part full at the top and part full at the bottom, so it
   reads as time running rather than not started, and keeps its old width. The stopwatch gains a
   crown and a start button at 45 degrees, clear of the ring, so it no longer reads as a wall clock;
-  its hands stay at 12 and 3. Health, armour and the marine speed chevron are unchanged.
+  its hands stay at 12 and 3. Health, armor and the marine speed chevron are unchanged.
 - The Workshop description lost two sentences to make room under Steam's 8000-byte cap: the quoted
   Lua stub in the "In Cooldown" paragraph, and a clause about display versus enforcement. Both were
   implementation detail on a page meant for players.
@@ -581,7 +584,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   1.02 drew a pip in the badge's corner; it worked, but it was small and took two rounds of
   resizing to be legible at all. Each team's header now reads `[tick] [Ready] Frontiersmen
   (6 Players)`, green for ready and red for not, with the glyph squared off to the height of the
-  label beside it. No art change — cells 5 and 6 were already a coloured square with a white mark.
+  label beside it. No art change — cells 5 and 6 were already a colored square with a white mark.
 - Two things in vanilla made that harder than it looks, both recorded in
   `docs/tournament-ready-label.md`. The skill badge's x is derived from the team name's width but
   only recomputed when the team's summed skill changes, so shifting the name strands the badge on
@@ -614,10 +617,10 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 **1.01**
 - **Lost arms lab upgrades stay on screen, in red.** When a team loses every arms lab, or they all
-  lose power, the marine HUD's weapon and armour icons simply vanished — indistinguishable from
+  lose power, the marine HUD's weapon and armor icons simply vanished — indistinguishable from
   never having researched them. Vanilla already contains the alert red for this state but can never
-  show it: `GUIMarineHUD:Update` hides the icons fifteen lines before it colours them, and both
-  tests come from the same arms lab. The icons now stay, using vanilla's own colour, driven by the
+  show it: `GUIMarineHUD:Update` hides the icons fifteen lines before it colors them, and both
+  tests come from the same arms lab. The icons now stay, using vanilla's own color, driven by the
   `researched` flag `PlayerUI_GetArmorLevel` accepts and the HUD never passes.
 - **The biomass bar shows research as it happens.** The twelve bead bar knew only whole beads —
   empty until a research finished, then full — because it reads a single integer. Each bead being
@@ -625,13 +628,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   from the per-level progress the 0.92 fix has been publishing all along. Bead positions are
   measured from the texture rather than assumed even; they are not.
 - **Ability icons on that bar light up while being researched** and carry a progress bar, matching
-  the tech map, which promotes any node with partial progress to its "available" colour. They used
-  to stay greyed out until the instant the research completed.
+  the tech map, which promotes any node with partial progress to its "available" color. They used
+  to stay grayed out until the instant the research completed.
 - **A settings panel under Options, Mods**, alongside CBM's and anyone else's: the In Cooldown panel
   can be switched off, and a slider sets the shortest cooldown it will list. Both apply immediately.
-- **CBM's biomass 5 tint now uses CBM's own advanced alien colour.** It previously used the purple
+- **CBM's biomass 5 tint now uses CBM's own advanced alien color.** It previously used the purple
   from CBM's tech map connector lines, which is in fact nearer their advanced *marine* shade — an
-  alien research marked in almost the marine colour.
+  alien research marked in almost the marine color.
 - The Workshop description no longer claims movement speed "picks up whatever the loaded mods set it
   to". It does not: the figure is read off the unit's own class, so mods that compute speed live
   from game state read low or blank. Known, and stated plainly rather than overclaimed.
@@ -643,20 +646,20 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   class's own speed is shown instead. B2TP's Spur shows a speed before its Shift Hive is in, which is
   the one thing given up for everything else being right.
 - **The hourglass and stopwatch now match the vanilla glyphs in size.** Both were drawn 57px tall in
-  a 64px cell and sampled whole, so they rendered at 89% of the icon against the health and armour
+  a 64px cell and sampled whole, so they rendered at 89% of the icon against the health and armor
   glyphs' 81% and visibly overhung them. They are now measured after drawing and fitted to the same
   81%, which also keeps them in step if the drawing code changes.
 - Fixed an error seen on a plain install: `Element 'DualMinigun' doesn't exist in the enum`. `kTechId` is
   an engine enum that **raises** on a name it does not hold rather than answering nil. Every lookup
   by name now goes through `ImprovedTooltips.GetTechIdByName`, which reads the underlying table and
   answers nil for a name that is not there.
-- **Biomass icons are coloured everywhere the mod can reach them** — the hive HUD row, the biomass
-  icon on the commander tooltip, and the spectator top bar counter — in the tech map's own colour for
-  researched alien tech. Vanilla leaves all three as the bare greyscale atlas cell, but nothing else
-  in a tooltip or in the tech tree stays uncoloured, so untinted read as unfinished rather than as
+- **Biomass icons are colored everywhere the mod can reach them** — the hive HUD row, the biomass
+  icon on the commander tooltip, and the spectator top bar counter — in the tech map's own color for
+  researched alien tech. Vanilla leaves all three as the bare grayscale atlas cell, but nothing else
+  in a tooltip or in the tech tree stays uncolored, so untinted read as unfinished rather than as
   deliberate. CBM's biomass 5 keeps CBM purple.
 - **A CBM compatibility module**, the one mod-specific file in the mod and a deliberate exception:
-  CBM colour-codes its own tech in a way nothing can be read from. It detects CBM by the tech CBM
+  CBM color-codes its own tech in a way nothing can be read from. It detects CBM by the tech CBM
   adds rather than by a name, and registers nothing at all when CBM is absent.
 - **CBM's biomass 5 icon is tinted purple** on the hive HUD, matching how CBM marks that hive out.
   The research itself needed no code — the HUD already listed it and reads its art from the atlas, so
@@ -689,7 +692,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   40, 60 and 80 seconds and the hive furthest along is not necessarily the one that finishes first.
 
 **0.91**
-- Fixed the health and armour glyphs being oversized on vanilla's selection panel. They are now
+- Fixed the health and armor glyphs being oversized on vanilla's selection panel. They are now
   baked at vanilla's own proportion, with the tooltips magnifying by sampling a smaller window.
 - Speed is now **dimmed**, rather than stated as fact, for structures whose movement is conditional
   and cannot currently be confirmed. B2TP's Spur needs a Shift Hive, CBM's Spur does not — the mod
@@ -701,12 +704,12 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - **Movement speed** added for things that move: ARC 2.0, Shade 1.73, Crag 2.9, Shift 2.9, Whip 3.5,
   MAC 6, Drifter 11.
 - **ARC stances.** The Deploy and Undeploy buttons now describe the state they put the ARC into, so
-  Deploy shows armour dropping to 0 and speed to 0 — the cost of deploying, visible while choosing.
-- **Health and armour icons replaced with vanilla's own** cross and shield, resampled into the mod's
+  Deploy shows armor dropping to 0 and speed to 0 — the cost of deploying, visible while choosing.
+- **Health and armor icons replaced with vanilla's own** cross and shield, resampled into the mod's
   sheet so they match the other icons in size and are fully opaque. The mod's earlier hand-drawn
   pair is gone.
-- **Colour.** Figures and icons both take vanilla's selection-panel colours — marine health pale
-  cyan, marine armour deep teal, alien health yellow, alien armour darker orange — so a number means
+- **Color.** Figures and icons both take vanilla's selection-panel colors — marine health pale
+  cyan, marine armor deep teal, alien health yellow, alien armor darker orange — so a number means
   the same thing wherever it is read. Vanilla's own selection panel is brought in line too.
 - **Cooldown panel** entries now sit on the game's build-menu button plate rather than one flat
   rectangle behind the whole panel, removing the hard-edged box on both teams.
@@ -731,7 +734,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 **0.85**
 - Moved research time and cooldown out of vanilla's top-right icon row and into a single stat row
-  under the title, alongside health and armour. In 0.8 each extra icon in the top row pushed it
+  under the title, alongside health and armor. In 0.8 each extra icon in the top row pushed it
   further left, and with a long title it collided with the title text.
 - Dropped 0.8's repacking of vanilla's own cost / supply / biomass icons — no longer needed, and it
   means tooltips with no extra data now render exactly as vanilla does.

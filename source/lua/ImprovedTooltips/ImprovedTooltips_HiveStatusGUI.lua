@@ -55,7 +55,7 @@ local kProgressRingCoords = { 256, 68, 256 + 128, 68 + 128 }
 local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "ResearchBioMassThree", "ResearchBioMassFour" }
 
 -- Each entry is { coords = ..., techId = ... }. The techId is kept so a compatibility module can
--- claim a colour for it - CBM marks its biomass 5 research out in purple.
+-- claim a color for it - CBM marks its biomass 5 research out in purple.
 local kBiomassIcons = nil
 local kDnaIconCoords = nil
 
@@ -69,7 +69,7 @@ local function ResolveIcons()
 		return false
 	end
 
-	-- Compatibility modules attach themselves on first use, and one of them may want to colour an
+	-- Compatibility modules attach themselves on first use, and one of them may want to color an
 	-- icon built below.
 	IT.ApplyCompatModules()
 
@@ -119,7 +119,7 @@ local function CreateBiomassIcons(slot)
 		icon:SetTexture(kBuildMenuTexture)
 		-- Each slot is simply the art of the research it stands for.
 		icon:SetTexturePixelCoordinates(GUIUnpackCoords(entry.coords))
-		-- Untinted unless a compatibility module has claimed a colour for this research.
+		-- Untinted unless a compatibility module has claimed a color for this research.
 		icon:SetColor(IT.GetIconColor(entry.techId) or IT.kBiomassIconColor)
 		icon:SetLayer(kGUILayerPlayerHUDForeground4)
 		icon:SetIsVisible(false)
@@ -149,14 +149,14 @@ local function CreateResearchIcon(slot)
 	slot.itResearchRing:SetColor(IT.kHiveResearchRingColor)
 	slot.itResearchRing:SetLayer(kGUILayerPlayerHUDForeground4)
 	slot.itResearchRing:SetIsVisible(false)
-	-- No rotation offset, deliberately. The engine already pivots about the item's own centre, which
+	-- No rotation offset, deliberately. The engine already pivots about the item's own center, which
 	-- is why GUIUnitStatus spins this same art in place without setting one. 0.93 set it to a
 	-- normalized (0.5, 0.5) on the theory that (0, 0) meant a corner; it does not, and that pushed
 	-- the pivot out to the edge and made the ring orbit a point outside itself.
 	slot.background:AddChild(slot.itResearchRing)
 
 	-- The DNA sits inside the ring and must not spin with it, so it is a sibling positioned to the
-	-- same centre rather than a child.
+	-- same center rather than a child.
 	local dnaSize = size * IT.kHiveResearchDnaScale
 	local inset = (size - dnaSize) * 0.5
 

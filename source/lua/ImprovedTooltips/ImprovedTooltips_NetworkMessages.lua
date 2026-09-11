@@ -78,7 +78,7 @@ local kHiveStateMessage =
 {
 	-- A location id is Shared.GetStringIndex(locationName) (ScriptActor_Server.lua:180), not an
 	-- entity id. AlienTeamInfo declares its own as "entityid" and gets away with it, but an integer
-	-- is what this actually is, and 0 is what ScriptActor initialises it to.
+	-- is what this actually is, and 0 is what ScriptActor initializes it to.
 	locationId = "integer",
 	-- Matches Hive.lua's own network var range.
 	biomass = "integer (0 to 6)",

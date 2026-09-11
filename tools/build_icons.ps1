@@ -3,7 +3,7 @@
 # Produces source/ui/bleu_tooltip_icons.dds: a 448x64 sheet of seven 64x64 cells, in this order:
 #
 #   0 research (hourglass)  1 cooldown (stopwatch)  2 speed, marine (chevron)
-#   3 health (cross)        4 armour (shield)
+#   3 health (cross)        4 armor (shield)
 #   5 ready (tick)          6 not ready (cross)
 #
 # The cell order is what ImprovedTooltips_TooltipGUI.lua's kOwnIconCoords indexes into - change one
@@ -15,7 +15,7 @@
 # Nothing here is drawn from scratch except the hourglass and stopwatch. The rest is vanilla art,
 # resampled - the mod invents as little as possible:
 #
-#   health, armour -> vanilla's own selection-panel glyphs, resampled to match the other icons in
+#   health, armor -> vanilla's own selection-panel glyphs, resampled to match the other icons in
 #                     size and made fully opaque. See the block that builds them for why they are
 #                     baked in rather than drawn from the vanilla atlas at runtime.
 #   marine speed   -> ui/marine_buildmenu_insight.dds row 2 column 4, mirrored to point right and
@@ -79,10 +79,10 @@ function RoundRect($x, $y, $w, $h, $r) {
 }
 
 # Draws a canvas into its cell scaled so the glyph's own bounding box ends up $TARGET pixels across,
-# centred. Used for the two glyphs drawn from scratch here.
+# centered. Used for the two glyphs drawn from scratch here.
 #
-# Why they need it and the vanilla art does not: the health cross and armour shield are baked at 39
-# of the 64px cell and the tooltip samples a centred 48px window of it, so they render at 39/48 =
+# Why they need it and the vanilla art does not: the health cross and armor shield are baked at 39
+# of the 64px cell and the tooltip samples a centered 48px window of it, so they render at 39/48 =
 # 81% of the icon box. The hourglass and stopwatch are sampled over the WHOLE cell, so to match that
 # 81% their glyph has to be 0.8125 * 64 = 52px. Drawn as-is they came out 57 tall, which is why they
 # looked bigger than everything beside them.
@@ -183,7 +183,7 @@ $g.FillPath($white, (RoundRect 25 5 14 7 2.5))
 # attempt started it at radius 19 and it crossed the stroke, reading as a line drawn through the
 # watch rather than a button on it.
 #
-# Geometry so it touches and does not cross: centre (32, 38), ring radius 21 with a 5-wide stroke,
+# Geometry so it touches and does not cross: center (32, 38), ring radius 21 with a 5-wide stroke,
 # so the outer edge is at radius 23.5 - at 45 degrees that is (32 + 23.5*cos45, 38 - 23.5*sin45) =
 # (48.6, 21.4). A round cap extends half the pen width beyond the endpoint, so with a 6-wide pen the
 # line would have to START 3 further out along the radius for its cap to land exactly on that edge.
@@ -207,7 +207,7 @@ $g.Dispose(); CommitFitted $b 1
 #
 # It sits on a rounded dark button plate, and unlike the buy-menu glyphs that plate is opaque - the
 # alpha channel is no use for separating them. Luminance works instead: the plate is near-black, the
-# chevron is bright cyan. So luminance becomes the alpha mask and the colour is flattened to white,
+# chevron is bright cyan. So luminance becomes the alpha mask and the color is flattened to white,
 # which also lets the runtime team tint apply cleanly.
 $nvdecompress = Join-Path $NS2 "utils\nvdecompress.exe"
 if (-not (Test-Path -LiteralPath $nvdecompress)) { throw "nvdecompress.exe not found at $nvdecompress" }
@@ -250,7 +250,7 @@ $g.DrawImage($chevron,
 $g.Dispose(); Commit $b 2
 $chevron.Dispose()
 
-# 3, 4 - health cross and armour shield, resampled from ui/alien_commander_textures.dds at
+# 3, 4 - health cross and armor shield, resampled from ui/alien_commander_textures.dds at
 # (0,363)-(48,411) and (48,363)-(96,411). These are vanilla's own selection-panel glyphs, the ones
 # that appear when you click a structure.
 #
@@ -262,7 +262,7 @@ $chevron.Dispose()
 #   * ALPHA. The source tops out at alpha 233 (marine's copy only reaches 149), so they rendered
 #     slightly translucent next to the fully opaque drawn glyphs. SetColor multiplies, so alpha
 #     cannot be raised at runtime - it has to be fixed in the texture.
-#   * COLOUR. Flattening to white means the runtime team tint lands on the exact target colour
+#   * COLOR. Flattening to white means the runtime team tint lands on the exact target color
 #     instead of compounding with the art's own amber, which previously meant health could not be
 #     tinted at all (multiply only darkens).
 #
@@ -302,8 +302,8 @@ function Add-CommanderGlyph($cellX, $bx1, $by1, $bx2, $by2, $slot) {
     # draws the same cell into an item size it sets itself - same box, bigger glyph inside it.
     #
     # So they are baked at vanilla's 61% and the TOOLTIP magnifies instead, by sampling a smaller
-    # centred window of the cell (see kOwnIconCoords). Sampling inward cannot bleed into the
-    # neighbouring cells, whereas sampling outward to shrink them would.
+    # centered window of the cell (see kOwnIconCoords). Sampling inward cannot bleed into the
+    # neighboring cells, whereas sampling outward to shrink them would.
     $box = 39                       # 39/64 = 61%, matching vanilla; a 48px window gives 39/48 = 81%
     $pad = ($CELL - $box) / 2
     $scale = [Math]::Min($box / $gw, $box / $gh)
@@ -319,18 +319,18 @@ function Add-CommanderGlyph($cellX, $bx1, $by1, $bx2, $by2, $slot) {
 }
 
 Add-CommanderGlyph 0  10 8  38 36  3    # health cross
-Add-CommanderGlyph 48 11 11 37 36  4    # armour shield
+Add-CommanderGlyph 48 11 11 37 36  4    # armor shield
 
 # ---------------------------------------------------------------------------------------------
 # Slots 5 and 6: the tournament mode ready pip - a tick, and a cross.
 #
-# Unlike every other cell here these are drawn IN COLOUR rather than white. The rest are baked white
-# and opaque so SetColor can tint them per team; green and red are semantic, never team colours, so
+# Unlike every other cell here these are drawn IN COLOR rather than white. The rest are baked white
+# and opaque so SetColor can tint them per team; green and red are semantic, never team colors, so
 # there is nothing to tint and a two-item shape-plus-glyph construction would be wasted on a pip
 # roughly sixteen pixels across.
 #
-# Shape carries the meaning and colour only reinforces it: a tick against a cross survives red-green
-# colour blindness, a green square against a red one does not.
+# Shape carries the meaning and color only reinforces it: a tick against a cross survives red-green
+# color blindness, a green square against a red one does not.
 #
 # The rounded plate is deliberately not the full cell. These sit in the corner of the scoreboard's
 # team skill badge, so the glyph needs to read at a third of that badge's height.
@@ -376,7 +376,7 @@ $ag.Dispose()
 $atlas.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)
 $atlas.Dispose()
 
-# Uncompressed RGBA rather than DXT: the sheet is tiny (64KB plus mips) and DXT block artefacts
+# Uncompressed RGBA rather than DXT: the sheet is tiny (64KB plus mips) and DXT block artifacts
 # are very visible on hard-edged white glyphs against full transparency.
 $nvcompress = Join-Path $NS2 "utils\nvcompress.exe"
 if (-not (Test-Path -LiteralPath $nvcompress)) { throw "nvcompress.exe not found at $nvcompress - pass -NS2 <install path>" }

@@ -37,8 +37,8 @@ IT.kShowZeroArmor = true
 -- reports otherwise mid-root. Stating the plain speed is the simpler and more often correct answer.
 IT.kShowSpeed = true
 
--- Icon tint. Applies to the mod's own icons only. Vanilla's health and armour art is already
--- coloured per team and is left untinted.
+-- Icon tint. Applies to the mod's own icons only. Vanilla's health and armor art is already
+-- colored per team and is left untinted.
 IT.kMarineIconColor = Color(0.7, 0.9, 1, 1)
 IT.kAlienIconColor = Color(1, 0.79, 0.3, 1)
 
@@ -66,16 +66,16 @@ IT.kCooldownPanelShowSeconds = true
 -- Backing plate opacity behind the whole panel, per team. Both are 0.
 --
 -- Each entry now sits on the game's own build-menu button plate, the same one the research display
--- uses, so the row has a shape of its own and needs nothing behind it. Any flat colour here draws a
+-- uses, so the row has a shape of its own and needs nothing behind it. Any flat color here draws a
 -- hard-edged rectangle: obvious on the alien side, where the smoke mask fades to nothing at its
 -- edges and the box shows through underneath, and just as wrong on the marine side where there is
 -- no smoke to distract from it. Raise one only if text turns out unreadable over a bright map.
 IT.kCooldownPanelAlienBackgroundAlpha = 0
 IT.kCooldownPanelMarineBackgroundAlpha = 0
 
--- Also tint the health and armour icons on VANILLA's selection panel - the one you get clicking an
--- existing structure - to match their own figures. Vanilla colours the two numbers differently but
--- draws both icons in one flat team colour.
+-- Also tint the health and armor icons on VANILLA's selection panel - the one you get clicking an
+-- existing structure - to match their own figures. Vanilla colors the two numbers differently but
+-- draws both icons in one flat team color.
 IT.kTintSelectionPanelIcons = true
 
 ------------------------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ IT.kTintSelectionPanelIcons = true
 --
 -- This is the mod's only server-side display option: AlienTeam lives in the server VM, and the
 -- corrected progress reaches clients through vanilla's own tech node update. Setting it false
--- restores vanilla's behaviour exactly.
+-- restores vanilla's behavior exactly.
 IT.kSpreadBiomassProgress = true
 
 ------------------------------------------------------------------------------------------------
@@ -117,31 +117,31 @@ IT.kHiveBiomassIconOrigin = Vector(140, -13, 0)
 IT.kHiveBiomassIconSize = 18
 IT.kHiveBiomassIconSpacing = 19
 --
--- The ring is positioned by its top-left but is read as a disc, so it is easier to think in centres:
--- this puts its centre at (168, 38), which is directly under the middle of the SECOND biomass icon
+-- The ring is positioned by its top-left but is read as a disc, so it is easier to think in centers:
+-- this puts its center at (168, 38), which is directly under the middle of the SECOND biomass icon
 -- (140 + 19 + 18/2 = 168) and low enough to clear the name plate. Change the size and the ring grows
 -- down and right from the same corner, so move the position by half the difference to keep it
--- centred where it was.
+-- centered where it was.
 IT.kHiveResearchIconPosition = Vector(134, 4, 0)
 IT.kHiveResearchIconSize = 68
 
 -- The DNA glyph as a fraction of the ring it sits inside.
 IT.kHiveResearchDnaScale = 0.55
--- The colour of every biomass icon the mod draws or reaches: the hive HUD row, the biomass icon on
+-- The color of every biomass icon the mod draws or reaches: the hive HUD row, the biomass icon on
 -- the commander tooltip, and the spectator top bar counter.
 --
--- Vanilla leaves all three untinted, which is the same greyscale cell in each case - kTechId.Biomass
+-- Vanilla leaves all three untinted, which is the same grayscale cell in each case - kTechId.Biomass
 -- and kTechId.BioMassOne are both atlas index 112. But nothing else in the tech tree or in a tooltip
--- stays uncoloured, so untinted reads as unfinished rather than as deliberate. This is the tech
--- map's own colour for alien tech that is researched and available -
+-- stays uncolored, so untinted reads as unfinished rather than as deliberate. This is the tech
+-- map's own color for alien tech that is researched and available -
 -- kTechMapIconColors[kAlienTeamType][kTechStatus.Available] in GUITechMap.lua - so a biomass icon
 -- means the same thing wherever it is seen.
 --
--- A compatibility module can claim a different colour for one specific research; CBM's biomass 5
--- takes CBM's advanced alien colour this way. See IT.RegisterIconColor.
+-- A compatibility module can claim a different color for one specific research; CBM's biomass 5
+-- takes CBM's advanced alien color this way. See IT.RegisterIconColor.
 IT.kBiomassIconColor = Color(1, 0.9, 0.4, 1)
 
--- Colour the spectator top bar's biomass counter too. Separate because reaching it takes more work
+-- Color the spectator top bar's biomass counter too. Separate because reaching it takes more work
 -- than the others: see ImprovedTooltips_InsightTopBar.lua.
 IT.kColorSpectatorBiomass = true
 
@@ -181,14 +181,14 @@ IT.kEnableCBMCompat = true
 -- Tint the biomass 5 research icon on the hive HUD, which CBM marks out in purple.
 IT.kColorCBMBiomassFive = true
 
--- CBM's own colour for advanced ALIEN content: kAdvancedAlienColor in its GUIMinimap.lua, the
+-- CBM's own color for advanced ALIEN content: kAdvancedAlienColor in its GUIMinimap.lua, the
 -- counterpart to kAdvancedMarineColor = Color(0.4, 0, 1, 1) for advanced marine content. Confirmed
 -- by one of CBM's developers, 2026-09-05.
 --
 -- It used to be Color(0.7, 0.3, 1, 1) here, taken from CBM's tech map and minimap connector lines.
--- That was the closest thing to a deliberate CBM colour at the time, but it is a generic UI purple
+-- That was the closest thing to a deliberate CBM color at the time, but it is a generic UI purple
 -- and, as it turns out, nearer their advanced MARINE shade than their alien one - so an alien
--- research was being marked in almost the marine colour. This is the semantic one.
+-- research was being marked in almost the marine color. This is the semantic one.
 --
 -- Mirrored rather than read at runtime. CBM declares both as file-locals in its own copy of
 -- GUIMinimap.lua and keys them into self.blipColorTable through kBlipColorType, which it also
@@ -201,7 +201,7 @@ IT.kCBMBiomassFiveColor = Color(0.93, 0, 0.65, 1)
 -- Lost arms lab upgrades
 ------------------------------------------------------------------------------------------------
 --
--- See ImprovedTooltips_ArmsLabAlert.lua. Vanilla hides the weapon and armour upgrade icons when the
+-- See ImprovedTooltips_ArmsLabAlert.lua. Vanilla hides the weapon and armor upgrade icons when the
 -- team has no working arms lab, which looks exactly like never having researched them. It also
 -- contains the code to paint them red instead - unreachable, because the icons are hidden first.
 
@@ -238,12 +238,12 @@ IT.kBiomassAbilityMeterFraction = 0.18
 -- up in game.
 IT.kBiomassAbilityMeterColor = Color(1, 1, 1, 1)
 
--- Colour for an ability icon while its research is in flight. Vanilla's overlay only knows locked
--- and unlocked, so a research under way sits greyed out until the moment it finishes.
+-- Color for an ability icon while its research is in flight. Vanilla's overlay only knows locked
+-- and unlocked, so a research under way sits grayed out until the moment it finishes.
 --
 -- The tech map does not: GUITechMap promotes any node with partial progress straight to
 -- kTechStatus.Available - "if researchProgress ~= 0 and researchProgress ~= 1 then status =
--- kTechStatus.Available" - so the icon lights up the moment work starts. This is that same colour,
+-- kTechStatus.Available" - so the icon lights up the moment work starts. This is that same color,
 -- kTechMapIconColors[kAlienTeamType][kTechStatus.Available], so a research in progress looks the
 -- same in both places.
 --
@@ -265,7 +265,7 @@ IT.kShowSpectatorSupply = true
 -- LEFT edge, alien leftward from its RIGHT edge, so a negative alien number is inside the bar and a
 -- positive one is out past it.
 --
--- Vanilla sits at marine extractors 50, marine resources 130, centre 256, alien resources 317,
+-- Vanilla sits at marine extractors 50, marine resources 130, center 256, alien resources 317,
 -- harvesting 397, biomass 507 - all within a bar only 512 wide, on a screen that is not. The first
 -- attempt put both counters inside those 512 pixels and they collided. These use the empty space
 -- either side instead.
@@ -281,7 +281,7 @@ IT.kSpectatorBiomassShiftX = 110
 -- Tournament mode ready labels
 ------------------------------------------------------------------------------------------------
 --
--- See ImprovedTooltips_TournamentReady.lua. A glyph and a coloured label at the front of each
+-- See ImprovedTooltips_TournamentReady.lua. A glyph and a colored label at the front of each
 -- team's scoreboard header while Shine's tournament mode waits for both teams to ready up, in
 -- place of the corner pip 1.02 drew on the skill badge. Inert unless that plugin is running, and
 -- removed entirely once the round starts.
@@ -294,7 +294,7 @@ IT.kReadyLabelText = "[Ready]"
 IT.kNotReadyLabelText = "[Not Ready]"
 
 -- Full green and full red. These are the one pair a red/green dichromat cannot separate, which is
--- why the tick and the cross are kept beside them: the shape carries the meaning and the colour
+-- why the tick and the cross are kept beside them: the shape carries the meaning and the color
 -- only reinforces it.
 IT.kReadyLabelColor = Color(0, 1, 0, 1)
 IT.kNotReadyLabelColor = Color(1, 0, 0, 1)
@@ -317,12 +317,12 @@ IT.kReadyGlyphGap = 0.3
 IT.kReadyLabelGap = 0.5
 
 ------------------------------------------------------------------------------------------------
--- Marine map blips coloured by weapon
+-- Marine map blips colored by weapon
 ------------------------------------------------------------------------------------------------
 --
--- See ImprovedTooltips_MapBlipColor.lua. Marine player blips on the map take a colour per weapon,
+-- See ImprovedTooltips_MapBlipColor.lua. Marine player blips on the map take a color per weapon,
 -- so the map says where the shotguns are. Off by default: it is more to read at a glance than the
--- one flat team colour, and not everyone wants that.
+-- one flat team color, and not everyone wants that.
 --
 -- Two switches since 1.04. The first is the big map, the one on the map key, and keeps the option
 -- key it had in 1.03 so anyone who turned it on still has it. The second is every minimap: the
@@ -331,20 +331,20 @@ IT.kReadyLabelGap = 0.5
 IT.kColorMarineBlipsByWeapon = false
 IT.kColorMarineMinimapBlipsByWeapon = false
 
--- These are the COMMANDER's palette, GUIUnitStatus.lua:57-64 - the colours already under each
+-- These are the COMMANDER's palette, GUIUnitStatus.lua:57-64 - the colors already under each
 -- marine's ammo bar in the top-down view, which is the same screen this map is read from. They are
 -- normally read out of the game at runtime rather than used from here; see
 -- kMapBlipReadCommanderPalette below. This table is the fallback for when that read cannot happen,
 -- so keep it in step with the game's own values if they ever change.
 --
--- Every primary weapon is here, rifle included: the colour says what a marine can bring, so a plain
+-- Every primary weapon is here, rifle included: the color says what a marine can bring, so a plain
 -- rifleman reads as teal rather than as an absence. Pistols, axes and welders never appear -
--- kPlayerStatus has no value for them, they only ever sit in slots 2 and 3 - and a marine's colour
+-- kPlayerStatus has no value for them, they only ever sit in slots 2 and 3 - and a marine's color
 -- does not change when they switch to one, because the status is read from the primary slot.
 --
--- Exos are the one exclusion. Vanilla colours them elsewhere (minigun red, railgun orange), but
+-- Exos are the one exclusion. Vanilla colors them elsewhere (minigun red, railgun orange), but
 -- under CBM an exo is modular and can carry any combination, so there is no single weapon to
--- colour by.
+-- color by.
 IT.kMapBlipColorRifle           = Color(0, 1, 1, 1)          -- #00FFFF
 IT.kMapBlipColorShotgun         = Color(0, 1, 0, 1)          -- #00FF00
 IT.kMapBlipColorGrenadeLauncher = Color(1, 0, 1, 1)          -- #FF00FF

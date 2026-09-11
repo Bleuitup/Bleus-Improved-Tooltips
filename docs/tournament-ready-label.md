@@ -69,8 +69,8 @@ the header row, where it reads at a glance:
 
 Label green for ready, red for not; glyph squared off to the height of the text beside it.
 
-**The colour split forces a separate text item.** A GUI text item has one colour, so `[Ready]` in
-green and the team name in the team's own colour cannot be one string. The label is our item,
+**The color split forces a separate text item.** A GUI text item has one color, so `[Ready]` in
+green and the team name in the team's own color cannot be one string. The label is our item,
 measured and positioned by us; vanilla's `teamNameItem` (`:158-168`) is only moved.
 
 **The skill badge position is derived from the name width AND cached.** `:1153` sets it to
@@ -129,7 +129,7 @@ badge-after-name and wrote both positions from those constants. ESB flows the he
 So on a server running ESB our code **moved somebody else's badge from the front of the row to the
 back of it**, and set our label in `Fonts.kInsight` while the name beside it was Arial 13.
 
-Both fixes generalise rather than special-casing ESB:
+Both fixes generalize rather than special-casing ESB:
 
 - **Read the host's positions back and only shift them.** `TrackBase` keeps, per item, the last x
   we wrote; anything different from that on the next update is the host's own write and becomes the
@@ -150,21 +150,21 @@ CompMod (`1876217244`), Shimizu Scoreboard (`3776560923`), Shimizu Better Specta
 ## Art (unchanged from 1.02)
 
 Cells 5 and 6 of the mod's own sheet, 448x64. See `tools/build_icons.ps1`. The move from badge pip
-to header prefix needed **no art change at all** — the cells were already a coloured rounded square
+to header prefix needed **no art change at all** — the cells were already a colored rounded square
 with a white tick or cross, which is exactly what the header wants.
 
 Emoji were ruled out. The code points are free — they are Unicode standards — but every set of
-*glyphs* is somebody's artwork under its own licence: Apple's and the Segoe font's are proprietary,
+*glyphs* is somebody's artwork under its own license: Apple's and the Segoe font's are proprietary,
 Twemoji is CC-BY, OpenMoji is share-alike. A tick is two strokes, so there is nothing worth an
 attribution line for.
 
-**These are the only cells baked in colour.** Every other cell is white so `SetColor` can tint it
-per team; green and red here are semantic and never team colours, so there is nothing to tint and a
+**These are the only cells baked in color.** Every other cell is white so `SetColor` can tint it
+per team; green and red here are semantic and never team colors, so there is nothing to tint and a
 two-item plate-plus-glyph construction would buy nothing. The cost is that changing the
-colours means re-running the build script rather than editing config.
+colors means re-running the build script rather than editing config.
 
-Shape carries the meaning and colour only reinforces it — a tick against a cross survives red-green
-colour blindness, a green square against a red one does not.
+Shape carries the meaning and color only reinforces it — a tick against a cross survives red-green
+color blindness, a green square against a red one does not.
 
 ## Test checklist
 

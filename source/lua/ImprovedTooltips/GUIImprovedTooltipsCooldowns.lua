@@ -104,7 +104,7 @@ function GUIImprovedTooltipsCooldowns:Initialize()
 	-- GUICommanderTooltip:InitSmokeyBackground.
 	--
 	-- The backing plate is transparent for aliens (see the config). The smoke mask fades to nothing
-	-- at its edges, so any flat colour behind it shows up as a hard rectangle under soft smoke.
+	-- at its edges, so any flat color behind it shows up as a hard rectangle under soft smoke.
 	if isAlien then
 		self.smoke = GUIManager:CreateGraphicItem()
 		self.smoke:SetAnchor(GUIItem.Middle, GUIItem.Center)

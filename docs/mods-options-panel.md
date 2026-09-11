@@ -6,7 +6,7 @@ Branch `feature/mods-options-panel`. Tracking issue: #1.
 nothing more. Needs an in-game pass.
 
 This is the shared infrastructure the other feature branches need — the exo charge figures and the
-marine weapon colours both want live toggles rather than constants. It is on its own branch for that
+marine weapon colors both want live toggles rather than constants. It is on its own branch for that
 reason: building it inside either of those would mean writing it twice and merging it once.
 
 All line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`.

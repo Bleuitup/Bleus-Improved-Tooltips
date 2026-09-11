@@ -5,9 +5,9 @@
 -- knows about any particular mod.
 --
 -- Everything else works by asking TechData and the tech tree what they hold, which covers any mod
--- that adds tech the ordinary way. One thing cannot be reached that way: CBM colour-codes its own
+-- that adds tech the ordinary way. One thing cannot be reached that way: CBM color-codes its own
 -- tech, marking the biomass 5 research out in purple on the hive model and in its own UI, and
--- matching that is a judgement about CBM's art rather than a value readable from anywhere.
+-- matching that is a judgment about CBM's art rather than a value readable from anywhere.
 --
 -- It once carried speed corrections for CBM's Crag, Shade, Shift, Whip and Fortress structures,
 -- which compute movement from live infestation charge rather than storing a constant. Those were
@@ -47,7 +47,7 @@ end
 -- per biomass research and reads its art through GetTextureCoordinatesForIcon, so CBM's own icon
 -- for it appears with no help from here.
 --
--- What does need saying is the colour. CBM marks the biomass 5 hive out in purple - a distinct
+-- What does need saying is the color. CBM marks the biomass 5 hive out in purple - a distinct
 -- model material, hive_adv.material - and the icon should carry that so the HUD agrees with what
 -- the player sees standing in the room. Every other biomass icon stays untinted, as vanilla draws
 -- them.

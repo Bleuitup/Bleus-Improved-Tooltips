@@ -154,11 +154,11 @@ function IT.SuppressField(field, techId)
 end
 
 ------------------------------------------------------------------------------------------------
--- Icon tints, for mods that colour-code their own tech
+-- Icon tints, for mods that color-code their own tech
 ------------------------------------------------------------------------------------------------
 --
 -- A public registry rather than a branch inside the drawing code, so a mod can say "my tech is this
--- colour" without this mod knowing anything about it. Used by the CBM compatibility module for the
+-- color" without this mod knowing anything about it. Used by the CBM compatibility module for the
 -- biomass 5 research, which CBM marks out in purple.
 
 IT._iconColors = IT._iconColors or { }
@@ -436,7 +436,7 @@ end
 --
 -- kTechId.ARC itself carries the undeployed values in TechData and moves at ARC.kMoveSpeed, so it
 -- needs nothing. The two stance buttons carry no TechData at all, which leaves them free to
--- describe the state they put the ARC INTO - so the Deploy button reads "0 armour, no speed",
+-- describe the state they put the ARC INTO - so the Deploy button reads "0 armor, no speed",
 -- making the cost of deploying visible at the moment you are choosing it.
 -- The constants are read inside the resolvers, not captured here: this file is loaded from a
 -- post-hook and there is no guarantee ARC.lua or BalanceHealth.lua have run yet at registration
