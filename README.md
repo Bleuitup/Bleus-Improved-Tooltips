@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.04. Published to the Steam Workshop as
+Version 1.04a. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -473,7 +473,7 @@ and `mod.settings` names the file by extension.
 - `kReadyGlyphGap` / `kReadyLabelGap` — gaps as fractions of the label's text height, glyph to
   label and label to team name, so they stay in proportion under a scoreboard mod's own font
 - `kColorMarineBlipsByWeapon` — color marine blips on the big map, the one on the map key, by the
-  weapon each player carries. Off by default, and exposed in the settings panel
+  weapon each player carries. **On** by default from 1.04a, and exposed in the settings panel
 - `kColorMarineMinimapBlipsByWeapon` — the same on every minimap: the marine HUD's corner map, and
   the commander's and spectator's. Off by default, and exposed in the settings panel
 - `kMapBlipColorRifle` / `kMapBlipColorShotgun` / `kMapBlipColorGrenadeLauncher` / `kMapBlipColorFlamethrower` /
@@ -528,6 +528,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.04a**
+- **Weapon colors on the big map are now on by default.** It is a screen you open deliberately, to
+  read, so the extra color earns its place there. The minimap stays off by default: it is in the
+  corner of the screen all round whether you are reading it or not.
+- Nobody's choice is overwritten. `Client.GetOptionBoolean` returns whatever a player stored, so the
+  new default only reaches players who never touched the setting.
 
 **1.04**
 - **The big map and the minimap have a weapon color switch each.** COLOR MAP BLIPS BY WEAPON now

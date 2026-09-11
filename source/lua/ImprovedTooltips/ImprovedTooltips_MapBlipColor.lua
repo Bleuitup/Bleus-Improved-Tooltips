@@ -3,8 +3,8 @@
 --
 -- Post-hook on lua/MapBlip.lua. Colors marine player blips on the map by the weapon each one is
 -- carrying, so a glance at the map says where the shotguns are rather than only where bodies are.
--- Off by default: it is more to read, and not everyone wants it. The big map and the minimaps are
--- switched separately; see GetIsEnabledFor.
+-- The big map and the minimaps are switched separately; see GetIsEnabledFor. The big map is on by
+-- default from 1.04a, the minimap off.
 --
 -- THE COLORS ARE THE COMMANDER'S OWN, AND ARE READ FROM THE GAME. NS2 has three per-weapon
 -- palettes and they are not shown to the same people:

@@ -41,7 +41,7 @@ local kOptionWeaponBlipsMinimap = "BIT_WeaponBlipsMinimap"
 -- loaded. Keep in step with ImprovedTooltips_Config.lua.
 local kDefaultCooldownPanel      = true
 local kDefaultCooldownMinTime    = 5
-local kDefaultWeaponBlips        = false
+local kDefaultWeaponBlips        = true
 local kDefaultWeaponBlipsMinimap = false
 
 if not kMainVM then

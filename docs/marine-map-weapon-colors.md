@@ -4,7 +4,8 @@ Shipped in 1.03 and confirmed working in game. 1.04 split the one toggle into tw
 the minimaps are switched separately (see [Big map and minimap](#big-map-and-minimap-switched-apart-104)).
 
 Marine player blips on the map take a color per weapon, so the map says where the shotguns are
-rather than only where bodies are. Optional and off by default.
+rather than only where bodies are. Optional; the big map is on by default from 1.04a, the minimap
+off.
 
 NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`.
 
@@ -17,7 +18,7 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 | Who sees it | Marines and spectators only |
 | Friend tinting | Composes on top: a friend with an HMG is half-saturated red |
 | Own blip | Untouched. Not a `MapBlip` at all |
-| Setting | In the Mods panel, default **off**. Two since 1.04: big map, and minimap |
+| Setting | In the Mods panel. Two since 1.04: big map, **on** by default from 1.04a, and minimap, **off** |
 | Colorblind | Nothing to do |
 | Art | **None.** This branch ships no `.dds` |
 
@@ -301,7 +302,11 @@ invisible from the marine side.
 Confirmed in game for 1.03: colors appear on the map with bots carrying dropped weapons. The
 friend and CBM cases below are still unverified.
 
-- Both settings off, the default: every map looks exactly like vanilla.
+- Both settings off: every map looks exactly like vanilla. From 1.04a the big map is on by default,
+  so this is no longer the out-of-the-box state.
+- **1.04a, a player who never touched the setting:** the big map is colored on first launch, the
+  minimap is not. A player who had turned it off keeps it off - `Client.GetOptionBoolean` returns
+  what they stored, and the new default only applies where nothing is stored.
 - Setting on, as a marine: rifle teal, shotgun green, GL fuchsia, flamethrower yellow, HMG red. A
   marine holding a pistol, axe or welder keeps their primary weapon's color.
 - **1.04: big map on, minimap off.** Colored on the map key; the HUD's corner minimap stays plain.
