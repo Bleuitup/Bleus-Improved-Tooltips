@@ -328,8 +328,9 @@ and cost time to rule out.
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- **1.04 is published and tagged `v1.04`** (2026-09-11): separate weapon-color switches for the big
-  map and the minimap, and American spelling throughout. 1.03 (`v1.03`) added the weapon-colored
+- **1.04a is published and tagged `v1.04a`** (2026-09-13): the big map weapon colors default to on,
+  the minimap stays off. 1.04 (`v1.04`) split the weapon-color toggle into a big map and a minimap
+  switch and moved everything to American spelling. 1.03 (`v1.03`) added the weapon-colored
   marine map blips and the redrawn hourglass and stopwatch. The `it_blipcolors` and `it_blipstate`
   console commands are still in; they are inert unless typed and are how a "no colors" report gets
   diagnosed.
