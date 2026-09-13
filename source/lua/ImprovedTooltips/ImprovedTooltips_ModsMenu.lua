@@ -36,6 +36,7 @@ local kOptionCooldownMinTime = "BIT_CooldownMinTime"
 -- BIT_WeaponBlips is the big map only from 1.04, and keeps its 1.03 key so a stored ON carries over.
 local kOptionWeaponBlips        = "BIT_WeaponBlips"
 local kOptionWeaponBlipsMinimap = "BIT_WeaponBlipsMinimap"
+local kOptionMinimapPGArrows    = "BIT_MinimapPhaseGateArrows"
 
 -- Repeated here rather than read from the config, because in the main menu VM the config is not
 -- loaded. Keep in step with ImprovedTooltips_Config.lua.
@@ -43,6 +44,7 @@ local kDefaultCooldownPanel      = true
 local kDefaultCooldownMinTime    = 5
 local kDefaultWeaponBlips        = true
 local kDefaultWeaponBlipsMinimap = false
+local kDefaultMinimapPGArrows    = true
 
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
@@ -65,6 +67,7 @@ local function ApplyStoredOptions()
 	IT.kShowCooldownPanel = Client.GetOptionBoolean(kOptionCooldownPanel, kDefaultCooldownPanel)
 	IT.kColorMarineBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlips, kDefaultWeaponBlips)
 	IT.kColorMarineMinimapBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlipsMinimap, kDefaultWeaponBlipsMinimap)
+	IT.kCommanderMinimapPhaseGateArrows = Client.GetOptionBoolean(kOptionMinimapPGArrows, kDefaultMinimapPGArrows)
 
 	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
 	-- feeds compares against whole seconds, so round rather than truncate.
@@ -172,6 +175,24 @@ local kContents =
 		properties =
 		{
 			{ "Label", "COLOR MINIMAP BLIPS BY WEAPON" },
+		},
+	},
+
+	{
+		name = "bitMinimapPhaseGateArrows",
+		class = OP_TT_Checkbox,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionMinimapPGArrows,
+			optionType = "bool",
+			default = kDefaultMinimapPGArrows,
+			tooltip = "Shows phase gate arrows on the commander's and spectator's corner minimap, like the big map. Follows your phase gate lines setting under Advanced.",
+			immediateUpdate = ApplyStoredOptions,
+		},
+		properties =
+		{
+			{ "Label", "PHASE GATE ARROWS ON CORNER MINIMAP" },
 		},
 	},
 }

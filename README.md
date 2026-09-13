@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.04a. Published to the Steam Workshop as
+Version 1.05. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -486,6 +486,9 @@ and `mod.settings` names the file by extension.
   `debug.getupvalue`, the same technique Shine and NSL use. Set false to force the values above
 - `kMapBlipColorRefreshInterval` — seconds between rebuilds of the blip-owner to weapon table.
   `GetMapBlipColor` runs once per blip per minimap update, so this cannot be per call
+- `kCommanderMinimapPhaseGateArrows` — draw phase gate arrows on the commander's and spectator's
+  corner minimap, following the player's own phase gate line setting. On by default, and exposed in
+  the settings panel
 
 ## Building the assets
 
@@ -528,6 +531,17 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.05**
+- **Phase gate arrows on the commander's and spectator's corner minimap.** Vanilla draws them on the
+  big map and on the marine HUD's minimap but never on the overhead corner map, because a single
+  `not modeIsMini` term (`GUIMinimapConnection.lua:32`) switches off both the static and the
+  animated arrows there. New setting PHASE GATE ARROWS ON CORNER MINIMAP, on by default.
+- It follows the player's own phase gate line setting (Advanced > Map) and vanilla's own rules:
+  marine gates only, and only with more than two of them. Solid lines, alien tunnels and two-gate
+  setups are left exactly as vanilla draws them.
+- Lines that carry arrows there are drawn 10 thick, the same as the marine HUD's minimap, instead of
+  the corner map's usual 6: at 6 the arrow art is squashed past reading.
 
 **1.04a**
 - **Weapon colors on the big map are now on by default.** It is a screen you open deliberately, to

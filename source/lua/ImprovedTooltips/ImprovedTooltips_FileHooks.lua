@@ -47,8 +47,11 @@ if Client then
 	-- tournament mode is waiting for both teams. Inert when that plugin is not running.
 	ModLoader.SetupFileHook("lua/GUIScoreboard.lua", "lua/ImprovedTooltips/ImprovedTooltips_TournamentReady.lua", "post")
 	-- The map, both the minimap and the big one: marine blips colored by the weapon each player
-	-- carries. Off by default, and only ever shown to the marine side or to a spectator.
+	-- carries. Big map on by default, minimap off, and only ever shown to marines or spectators.
 	ModLoader.SetupFileHook("lua/MapBlip.lua", "lua/ImprovedTooltips/ImprovedTooltips_MapBlipColor.lua", "post")
+	-- Phase gate arrows on the commander's and spectator's corner minimap, which vanilla leaves
+	-- plain. Follows the player's own phase gate line setting. On by default.
+	ModLoader.SetupFileHook("lua/GUIMinimapConnection.lua", "lua/ImprovedTooltips/ImprovedTooltips_MinimapConnection.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and

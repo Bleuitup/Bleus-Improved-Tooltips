@@ -373,3 +373,14 @@ IT.kMapBlipReadCommanderPalette = true
 -- per minimap update, so this must not be per call. A quarter second is far below the time it
 -- takes to notice a weapon change on a map.
 IT.kMapBlipColorRefreshInterval = 0.25
+
+------------------------------------------------------------------------------------------------
+-- Phase gate arrows on the corner minimap
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_MinimapConnection.lua. Vanilla draws phase gate arrows on the big map and on
+-- the marine HUD's minimap, but never on the commander's or spectator's corner minimap. This draws
+-- them there too, following the player's own phase gate line setting (Advanced > Map). On by
+-- default, and exposed in the settings panel.
+
+IT.kCommanderMinimapPhaseGateArrows = true
