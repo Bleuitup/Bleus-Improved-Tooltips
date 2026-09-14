@@ -37,6 +37,7 @@ local kOptionCooldownMinTime = "BIT_CooldownMinTime"
 local kOptionWeaponBlips        = "BIT_WeaponBlips"
 local kOptionWeaponBlipsMinimap = "BIT_WeaponBlipsMinimap"
 local kOptionMinimapPGArrows    = "BIT_MinimapPhaseGateArrows"
+local kOptionExoWeaponBars      = "BIT_ExoWeaponBars"
 
 -- Repeated here rather than read from the config, because in the main menu VM the config is not
 -- loaded. Keep in step with ImprovedTooltips_Config.lua.
@@ -45,6 +46,7 @@ local kDefaultCooldownMinTime    = 5
 local kDefaultWeaponBlips        = true
 local kDefaultWeaponBlipsMinimap = false
 local kDefaultMinimapPGArrows    = true
+local kDefaultExoWeaponBars      = true
 
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
@@ -68,6 +70,7 @@ local function ApplyStoredOptions()
 	IT.kColorMarineBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlips, kDefaultWeaponBlips)
 	IT.kColorMarineMinimapBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlipsMinimap, kDefaultWeaponBlipsMinimap)
 	IT.kCommanderMinimapPhaseGateArrows = Client.GetOptionBoolean(kOptionMinimapPGArrows, kDefaultMinimapPGArrows)
+	IT.kShowExoWeaponBars = Client.GetOptionBoolean(kOptionExoWeaponBars, kDefaultExoWeaponBars)
 
 	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
 	-- feeds compares against whole seconds, so round rather than truncate.
@@ -193,6 +196,24 @@ local kContents =
 		properties =
 		{
 			{ "Label", "PHASE GATE ARROWS ON CORNER MINIMAP" },
+		},
+	},
+
+	{
+		name = "bitExoWeaponBars",
+		class = OP_TT_Checkbox,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionExoWeaponBars,
+			optionType = "bool",
+			default = kDefaultExoWeaponBars,
+			tooltip = "Shows heat and charge bars beside the crosshair for each exo arm. Only while the exo viewmodel is hidden and marine HUD bars are set to Default.",
+			immediateUpdate = ApplyStoredOptions,
+		},
+		properties =
+		{
+			{ "Label", "EXO WEAPON BARS" },
 		},
 	},
 }

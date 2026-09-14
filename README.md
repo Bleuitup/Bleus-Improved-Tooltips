@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.05. Published to the Steam Workshop as
+Version 1.06. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -489,6 +489,16 @@ and `mod.settings` names the file by extension.
 - `kCommanderMinimapPhaseGateArrows` — draw phase gate arrows on the commander's and spectator's
   corner minimap, following the player's own phase gate line setting. On by default, and exposed in
   the settings panel
+- `kShowExoWeaponBars` — a bar and a percentage beside the crosshair for each exo arm, shown only
+  while the exo viewmodel is hidden and marine HUD bars are "Default". On by default, and exposed in
+  the settings panel
+- `kExoBarInnerOffset` / `kExoBarThickness` / `kExoBarHeight` / `kExoBarTextGap` /
+  `kExoBarFontSize` — exo bar geometry in 1080p pixels, scaled by resolution and by crosshair scale
+  above 1
+- `kExoBarBaseColor`, `kExoBarHeatWarnFrom` / `kExoBarHeatWarnAt`, `kExoBarWarnColor` /
+  `kExoBarHotColor`, `kExoBarChargeReadyColor`, `kExoBarPoolNotReadyAlpha`,
+  `kExoBarPoolReadyColor` / `kExoBarPoolMultiReadyColor` — exo bar colors and thresholds for heat,
+  charge and energy pool arms
 
 ## Building the assets
 
@@ -531,6 +541,22 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.06**
+- **Exo weapon bars beside the crosshair.** Hiding the exo viewmodel also hides minigun heat and
+  railgun charge, because vanilla paints both onto the weapon model's own texture. A bar and a
+  percentage now sit either side of the crosshair, one per arm, never averaged. New setting EXO
+  WEAPON BARS, on by default.
+- Shown only when the exo viewmodel is hidden ("Hide all", or "Custom" with the exo hidden) and
+  marine HUD bars are "Default"; Centralized and NS1 already carry an exo readout.
+- Arms are recognized by what they expose, not by name: heat (minigun) blends from blue through
+  orange to red and pulses when overheated; charge (railgun) turns white when full; an energy pool
+  (CBM's plasma launcher) marks the shot cost with a tick and turns CBM's own color once a shot is
+  affordable. A claw shows nothing.
+- The look is the ydy center HUD bar stroke at twice the thickness, drawn from plain GUI items so it
+  is the same whichever bar texture a player has installed.
+- The Workshop description's Settings paragraph now covers every switch, not just the cooldown
+  panel.
 
 **1.05**
 - **Phase gate arrows on the commander's and spectator's corner minimap.** Vanilla draws them on the

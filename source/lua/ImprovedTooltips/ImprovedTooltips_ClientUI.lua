@@ -20,3 +20,7 @@ if not Client then
 end
 
 AddClientUIScriptForClass("Player", "ImprovedTooltips/GUIImprovedTooltipsCooldowns")
+
+-- Exo weapon bars beside the crosshair. Registered for "Exo": ClientUI matches with isa, so this
+-- covers every exo variant without naming them, and the script only exists while in a suit.
+AddClientUIScriptForClass("Exo", "ImprovedTooltips/GUIImprovedTooltipsExoBars")

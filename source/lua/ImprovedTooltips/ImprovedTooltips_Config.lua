@@ -384,3 +384,41 @@ IT.kMapBlipColorRefreshInterval = 0.25
 -- default, and exposed in the settings panel.
 
 IT.kCommanderMinimapPhaseGateArrows = true
+
+------------------------------------------------------------------------------------------------
+-- Exo weapon bars
+------------------------------------------------------------------------------------------------
+--
+-- See GUIImprovedTooltipsExoBars.lua. A bar and a percentage beside the crosshair for each exo arm,
+-- shown only when the exo viewmodel is hidden and marine HUD bars are "Default". On by default, and
+-- exposed in the settings panel.
+
+IT.kShowExoWeaponBars = true
+
+-- Geometry in 1080p pixels, scaled by GUIScale and by the crosshair scale when it is above 1. The
+-- ydy center bar stroke sits 59-64 px from center and is 5 px thick; these bars are twice as thick
+-- and further out, clear of the exo reticle's center.
+IT.kExoBarInnerOffset = 74
+IT.kExoBarThickness   = 10
+IT.kExoBarHeight      = 64
+IT.kExoBarTextGap     = 4
+IT.kExoBarFontSize    = 16
+
+-- The base color is the Centralized HUD bars' own, GUIAdvancedHUDBars.lua:31-33.
+IT.kExoBarBaseColor = Color(0, 0.6117, 1, 1)
+
+-- Heat (minigun): base color until kExoBarHeatWarnFrom, blending to the warn color by
+-- kExoBarHeatWarnAt, then to the hot color at 100%. Overheated pulses red, as vanilla's bars do.
+IT.kExoBarHeatWarnFrom = 0.5
+IT.kExoBarHeatWarnAt   = 0.75
+IT.kExoBarWarnColor    = Color(1, 0.5, 0.2, 1)
+IT.kExoBarHotColor     = Color(1, 0.12, 0.08, 1)
+
+-- Charge (railgun): base color while charging, this color once fully charged.
+IT.kExoBarChargeReadyColor = Color(1, 1, 1, 1)
+
+-- Energy pool (CBM plasma launcher): the base color dimmed while a shot is not affordable, then
+-- CBM's own dial colors once it is (GUIPlasma.lua: magenta for Bomb, cyan for MultiShot).
+IT.kExoBarPoolNotReadyAlpha   = 0.6
+IT.kExoBarPoolReadyColor      = Color(1, 0.25, 1, 1)
+IT.kExoBarPoolMultiReadyColor = Color(0.25, 1, 1, 1)

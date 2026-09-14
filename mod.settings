@@ -46,6 +46,7 @@ Both are visible to every player on the team, not just the commander.
 [*] [b]Supply icons.[/b] The supply figure on a tooltip was marked with a MAC or a Drifter while the HUD's top bar used a different pair of icons for the same thing. The tooltip now uses the top bar's. The MAC and Drifter icons are untouched wherever they stand for the units themselves.
 [*] [b]Uncolored biomass icons.[/b] The biomass icon was drawn as bare grayscale wherever it appeared, on the commander tooltip, the spectator counter and the hive panel. Nothing else in a tooltip or the tech tree is left uncolored, so it read as unfinished. All of them now take the tech map color for researched alien tech.
 [*] [b]Lost arms lab upgrades.[/b] When a team loses every arms lab, or they all lose power, the weapon and armor icons on the marine HUD simply vanished - which looks exactly like never having researched them. They now stay on screen in the alert red the base game already defined for this and never showed, so "we lost it" reads differently from "we never had it".
+[*] [b]Exo weapon readouts.[/b] Hiding the exo viewmodel hid minigun heat and railgun charge; bars beside the crosshair now show them.
 [/list]
 
 [h1]Live values[/h1]
@@ -63,7 +64,7 @@ Each bead being researched now fills as the work goes in, and more than one fill
 [h1]Map, spectating and tournament play[/h1]
 
 [list]
-[*] [b]Phase gate arrows on the commander minimap.[/b] Shown as on the big map, following your phase gate lines setting.
+[*] [b]Phase gate arrows on the commander minimap.[/b] As on the big map, per your phase gate lines setting.
 [*] [b]Marine blips colored by weapon.[/b] Each marine's blip takes their primary weapon's color, as on the commander's ammo bars, so a glance says where the shotguns are. On for the big map, off for the minimap by default. Exosuits keep the marine color; only marines and spectators see it.
 [*] [b]Supply on the spectator bar.[/b] That bar never showed supply. Both teams' supply now sits on it, used against maximum.
 [*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header is marked ready in green or not ready in red, with a tick or a cross beside it. Both come off at round start, and nothing is drawn on a server without that plugin. Shine only announces readiness when it changes, so a client joining mid pre game may show a team as not ready until the next change.
@@ -71,7 +72,7 @@ Each bead being researched now fills as the work goes in, and more than one fill
 
 [h1]Settings[/h1]
 
-Options, Mods, "Bleu's Improved Tooltips". The In Cooldown panel can be turned off there, and a slider sets the shortest cooldown it will list, so you can quiet it down or show everything. Both take effect immediately.
+Options, Mods, "Bleu's Improved Tooltips": switch each optional feature and set the shortest cooldown listed. Changes apply immediately.
 
 [h1]Works with other mods[/h1]
 
