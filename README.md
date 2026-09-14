@@ -490,7 +490,7 @@ and `mod.settings` names the file by extension.
   corner minimap, following the player's own phase gate line setting. On by default, and exposed in
   the settings panel
 - `kShowExoWeaponBars` — a bar and a percentage beside the crosshair for each exo arm, shown only
-  while the exo viewmodel is hidden and marine HUD bars are "Default". On by default, and exposed in
+  while the exo viewmodel is hidden, whatever the marine HUD bars style. On by default, and exposed in
   the settings panel
 - `kExoBarInnerOffset` / `kExoBarThickness` / `kExoBarHeight` / `kExoBarTextGap` /
   `kExoBarFontSize` — exo bar geometry in 1080p pixels, scaled by resolution and by crosshair scale
@@ -547,8 +547,9 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   railgun charge, because vanilla paints both onto the weapon model's own texture. A bar and a
   percentage now sit either side of the crosshair, one per arm, never averaged. New setting EXO
   WEAPON BARS, on by default.
-- Shown only when the exo viewmodel is hidden ("Hide all", or "Custom" with the exo hidden) and
-  marine HUD bars are "Default"; Centralized and NS1 already carry an exo readout.
+- Shown only when the exo viewmodel is hidden ("Hide all", or "Custom" with the exo hidden),
+  whatever the marine HUD bars style. Centralized and NS1 do carry an exo readout, but they squeeze
+  both arms into one averaged bar, so a player can like those for marines and still want these.
 - Arms are recognized by what they expose, not by name: heat (minigun) blends from blue through
   orange to red and pulses when overheated; charge (railgun) turns white when full; an energy pool
   (CBM's plasma launcher) marks the shot cost with a tick and turns CBM's own color once a shot is

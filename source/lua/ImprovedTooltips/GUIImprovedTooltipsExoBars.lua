@@ -17,8 +17,11 @@
 --   * The exo viewmodel is hidden: Client.kHideViewModel, which ViewModelOption_Update
 --     (NS2Utility.lua:1781) sets for "Hide all" and for "Custom" with the exo hidden. It is
 --     recomputed whenever the local player changes (Client.lua:1812), so becoming an exo is covered.
---   * Marine HUD bars are "Default" (hudbars_m == 0). Centralized and NS1 already carry an exo weapon
---     readout on their own bars (NS2Utility.lua:84-99), averaged across both arms.
+--
+-- Marine HUD bars are deliberately NOT a condition (user, 2026-09-14, reversing an earlier call).
+-- Centralized and NS1 do carry an exo readout (NS2Utility.lua:84-99), but they squeeze both arms into
+-- one averaged bar, so a player can like those styles for marines and still want these in an exo.
+-- Nothing collides: Centralized sits 32-64 px from center, NS1 in the bottom corners, these 74+.
 --
 -- WHAT EACH ARM SHOWS. Detected by what the weapon exposes, not by class name, so vanilla, CBM and
 -- CBM's dev branch all work with nothing hardcoded, and so would any other mod's arm built the same
@@ -77,11 +80,6 @@ local function GetCrosshairScale()
 	return (type(scale) == "number" and scale > 1) and scale or 1
 end
 
-local function GetHudBarsMode()
-	local mode = GetAdvancedOption and GetAdvancedOption("hudbars_m") or 0
-	return type(mode) == "number" and mode or 0
-end
-
 -- Shared.GetEntity(Entity.invalidId) is not guaranteed nil-safe, so the id is checked first.
 local function GetSlotWeapon(holder, idField)
 	local id = holder[idField]
@@ -94,7 +92,6 @@ end
 function GUIImprovedTooltipsExoBars:Initialize()
 
 	self.crosshairScale = GetCrosshairScale()
-	self.hudBarsMode = GetHudBarsMode()
 	self.nextOptionPoll = 0
 
 	local scale = self.crosshairScale
@@ -217,8 +214,8 @@ function GUIImprovedTooltipsExoBars:HideBoth()
 	if self.right then self.right.root:SetIsVisible(false) end
 end
 
--- The options this depends on are read on an interval rather than every frame, and a crosshair scale
--- change rebuilds the geometry, since GUIAdvancedHUDBars only picks that up on a restart.
+-- The crosshair scale is read on an interval rather than every frame, and a change rebuilds the
+-- geometry, since GUIAdvancedHUDBars only picks that up on a restart.
 function GUIImprovedTooltipsExoBars:PollOptions()
 
 	local now = Shared.GetTime()
@@ -226,8 +223,6 @@ function GUIImprovedTooltipsExoBars:PollOptions()
 		return
 	end
 	self.nextOptionPoll = now + kOptionPollInterval
-
-	self.hudBarsMode = GetHudBarsMode()
 
 	if GetCrosshairScale() ~= self.crosshairScale then
 		self:Uninitialize()
@@ -252,10 +247,6 @@ function GUIImprovedTooltipsExoBars:GetHolderIfShown()
 	end
 
 	self:PollOptions()
-
-	if self.hudBarsMode ~= 0 then
-		return nil
-	end
 
 	local holder = player:GetActiveWeapon()
 	if not holder or not holder:isa("ExoWeaponHolder") then

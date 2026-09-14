@@ -10,7 +10,7 @@ NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\
 
 | | |
 | --- | --- |
-| When | Exo viewmodel hidden (`Client.kHideViewModel`) AND marine HUD bars "Default" (`hudbars_m == 0`) |
+| When | Exo viewmodel hidden (`Client.kHideViewModel`), **whatever the marine HUD bars style** (revised 2026-09-14, see below) |
 | Setting | EXO WEAPON BARS in the Mods panel, `BIT_ExoWeaponBars`, default **on** |
 | Per arm | One bar each side, never averaged |
 | Look | ydy center bar stroke at 2x thickness, further out than ydy, number below |
@@ -24,14 +24,18 @@ Vanilla paints minigun heat and railgun charge onto the viewmodel's texture thro
 railgun surface. Hiding the viewmodel removes the surface and the readout with it. Vanilla already
 patches the armor text for this exact case (`GUIMarineHUD.lua:979-990`) but not weapon state.
 
-## The two conditions
+## The condition
 
 - `Client.kHideViewModel` is set by `ViewModelOption_Update` (`NS2Utility.lua:1781`): true for
   "Hide all", or "Custom" with `drawviewmodel_exo` off. It is recomputed whenever the local player
   changes (`Client.lua:1812`), so switching from marine to exo is covered.
-- `hudbars_m` (`AdvancedOptions.lua:306`): 0 Default, 1 Centralized, 2 NS1. The user's "crosshair
-  style" is this setting. Centralized and NS1 already show an exo readout on their right bar
-  (`GetWeaponAmmoFraction`, `NS2Utility.lua:84-99`), averaged across both arms, minigun inverted.
+
+**Marine HUD bars used to be a second condition and no longer are.** The first build required
+`hudbars_m == 0` (`AdvancedOptions.lua:306`: 0 Default, 1 Centralized, 2 NS1), on the reasoning that
+Centralized and NS1 already show an exo readout (`GetWeaponAmmoFraction`, `NS2Utility.lua:84-99`).
+After testing, the user dropped it: that readout squeezes both arms into one averaged bar, minigun
+inverted, so a player can like those styles for marines and still want these bars in an exo. Nothing
+collides - Centralized is 32-64 px from center, NS1 sits in the bottom corners, these start at 74.
 
 ## Arms, detected by what they expose
 
@@ -79,13 +83,14 @@ cheats 1
 
 Then `dualminigun` or `dualrailgun` (`NS2ConsoleCommands_Server.lua:2048-2050`; `exo` is also dual
 minigun). Claw and minigun has no console command - buy it at a prototype lab. Advanced > Misc >
-Draw viewmodel must hide the exo, and HUD bars must be Default.
+Draw viewmodel must hide the exo.
 
 - Dual minigun: both bars fill while firing, blend blue to orange to red, pulse red when overheated,
   and each arm reads on its own.
 - Dual railgun: 0% idle, fills while held, white at 100%, back to 0 after the shot.
 - Claw and minigun: the claw side shows nothing.
-- Viewmodel shown: no bars. HUD bars Centralized or NS1: no bars.
+- Viewmodel shown: no bars.
+- HUD bars Centralized and NS1: bars still show, alongside vanilla's own, without overlapping.
 - Setting off in the Mods panel: no bars, applied immediately.
 - Crosshair scale above 1: bars move out and grow with it.
 - CBM dev plasma launcher: fill refills over time, tick at 80%, dim below it, magenta at or above,

@@ -208,7 +208,7 @@ local kContents =
 			optionPath = kOptionExoWeaponBars,
 			optionType = "bool",
 			default = kDefaultExoWeaponBars,
-			tooltip = "Shows heat and charge bars beside the crosshair for each exo arm. Only while the exo viewmodel is hidden and marine HUD bars are set to Default.",
+			tooltip = "Shows heat and charge bars beside the crosshair for each exo arm. Only while the exo viewmodel is hidden.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =

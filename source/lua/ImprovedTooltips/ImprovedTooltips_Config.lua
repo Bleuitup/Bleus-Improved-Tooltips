@@ -390,7 +390,7 @@ IT.kCommanderMinimapPhaseGateArrows = true
 ------------------------------------------------------------------------------------------------
 --
 -- See GUIImprovedTooltipsExoBars.lua. A bar and a percentage beside the crosshair for each exo arm,
--- shown only when the exo viewmodel is hidden and marine HUD bars are "Default". On by default, and
+-- shown only when the exo viewmodel is hidden, whatever the marine HUD bars style. On by default, and
 -- exposed in the settings panel.
 
 IT.kShowExoWeaponBars = true
