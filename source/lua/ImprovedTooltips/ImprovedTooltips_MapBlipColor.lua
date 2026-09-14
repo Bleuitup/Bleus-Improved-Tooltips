@@ -180,6 +180,16 @@ local function GetColorForStatus(status)
 		return nil
 	end
 
+	-- Overrides win over the commander's palette, by status name. The first is CBM's SMG, whose
+	-- palette orange read as an alien on the map (1.05). This table is also where per-weapon custom
+	-- colors will plug in. Safe to cache at once: it does not depend on GUIUnitStatus having loaded.
+	local override = IT.kMapBlipColorOverrides and IT.kMapBlipColorOverrides[statusName]
+
+	if override then
+		resolvedColors[status] = override
+		return override
+	end
+
 	local palette = GetCommanderPalette()
 	local color
 

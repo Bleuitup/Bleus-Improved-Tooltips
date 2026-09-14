@@ -97,8 +97,17 @@ and this takes the commander bar's teal, since that is the palette a commander i
 yellow — the flamethrower's color. So the gap is spectator-only, and a commander sees the SMG
 correctly as orange.
 
-**This mod uses the commander bar's `#FF6600`**, because the map is read from the same seat and at
-the same moment as that bar, and the brighter orange carries further at blip size.
+**Up to 1.04a this mod used the commander bar's `#FF6600`**, because the map is read from the same
+seat and at the same moment as that bar, and the brighter orange carries further at blip size.
+
+**From 1.05 the SMG is blue, `#0000FF`, through `IT.kMapBlipColorOverrides`.** CBM players reported
+SMG marines reading as aliens: `#FF6600` sits next to the default alien blip color, `#FF8A00`
+(`AdvancedOptions.lua:1144`). The user chose blue on the "rifle plus" reasoning, which a CBM player
+also pitched. I argued for violet, since blue can match the plain marine blip color (vanilla default
+`#00D8FF`, the user's own `#0000FF`) and with weapon colors on the only marines left in that color
+are exos. The user's answer, which decided it: exo blips are much larger than marine blips, so the
+two do not read alike. Pure blue is a first test value. The override is checked before the palette
+read and cached at once, and it is the table per-weapon custom colors will use.
 
 Only the spectator table is reachable from Lua, which is why every value here is written down rather
 than read: the two authoritative palettes keep their lists in file-locals and their colors in a
@@ -254,7 +263,7 @@ the two look nearly identical in game:
 [Improved Tooltips]   GrenadeLauncher    #FF00FF
 [Improved Tooltips]   Flamethrower       #FFFF00
 [Improved Tooltips]   HeavyMachineGun    #E60000
-[Improved Tooltips]   Submachinegun      #FF6600      <- only with CBM loaded
+[Improved Tooltips]   Submachinegun      #0000FF      <- only with CBM loaded; the 1.05 override
 [Improved Tooltips] 6 weapon colors resolved.
 ```
 

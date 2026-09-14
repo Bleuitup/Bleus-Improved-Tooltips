@@ -362,6 +362,21 @@ IT.kMapBlipColorHeavyMachineGun = Color(0.9, 0, 0, 1)        -- #E60000
 -- resolves to a status.
 IT.kMapBlipColorSubmachinegun = Color(1, 0.4, 0, 1)          -- #FF6600
 
+-- Per-weapon overrides, keyed by kPlayerStatus name. These WIN over both the commander's palette
+-- and the fallback table above.
+--
+-- Submachinegun (CBM), 1.05: the commander palette's orange (#FF6600) sat next to the default alien
+-- blip color (#FF8A00) and CBM players read SMG marines as aliens. Blue instead, on the "rifle plus"
+-- reasoning - a rifle-tier weapon in the rifle's color family - which a CBM player pitched
+-- independently. It can match the plain marine blip color; the only marines left in that color with
+-- weapon colors on are exos, whose blips are much larger. Pure blue is a first test value.
+--
+-- This table is where per-weapon custom colors will plug in later.
+IT.kMapBlipColorOverrides =
+{
+	Submachinegun = Color(0, 0, 1, 1),                        -- #0000FF
+}
+
 -- Read the commander's palette out of the running game rather than using the table above.
 -- GUIUnitStatus keeps kAmmoBarColors as a file-local, so it is pulled from the upvalues of
 -- GUIUnitStatus:UpdateUnitStatusBlip with debug.getupvalue - the same technique Shine and NSL use.

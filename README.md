@@ -484,6 +484,9 @@ and `mod.settings` names the file by extension.
   instead, so a weapon any mod adds is picked up with nothing hardcoded here. `GUIUnitStatus` keeps
   that table as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
   `debug.getupvalue`, the same technique Shine and NSL use. Set false to force the values above
+- `kMapBlipColorOverrides` — per-weapon colors keyed by `kPlayerStatus` name that win over both the
+  palette read and the fallback. Holds CBM's `Submachinegun` as blue (`#0000FF`) from 1.05, since the
+  palette's orange read as an alien; the place per-weapon custom colors will plug in
 - `kMapBlipColorRefreshInterval` — seconds between rebuilds of the blip-owner to weapon table.
   `GetMapBlipColor` runs once per blip per minimap update, so this cannot be per call
 - `kCommanderMinimapPhaseGateArrows` — draw phase gate arrows on the commander's and spectator's
@@ -552,6 +555,12 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   setups are left exactly as vanilla draws them.
 - Lines that carry arrows there are drawn 10 thick, the same as the marine HUD's minimap, instead of
   the corner map's usual 6: at 6 the arrow art is squashed past reading.
+- **CBM's SMG blips are blue instead of orange.** The commander palette's SMG orange (`#FF6600`) sat
+  right next to the default alien blip color (`#FF8A00`), and CBM players read SMG marines as
+  aliens. Blue follows the "rifle plus" idea, a rifle-tier weapon in the rifle's color family, which
+  a CBM player also suggested. It can match the plain marine color; with weapon colors on, the only
+  marines left in that color are exos, and their blips are far larger. A new override table,
+  `kMapBlipColorOverrides`, wins over the palette read; per-weapon custom colors will use it later.
 - **Exo weapon bars beside the crosshair.** Hiding the exo viewmodel also hides minigun heat and
   railgun charge, because vanilla paints both onto the weapon model's own texture. A bar and a
   percentage now sit either side of the crosshair, one per arm, never averaged. New setting EXO
