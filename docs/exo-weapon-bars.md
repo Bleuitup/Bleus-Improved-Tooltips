@@ -1,8 +1,9 @@
 # Exo weapon bars
 
-For 1.06, on `feature/exo-weapon-bars` (cut from the unpublished 1.05 branch). Built; awaiting the
-user's in-game test. Replaces `feature/exosuit-no-viewmodel-ui`, which predated the Mods panel, showed
-numbers only, and never ran.
+For 1.05, alongside the corner minimap phase gate arrows; built on `feature/exo-weapon-bars` and
+assembled on `release/1.05`. Tested by the user on B2TP and CBM dev; the Centralized weapon bar
+hiding was approved after that. Replaces `feature/exosuit-no-viewmodel-ui`, which predated the Mods
+panel, showed numbers only, and never ran.
 
 NS2 line numbers refer to `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`.
 
