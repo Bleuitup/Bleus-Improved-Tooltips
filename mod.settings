@@ -65,8 +65,8 @@ Each bead being researched now fills as the work goes in, and more than one fill
 
 [list]
 [*] [b]Phase gate arrows on the commander minimap.[/b] As on the big map, per your phase gate lines setting.
-[*] [b]Marine blips colored by weapon.[/b] Each marine's blip takes their primary weapon's color, so a glance says where the shotguns are. On for the big map, off for the minimap by default. Exosuits keep the marine color; only marines and spectators see it.
-[*] [b]Supply on the spectator bar.[/b] That bar never showed supply. Both teams' supply now sits on it, used against maximum.
+[*] [b]Marine blips colored by weapon.[/b] Each marine's blip takes their primary weapon's color, as on the commander's ammo bars, so a glance says where the shotguns are. With CBM, SMGs are blue. On by default for the big map only. Exosuits keep the marine color; only marines and spectators see it.
+[*] [b]Supply on the spectator bar.[/b] Both teams' supply now shows there, used against maximum.
 [*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header is marked ready in green or not ready in red, with a tick or a cross beside it. Both come off at round start, and nothing is drawn on a server without that plugin. Shine only announces readiness when it changes, so a client joining mid pre game may show a team as not ready until the next change.
 [/list]
 

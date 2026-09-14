@@ -79,6 +79,15 @@ local function ApplyStoredOptions()
 
 end
 
+-- CBM adds an SMG, which the map colors blue rather than the commander palette's orange (see
+-- IT.kMapBlipColorOverrides). The tooltip says so only when that weapon exists: kPlayerStatus gains a
+-- Submachinegun entry under CBM and has none in vanilla. Only knowable in game - the main menu VM
+-- loads no gameplay Lua, so from the main menu the tooltip reads as it does without CBM.
+local kCBMSmgNote = ""
+if not kMainVM and type(kPlayerStatus) == "table" and rawget(kPlayerStatus, "Submachinegun") ~= nil then
+	kCBMSmgNote = " SMGs are colored blue."
+end
+
 if not kMainVM and ImprovedTooltips then
 	ImprovedTooltips.ApplyStoredOptions = ApplyStoredOptions
 end
@@ -154,7 +163,7 @@ local kContents =
 			-- WILL notice theirs staying the team color and wonder whether it is broken; the
 			-- rifle and the sidearms are not, because keeping the color you already chose reads
 			-- as normal rather than as an omission.
-			tooltip = "Colors marines on the map (the one on the map key) by their primary weapon. Weapon color matches the dropped weapon outline. Exosuits are ignored. Seen by marines and spectators only.",
+			tooltip = "Colors marines on the map (the one on the map key) by their primary weapon. Weapon color matches the dropped weapon outline. Exosuits are ignored. Seen by marines and spectators only." .. kCBMSmgNote,
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =
