@@ -550,6 +550,9 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - Shown only when the exo viewmodel is hidden ("Hide all", or "Custom" with the exo hidden),
   whatever the marine HUD bars style. Centralized and NS1 do carry an exo readout, but they squeeze
   both arms into one averaged bar, so a player can like those for marines and still want these.
+- **With Centralized HUD bars, vanilla's right-hand weapon bar and its number are hidden** while the
+  exo bars show, so there is one readout beside the crosshair rather than two. The exo armor bar on
+  the left stays. NS1 is left alone: its bars are in the bottom corners and do not crowd these.
 - Arms are recognized by what they expose, not by name: heat (minigun) blends from blue through
   orange to red and pulses when overheated; charge (railgun) turns white when full; an energy pool
   (CBM's plasma launcher) marks the shot cost with a tick and turns CBM's own color once a shot is

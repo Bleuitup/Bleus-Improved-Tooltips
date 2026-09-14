@@ -37,6 +37,26 @@ After testing, the user dropped it: that readout squeezes both arms into one ave
 inverted, so a player can like those styles for marines and still want these bars in an exo. Nothing
 collides - Centralized is 32-64 px from center, NS1 sits in the bottom corners, these start at 74.
 
+## Centralized: vanilla's weapon bar is hidden while these show
+
+Asked for by the user after testing with Centralized (2026-09-14): one readout beside the crosshair,
+not two. `ImprovedTooltips_AdvancedHUDBars.lua` post-hooks `lua/GUIAdvancedHUDBars.lua`:
+
+- At `Initialize` it records whether this is a marine with `hudbars_m == 1`. Changing HUD bars
+  restarts `GUIMarineHUD`, which recreates the script, so the cached mode cannot go stale.
+- After vanilla's `Update`, which re-shows its items every frame, it hides the right side:
+  `rightBarBg`, `rightBar`, `reserveBar` (only created in some modes, `:187`), `ammoText` and
+  `ammoTextBg`. The exo armor bar and its number on the left are untouched.
+- Only while `IT.GetExoWeaponBarsActive()` is true. That function
+  (`ImprovedTooltips_ExoBarsState.lua`) is also what the bars use to decide to draw, so vanilla's bar
+  is hidden exactly when these are up: an exo, the setting on, the viewmodel hidden. With the
+  viewmodel shown, vanilla's bar is back.
+- NS1 is not touched; the user confirmed it does not overlap.
+- Neither CBM dev nor B2TP ships its own `GUIAdvancedHUDBars.lua`.
+
+After the bars stop showing, vanilla's right bar returns on the next frame; its number returns the next
+time the ammo string changes, which is also when vanilla itself would show it again.
+
 ## Arms, detected by what they expose
 
 | Exposes | Arm | Bar |
@@ -90,7 +110,10 @@ Draw viewmodel must hide the exo.
 - Dual railgun: 0% idle, fills while held, white at 100%, back to 0 after the shot.
 - Claw and minigun: the claw side shows nothing.
 - Viewmodel shown: no bars.
-- HUD bars Centralized and NS1: bars still show, alongside vanilla's own, without overlapping.
+- HUD bars Centralized: the exo bars show, vanilla's right-hand weapon bar and its number are gone,
+  and the left armor bar stays. Show the viewmodel: vanilla's weapon bar comes back.
+- HUD bars NS1: both show, no overlap.
+- Setting off with Centralized: vanilla's weapon bar is back.
 - Setting off in the Mods panel: no bars, applied immediately.
 - Crosshair scale above 1: bars move out and grow with it.
 - CBM dev plasma launcher: fill refills over time, tick at 80%, dim below it, magenta at or above,

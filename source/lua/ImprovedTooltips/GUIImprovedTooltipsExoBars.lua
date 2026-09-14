@@ -44,7 +44,7 @@
 -- a player has installed. Geometry follows GUIAdvancedHUDBars.lua:51-61: GUIScale, and the crosshair
 -- scale when it is above 1.
 
-Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_ExoBarsState.lua")
 
 local IT = ImprovedTooltips
 
@@ -233,25 +233,18 @@ end
 
 function GUIImprovedTooltipsExoBars:GetHolderIfShown()
 
-	if not self.visible or not IT.kShowExoWeaponBars then
+	if not self.visible then
 		return nil
 	end
 
-	local player = Client.GetLocalPlayer()
-	if not player or not player:isa("Exo") or not player:GetIsAlive() then
-		return nil
-	end
-
-	if Client.kHideViewModel ~= true then
+	-- Shared with the Centralized HUD bars hook, so vanilla's weapon bar is hidden exactly while
+	-- these show. See ImprovedTooltips_ExoBarsState.lua.
+	local active, holder = IT.GetExoWeaponBarsActive()
+	if not active then
 		return nil
 	end
 
 	self:PollOptions()
-
-	local holder = player:GetActiveWeapon()
-	if not holder or not holder:isa("ExoWeaponHolder") then
-		return nil
-	end
 
 	return holder
 

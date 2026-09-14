@@ -52,6 +52,9 @@ if Client then
 	-- Phase gate arrows on the commander's and spectator's corner minimap, which vanilla leaves
 	-- plain. Follows the player's own phase gate line setting. On by default.
 	ModLoader.SetupFileHook("lua/GUIMinimapConnection.lua", "lua/ImprovedTooltips/ImprovedTooltips_MinimapConnection.lua", "post")
+	-- Centralized HUD bars: hide vanilla's right-hand weapon bar and its number while the exo weapon
+	-- bars are on screen, so a pilot does not get two readouts beside the crosshair.
+	ModLoader.SetupFileHook("lua/GUIAdvancedHUDBars.lua", "lua/ImprovedTooltips/ImprovedTooltips_AdvancedHUDBars.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
