@@ -36,8 +36,15 @@ Two separate properties:
   energize and Echo, Whip attacks, Hydra attacks, Hive healing, Contamination bile. Burning aliens heal
   at 50% (`kOnFireHealingScalar`). Burning does **not** slow energy regeneration
   (`kOnFireEnergyRecuperationScalar = 1` in both rulesets).
-- **Sources:** Flamethrower (ignites), Welder (Flame damage, never ignites), cluster grenades (ignite;
-  x2.5 structures, 20% players), CBM exo flamer.
+- **Sources:** Flamethrower (ignites), Welder (Flame damage, never ignites), CBM exo flamer.
+- **Cluster grenades do NOT ignite** (corrected 2026-09-15; the first pass said they did).
+  `ClusterGrenade:BurnEntities` and `:BurnNearbyAbilities` exist but nothing calls them, in vanilla or
+  CBM, so no burning and no clearing of spores, umbra or bile. Instead the blast's damage type
+  (ClusterFlame) fakes the fire: x0.2 on players and exos, x2.5 on structures (CBM x2.875), and a
+  flammable target gets a flat bonus of one flamethrower burn (8/s x 2.1 s = 16.8) times its
+  flammable multiplier, added after distance falloff. The 8 fragments (20 each) get the player and
+  structure multipliers but no fire bonus. The damage-type comment in DamageTypes.lua ("5x vs
+  flammable, 50% player reduction") is stale in both rulesets.
 
 ## Approved rows
 
