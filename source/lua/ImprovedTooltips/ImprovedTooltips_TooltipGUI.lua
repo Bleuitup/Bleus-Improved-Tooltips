@@ -363,13 +363,18 @@ local function GetDisplayValue(field, values)
 
 end
 
--- The panel is a fixed width (tooltipWidth, 466 x kCommanderGUIsGlobalScale) and vanilla wraps its
--- own text at tooltipWidth - GUIScale(65) from kTextXOffset (GUICommanderTooltip.lua:224). At the
--- full gap, a row with all four figures and a four-digit one - the ARC's 2600 / 400 / 2 / 10 - ran
--- past the frame. The gaps close up first, evenly, down to kStatEntryMinGap; only a row that still
--- does not fit then moves each entry's number closer to its icon.
+-- The panel is a fixed width (tooltipWidth, 466 x kCommanderGUIsGlobalScale). At the full gap, a row
+-- with all four figures and a four-digit one - the ARC's 2600 / 400 / 2 / 10 - ran past the frame.
+-- The gaps close up first, evenly, down to kStatEntryMinGap; only a row that still does not fit then
+-- moves each entry's number closer to its icon.
+--
+-- The row ends where the top row does: the right edge of the team res icon, which vanilla anchors
+-- to the panel's right at -kResourceIconSize + kResourceIconXOffset (GUICommanderTooltip.lua:137),
+-- so its right edge sits at tooltipWidth + kResourceIconXOffset. Fitting to vanilla's text wrap
+-- width instead (tooltipWidth - GUIScale(65), GUICommanderTooltip.lua:224) kept the ARC inside the
+-- frame but left its last number past that column, which read as cramped.
 local function GetStatRowWidth(self)
-	return self.tooltipWidth - GUIScale(65)
+	return self.tooltipWidth + GUICommanderTooltip.kResourceIconXOffset - GUICommanderTooltip.kTextXOffset
 end
 
 local function LayoutStatRow(self, values)

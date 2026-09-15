@@ -554,8 +554,9 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   build now checks that pixel for pixel. See `docs/glyph-refresh.md`.
 - **The stat row fits the tooltip.** The panel is a fixed width, and the row used a fixed gap, so the
   ARC - the one tooltip with all four figures and a four-digit one (2600 / 400 / 2 / 10) - ran its
-  last glyph and number out past the frame. The gaps now close up evenly to fit vanilla's own text
-  width, and only a row that still does not fit brings each number closer to its icon.
+  last glyph and number out past the frame. The row now ends where the top row does, at the right
+  edge of the team res icon: the gaps close up evenly to fit, and only a row that still does not fit
+  brings each number closer to its icon.
 
 **1.05**
 - **Phase gate arrows on the commander's and spectator's corner minimap.** Vanilla draws them on the
