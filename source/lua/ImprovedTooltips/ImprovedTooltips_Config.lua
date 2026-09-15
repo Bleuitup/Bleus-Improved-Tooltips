@@ -437,3 +437,56 @@ IT.kExoBarChargeReadyColor = Color(1, 1, 1, 1)
 IT.kExoBarPoolNotReadyAlpha   = 0.6
 IT.kExoBarPoolReadyColor      = Color(1, 0.25, 1, 1)
 IT.kExoBarPoolMultiReadyColor = Color(0.25, 1, 1, 1)
+
+------------------------------------------------------------------------------------------------
+-- Centralized HUD bars: opacity and the alien shield bar
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_AdvancedHUDBars.lua. All of it applies only with HUD bars set to
+-- "Centralized"; NS1 and the default HUD are untouched. Settings are read when the bars are built;
+-- changing one in the panel rebuilds them.
+
+-- Opacity of every Centralized bar, both teams, shield bar included. 1 is fully opaque (the default,
+-- about the "HL2 Center Hudbar Fix" look or stronger); the floor, 0.30, is vanilla's art as shipped.
+-- Achieved by stacking copies of the installed bar art, so a bar texture mod's art is kept; see
+-- ImprovedTooltips_BarLayers.lua. Exposed in the settings panel.
+IT.kCentralizedBarOpacity = 1
+
+-- Copies drawn at most. 8 copies of vanilla's 30% art composite to about 94%.
+IT.kCentralizedBarMaxLayers = 8
+
+-- The shield bar: aliens with Centralized bars. On by default, exposed in the settings panel.
+IT.kShowCentralizedShields = true
+
+-- 0 relative (the default: full when every active shield is at its maximum, as vanilla's ring) or
+-- 1 absolute (against max health + armor, the health bar's own scale). Exposed in the settings panel.
+IT.kShieldBarScale = 0
+
+-- 0 vanilla (a third bar in the installed Centralized bar art) or 1 ydy (a thin solid stroke beside
+-- ydy style bars). Exposed in the settings panel.
+IT.kShieldStyleVanilla = 0
+IT.kShieldStyleYdy     = 1
+IT.kShieldBarStyle     = 0
+
+-- Segment colors, bottom to top in the order damage eats them last to first. Vanilla has only two
+-- shield ring looks - pale and veined when mucous is present, green otherwise - so babblers' tan is
+-- new. Mucous takes vanilla's mucous ring, vampirism its other ring. Settled with the user 2026-09-15.
+IT.kShieldColors =
+{
+	babbler   = Color(225 / 255, 195 / 255, 140 / 255, 1),
+	vampirism = Color(60 / 255, 215 / 255, 70 / 255, 1),
+	mucous    = Color(205 / 255, 190 / 255, 240 / 255, 1),
+}
+
+-- The shield total, in vanilla's shield number green (GUIAlienHUD.lua:114).
+IT.kShieldNumberColor = Color(0, 1, 0.2, 1)
+
+-- Geometry in Centralized bar units: the bars are 32 units wide, and a unit scales with resolution
+-- and crosshair scale exactly as vanilla's bars do.
+-- ydy style: the ydy stroke is the outer 5 units of its bar; this stroke is 5 wide, 5 further out.
+IT.kShieldYdyWidth     = 5
+IT.kShieldYdyGap       = 5
+IT.kShieldYdyEdgeAlpha = 0.7
+-- The number: right edge this far past the bar's center, and this far below the bar.
+IT.kShieldNumberOffsetX = 3
+IT.kShieldNumberGap     = 4

@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.05. Published to the Steam Workshop as
+Version 1.06. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -502,6 +502,20 @@ and `mod.settings` names the file by extension.
   `kExoBarHotColor`, `kExoBarChargeReadyColor`, `kExoBarPoolNotReadyAlpha`,
   `kExoBarPoolReadyColor` / `kExoBarPoolMultiReadyColor` — exo bar colors and thresholds for heat,
   charge and energy pool arms
+- `kCentralizedBarOpacity` — opacity of every Centralized HUD bar, both teams, shield bar included:
+  1 fully opaque (default), down to 0.30, vanilla's art as shipped. Made by stacking copies of the
+  installed bar art, so a bar texture mod's art is kept. Exposed in the settings panel
+- `kCentralizedBarMaxLayers` — most copies stacked; 8 copies of vanilla's 30% art reach about 94%
+- `kShowCentralizedShields` — the alien shield bar beside the Centralized health bar. On by default,
+  exposed in the settings panel
+- `kShieldBarScale` — 0 relative (default: full when each active shield is at its maximum, like
+  vanilla's ring) or 1 absolute (against max health + armor). Exposed in the settings panel
+- `kShieldBarStyle` — 0 vanilla (the installed Centralized bar art) or 1 ydy (a thin solid stroke).
+  Exposed in the settings panel
+- `kShieldColors`, `kShieldNumberColor` — segment colors (babblers tan, vampirism green, mucous
+  lavender) and the green of the shield total
+- `kShieldYdyWidth` / `kShieldYdyGap` / `kShieldYdyEdgeAlpha`, `kShieldNumberOffsetX` /
+  `kShieldNumberGap` — shield bar geometry in Centralized bar units (a bar is 32 wide)
 
 ## Building the assets
 
@@ -544,6 +558,25 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.06**
+- **Alien shields with Centralized HUD bars.** Vanilla hides its shield ring when HUD bars are
+  Centralized or NS1 (`GUIAlienHUD.lua:286`, `:734`) and leaves only a number in the corner. With
+  Centralized, a shield bar now sits outboard of the health bar: babblers (tan), vampirism (green)
+  and mucous (lavender), stacked bottom to top in the order damage eats them - mucous goes first -
+  with the total underneath in vanilla's shield green and the Centralized bars' own font. The corner
+  number is hidden while it shows. New setting SHIELD BAR, on by default.
+- SCALE: Relative (default) measures each shield against the maxima of the shields present, exactly
+  as vanilla's ring does, so a full bar means every active shield is at its cap. Absolute measures
+  them against max health + armor, the health bar's own scale.
+- STYLE: Vanilla (default) draws a third bar in the installed Centralized bar art; ydy draws a thin
+  solid stroke that stacks beside ydy style bars. Both scale with resolution and crosshair scale.
+- **CENTRALIZED BAR OPACITY**, both teams, shield bar included: 1 fully opaque by default, down to
+  0.30, vanilla's art as shipped. Vanilla's bar art peaks at about 30%, and a color can only fade art,
+  so the bars are drawn as stacked copies of whatever bar texture is installed - a bar texture mod
+  such as ydy keeps its look, and there is no need for a texture replacement like "HL2 Center Hudbar
+  Fix", which fights ydy for the same file.
+- Two Workshop description paragraphs were shortened to fit Steam's 8000-byte cap.
 
 **1.05**
 - **Phase gate arrows on the commander's and spectator's corner minimap.** Vanilla draws them on the

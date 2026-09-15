@@ -38,6 +38,10 @@ local kOptionWeaponBlips        = "BIT_WeaponBlips"
 local kOptionWeaponBlipsMinimap = "BIT_WeaponBlipsMinimap"
 local kOptionMinimapPGArrows    = "BIT_MinimapPhaseGateArrows"
 local kOptionExoWeaponBars      = "BIT_ExoWeaponBars"
+local kOptionCentralizedShields = "BIT_CentralizedShields"
+local kOptionShieldBarScale     = "BIT_ShieldBarScale"
+local kOptionShieldBarStyle     = "BIT_ShieldBarStyle"
+local kOptionCentralizedOpacity = "BIT_CentralizedBarOpacity"
 
 -- Repeated here rather than read from the config, because in the main menu VM the config is not
 -- loaded. Keep in step with ImprovedTooltips_Config.lua.
@@ -47,6 +51,11 @@ local kDefaultWeaponBlips        = true
 local kDefaultWeaponBlipsMinimap = false
 local kDefaultMinimapPGArrows    = true
 local kDefaultExoWeaponBars      = true
+local kDefaultCentralizedShields = true
+local kDefaultShieldBarScale     = 0      -- 0 relative, 1 absolute
+local kDefaultShieldBarStyle     = 0      -- 0 vanilla, 1 ydy
+local kDefaultCentralizedOpacity = 1      -- fully opaque; the floor is vanilla's own
+local kMinCentralizedOpacity     = 0.30   -- vanilla's centerhudbar.dds peaks at 76/255
 
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
@@ -71,6 +80,11 @@ local function ApplyStoredOptions()
 	IT.kColorMarineMinimapBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlipsMinimap, kDefaultWeaponBlipsMinimap)
 	IT.kCommanderMinimapPhaseGateArrows = Client.GetOptionBoolean(kOptionMinimapPGArrows, kDefaultMinimapPGArrows)
 	IT.kShowExoWeaponBars = Client.GetOptionBoolean(kOptionExoWeaponBars, kDefaultExoWeaponBars)
+	IT.kShowCentralizedShields = Client.GetOptionBoolean(kOptionCentralizedShields, kDefaultCentralizedShields)
+	IT.kShieldBarScale = Client.GetOptionInteger(kOptionShieldBarScale, kDefaultShieldBarScale)
+	IT.kShieldBarStyle = Client.GetOptionInteger(kOptionShieldBarStyle, kDefaultShieldBarStyle)
+	IT.kCentralizedBarOpacity = math.max(kMinCentralizedOpacity, math.min(1,
+		Client.GetOptionFloat(kOptionCentralizedOpacity, kDefaultCentralizedOpacity)))
 
 	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
 	-- feeds compares against whole seconds, so round rather than truncate.
@@ -90,6 +104,24 @@ end
 
 if not kMainVM and ImprovedTooltips then
 	ImprovedTooltips.ApplyStoredOptions = ApplyStoredOptions
+end
+
+-- The Centralized bar settings are read when the bars are built, not every frame, so applying one
+-- also rebuilds the bars. Reset re-runs Initialize (GUIAdvancedHUDBars.lua:237-242), where the mod's
+-- layers and shield bar are created.
+local function ApplyAndRebuildCentralizedBars()
+
+	ApplyStoredOptions()
+
+	if kMainVM or not GetGUIManager then
+		return
+	end
+
+	local script = GetGUIManager():GetGUIScriptSingle("GUIAdvancedHUDBars")
+	if script and script.Reset then
+		script:Reset()
+	end
+
 end
 
 -- CASING, matching vanilla. Option labels and category names are written in CAPITALS; the tooltip
@@ -223,6 +255,95 @@ local kContents =
 		properties =
 		{
 			{ "Label", "EXO WEAPON BARS" },
+		},
+	},
+
+	{
+		name = "bitCentralizedShields",
+		class = OP_TT_Checkbox,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionCentralizedShields,
+			optionType = "bool",
+			default = kDefaultCentralizedShields,
+			tooltip = "Shows mucous, vampirism and babbler shields as a bar beside the health bar, with their total in the center. Aliens with Centralized HUD bars only.",
+			immediateUpdate = ApplyAndRebuildCentralizedBars,
+		},
+		properties =
+		{
+			{ "Label", "SHIELD BAR" },
+		},
+	},
+
+	{
+		name = "bitShieldBarScale",
+		class = OP_TT_Choice,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionShieldBarScale,
+			optionType = "int",
+			default = kDefaultShieldBarScale,
+			tooltip = "Relative fills the bar as each shield reaches its maximum. Absolute measures the shields against your health and armor.",
+			immediateUpdate = ApplyAndRebuildCentralizedBars,
+		},
+		properties =
+		{
+			{ "Label", "SCALE" },
+			{ "Choices",
+				{
+					{ value = 0, displayString = "RELATIVE" },
+					{ value = 1, displayString = "ABSOLUTE" },
+				},
+			},
+		},
+	},
+
+	{
+		name = "bitShieldBarStyle",
+		class = OP_TT_Choice,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionShieldBarStyle,
+			optionType = "int",
+			default = kDefaultShieldBarStyle,
+			tooltip = "Vanilla uses the Centralized bar art you have installed. ydy draws a thin solid stroke beside ydy style bars.",
+			immediateUpdate = ApplyAndRebuildCentralizedBars,
+		},
+		properties =
+		{
+			{ "Label", "STYLE" },
+			{ "Choices",
+				{
+					{ value = 0, displayString = "VANILLA" },
+					{ value = 1, displayString = "YDY" },
+				},
+			},
+		},
+	},
+
+	{
+		name = "bitCentralizedBarOpacity",
+		class = OP_TT_Number,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionCentralizedOpacity,
+			optionType = "float",
+			default = kDefaultCentralizedOpacity,
+
+			minValue = kMinCentralizedOpacity,
+			maxValue = 1,
+			decimalPlaces = 2,
+
+			tooltip = "How opaque the Centralized HUD bars are, for both teams, shield bar included. 1 is fully opaque; 0.30 matches vanilla. A bar texture mod's art is kept.",
+			immediateUpdate = ApplyAndRebuildCentralizedBars,
+		},
+		properties =
+		{
+			{ "Label", "CENTRALIZED BAR OPACITY" },
 		},
 	},
 }

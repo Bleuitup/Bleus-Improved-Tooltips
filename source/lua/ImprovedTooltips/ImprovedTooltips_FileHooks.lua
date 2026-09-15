@@ -54,7 +54,11 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIMinimapConnection.lua", "lua/ImprovedTooltips/ImprovedTooltips_MinimapConnection.lua", "post")
 	-- Centralized HUD bars: hide vanilla's right-hand weapon bar and its number while the exo weapon
 	-- bars are on screen, so a pilot does not get two readouts beside the crosshair.
+	-- Also, in Centralized mode only: bar opacity for both teams, and the alien shield bar.
 	ModLoader.SetupFileHook("lua/GUIAdvancedHUDBars.lua", "lua/ImprovedTooltips/ImprovedTooltips_AdvancedHUDBars.lua", "post")
+	-- Alien HUD: with Centralized bars and the shield bar on, hide vanilla's corner shield number,
+	-- since the total is shown in the center instead.
+	ModLoader.SetupFileHook("lua/GUIAlienHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_AlienHUD.lua", "post")
 end
 
 -- Shared: the cooldown network message has to be registered identically in every VM, and
