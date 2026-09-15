@@ -130,3 +130,33 @@ A small flame icon to mark the fire labels, proposed for 1.07. Not designed yet.
 - White art like the rest of the sheet, tinted at runtime.
 - Open question: whether the "burning stops ..." labels get the flame too, or only flammable targets
   and fire weapons.
+
+## Armory and Prototype Lab buy menu (checked 2026-09-15)
+
+Player-facing, not commander tooltips: `GUIMarineBuyMenu.lua` shows a description (`*_BUYDESCRIPTION`),
+hand-set stat bars (`kTechIdStats`, not computed from balance values) and "Special" boxes.
+
+- **Accurate:** Pistol, Rifle, Shotgun, Grenade Launcher (x4 vs structures), Axe (Structural, x2 vs
+  structures), Mines, Jetpack, Dual Minigun ("effective against armor": Heavy damage), Gas grenade
+  (armor only, alien targets only, players and structures alike), Scan grenade (CBM).
+- **Flamethrower + Burn special:** accurate. Burning does disable alien structure abilities, and
+  `BurnSporesAndUmbra` does clear spores, umbra, bile bombs and whip bombs.
+- **Cluster grenade:** accurate as far as it goes; doesn't mention the flammable bonus (and never
+  claims fire, correctly).
+- **Welder:** accurate but omits that it deals damage (30/s Flame, x2 vs structures, flammable bonus).
+- **HMG:** "long range weapon" vs the commander tooltip's "Inaccurate at mid-long range": the two
+  texts contradict. Spread is 3.2° vs the rifle's 2.8°; range 100 m (CBM 41, the relevancy cap).
+- **Pulse grenade + Electrify special:** "greatly slowing attack speed" is 20% slower in vanilla (30%
+  in CBM). Omits vanilla's 70% energy regen and 50 damage; CBM also electrifies alien structures
+  (SetElectrified on Crag, Hive, Hydra, Shade, Shell, Shift, Spur, Veil, Whip) and adds damage over
+  time, while "enemy players" says players only.
+- **Dual Railgun:** fine in vanilla (charge 140). CBM sets charge damage equal to base (35/35), so
+  "massive burst damage" needs a look at CBM's railgun code before judging.
+- **Massive special:** egg smashing, knockdown immunity (no StunMixin), spore immunity (no vaporous
+  damage) and no Distress Beacon are all true. "Cannot use Phase Gates" is true in vanilla (no
+  PhaseGateUserMixin); CBM's Exo does include PhaseGateUserMixin (Cargo Gates), normal gates unchecked.
+- **CBM SMG:** 10.5 vs rifle 10 (+5%), melee 30 vs 10, weight 0.05 vs 0.13: accurate; typo "assualt".
+- **Stat bars:** identical in CBM although CBM changed GL (65), flamethrower (9) and pulse (15) damage.
+
+**Knock-on for the commander audit:** Drop Exosuit (EXOSUIT_TOOLTIP) says "can be beaconed". False in
+vanilla and CBM: `Observatory:GetPlayersToBeacon` only takes `isa("Marine")`, and Exo isn't one.
