@@ -1,0 +1,462 @@
+<title>Commander Tooltip Audit</title>
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #f2f0ec;
+  --panel: #ffffff;
+  --line: #ddd6cd;
+  --ink: #231d18;
+  --muted: #6f655b;
+  --accent: #b9551a;
+  --fire: #c42d22;
+  --wrong: #b3325a;
+  --partial: #a8761c;
+  --ok: #3f7d52;
+  --unchecked: #857a70;
+  --tip-marine-bg: #0f1b22;
+  --tip-marine-edge: #3aa7c4;
+  --tip-alien-bg: #1f1510;
+  --tip-alien-edge: #c9782e;
+  --tip-ink: #f1ece6;
+  --tip-live: #ffd08a;
+  --tip-fire: #ff5a44;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #15120f;
+    --panel: #1e1a16;
+    --line: #342d27;
+    --ink: #eee8e1;
+    --muted: #a39789;
+    --accent: #e8752b;
+    --fire: #ff5a44;
+    --wrong: #e2708f;
+    --partial: #deae52;
+    --ok: #7fbf92;
+    --unchecked: #9a8f84;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #15120f;
+  --panel: #1e1a16;
+  --line: #342d27;
+  --ink: #eee8e1;
+  --muted: #a39789;
+  --accent: #e8752b;
+  --fire: #ff5a44;
+  --wrong: #e2708f;
+  --partial: #deae52;
+  --ok: #7fbf92;
+  --unchecked: #9a8f84;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 15px/1.55 "Barlow", "Segoe UI", system-ui, sans-serif;
+  padding-inline: 20px;
+  padding-block: 0 64px;
+  margin: 0;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+
+header { padding-block: 40px 28px; border-bottom: 3px solid var(--accent); }
+.eyebrow {
+  font: 600 13px/1 "Barlow Condensed", "Arial Narrow", sans-serif;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+}
+h1 {
+  font: 700 clamp(34px, 5vw, 52px)/1 "Barlow Condensed", "Arial Narrow", sans-serif;
+  letter-spacing: .01em; text-transform: uppercase; margin: 10px 0 14px; text-wrap: balance;
+}
+.lede { max-width: 68ch; color: var(--muted); margin: 0; }
+.lede b { color: var(--ink); font-weight: 600; }
+
+.summary { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 22px; }
+.summary div { display: flex; align-items: baseline; gap: 8px; }
+.summary .n { font: 600 28px/1 "Barlow Condensed", sans-serif; font-variant-numeric: tabular-nums; }
+.summary .l { font: 500 12px/1 "Barlow Condensed", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 32px; padding-block: 24px; border-bottom: 1px solid var(--line); }
+.rules h2 { font: 600 13px/1.2 "Barlow Condensed", sans-serif; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 6px; color: var(--muted); }
+.rules p { margin: 0; font-size: 14px; max-width: 48ch; }
+
+nav.jump { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 18px; }
+nav.jump a {
+  font: 600 13px/1 "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; padding: 8px 12px; border: 1px solid var(--line); border-radius: 3px;
+}
+nav.jump a:hover, nav.jump a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+section { padding-top: 34px; }
+section > h2 {
+  font: 700 26px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .02em;
+  margin: 0 0 4px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+}
+section > h2 .count { font: 500 14px/1 "IBM Plex Mono", monospace; color: var(--muted); letter-spacing: 0; text-transform: none; }
+section > .note { color: var(--muted); margin: 0 0 16px; max-width: 72ch; font-size: 14px; }
+h3.group {
+  font: 600 13px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin: 26px 0 10px;
+}
+
+.row {
+  display: grid; grid-template-columns: 190px minmax(0, 1fr) minmax(0, 1fr); gap: 20px;
+  padding-block: 18px; border-top: 1px solid var(--line);
+}
+.meta { display: flex; flex-direction: column; gap: 6px; }
+.id { font: 500 12px/1 "IBM Plex Mono", monospace; color: var(--muted); }
+.name { font: 600 19px/1.1 "Barlow Condensed", sans-serif; letter-spacing: .01em; }
+.rs { font: 500 11px/1.2 "IBM Plex Mono", monospace; color: var(--muted); }
+.chip {
+  align-self: flex-start; font: 600 11px/1 "Barlow Condensed", sans-serif; letter-spacing: .12em; text-transform: uppercase;
+  padding: 5px 7px 4px; border-radius: 2px; border: 1px solid currentColor;
+}
+.chip.wrong { color: var(--wrong); }
+.chip.partial { color: var(--partial); }
+.chip.ok { color: var(--ok); }
+.chip.unchecked { color: var(--unchecked); border-style: dashed; }
+
+.col-label { font: 600 11px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.now { font-size: 14.5px; }
+.now .variant { margin: 0 0 8px; }
+.now .variant span { font: 500 11px/1 "IBM Plex Mono", monospace; color: var(--muted); margin-right: 6px; }
+.why { margin-top: 10px; font-size: 14px; color: var(--muted); }
+.why b { color: var(--ink); font-weight: 600; }
+
+/* The proposed text is set in an in-game tooltip panel, 37 characters wide: the width the
+   commander tooltip wraps its description at, so line counts read true. */
+.tip {
+  width: min(100%, calc(37ch + 28px));
+  font: 500 15px/1.4 "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  color: var(--tip-ink); background: var(--tip-marine-bg);
+  border: 1px solid var(--tip-marine-edge); border-radius: 3px;
+  padding: 10px 14px; margin-bottom: 8px;
+  box-shadow: inset 0 0 18px rgba(58, 167, 196, .12);
+}
+.alien .tip { background: var(--tip-alien-bg); border-color: var(--tip-alien-edge); box-shadow: inset 0 0 18px rgba(201, 120, 46, .12); }
+.tip .rsl { display: block; font: 500 10.5px/1 "IBM Plex Mono", monospace; color: #9fb4bd; margin-bottom: 6px; letter-spacing: .02em; }
+.alien .tip .rsl { color: #c3a892; }
+.tip .t { font-family: inherit; }
+.tip .t { display: block; }
+.tip .t + .fire { margin-top: 4px; }
+.tip .live { color: var(--tip-live); }
+.tip .fire { display: block; color: var(--tip-fire); font-weight: 500; letter-spacing: .01em; }
+.tip .none { color: #8c8279; font-style: italic; }
+.lines { font: 400 11px/1 "IBM Plex Mono", monospace; color: var(--muted); }
+
+table.fire { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.tablewrap { overflow-x: auto; }
+table.fire th {
+  text-align: left; font: 600 11px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); padding: 10px 12px 8px 0; border-bottom: 1px solid var(--line);
+}
+table.fire td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.fire td.label { font: 500 15px/1.3 "Barlow Semi Condensed", sans-serif; color: var(--fire); white-space: nowrap; }
+table.fire td.num { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+ul.pending { columns: 2 260px; column-gap: 32px; padding-left: 18px; margin: 0; font-size: 14.5px; }
+ul.pending li { break-inside: avoid; margin-bottom: 4px; }
+
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+@media (max-width: 860px) {
+  .row { grid-template-columns: 1fr; gap: 12px; }
+  .meta { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Bleu's Improved Tooltips · 1.07 candidate</div>
+    <h1>Commander Tooltip Audit</h1>
+    <p class="lede">Every written commander tooltip checked against the game code, in <b>vanilla</b> and <b>CBM dev</b>. Each row shows today's text, what the code actually does, and a proposed rewrite in a tooltip panel at the in-game wrap width. Reply with row IDs to approve, change or drop a proposal.</p>
+    <div class="summary" id="summary"></div>
+  </header>
+
+  <div class="rules">
+    <div>
+      <h2>Length budget</h2>
+      <p>A rewrite may run at most one line longer than today's text. Lines are counted at 37 characters, the tooltip's wrap width.</p>
+    </div>
+    <div>
+      <h2>Live numbers</h2>
+      <p><span style="color:var(--accent)">Highlighted</span> figures are read from the running game, like the stat row, so CBM and other balance mods show their own values.</p>
+    </div>
+    <div>
+      <h2>Fire labels</h2>
+      <p>A red line under the description, on its own line. It never counts against the one-line budget.</p>
+    </div>
+  </div>
+
+  <nav class="jump" aria-label="Sections">
+    <a href="#marine">Marine commander</a>
+    <a href="#alien">Alien commander</a>
+    <a href="#fire">Fire labels</a>
+    <a href="#pending">Not yet checked</a>
+  </nav>
+
+  <section id="marine">
+    <h2>Marine commander <span class="count" id="count-marine"></span></h2>
+    <p class="note">Assist drops first, since those are where the wording is most often wrong.</p>
+    <div id="rows-marine"></div>
+  </section>
+
+  <section id="alien" class="alien">
+    <h2>Alien commander <span class="count" id="count-alien"></span></h2>
+    <p class="note">Commander abilities, structure abilities and Drifter abilities. Heal Wave and Ink cast from a structure picked for you, so the rewrites say which one.</p>
+    <div id="rows-alien"></div>
+  </section>
+
+  <section id="fire">
+    <h2>Fire labels</h2>
+    <p class="note">The game has two separate fire properties. <b>Flammable</b> means the target takes extra fire damage (a multiplier in the code). <b>Stops while burning</b> means fire switches an ability off. Nothing on the marine side is flammable.</p>
+    <div class="tablewrap">
+      <table class="fire">
+        <thead><tr><th>Tooltip</th><th>Proposed red line</th><th>Code</th><th>Both rulesets</th></tr></thead>
+        <tbody id="fire-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="pending">
+    <h2>Not yet checked</h2>
+    <p class="note">Left for a second pass: the text reads plausibly but its claims haven't been traced in the code, or the tooltip only exists in CBM.</p>
+    <ul class="pending" id="pending-list"></ul>
+  </section>
+
+  <footer>Checked 2026-09-15 against the NS2 install and Community Balance Mod (dev). Tooltip width and fire multipliers from GUICommanderTooltip.lua and DamageTypes.lua.</footer>
+</div>
+
+<script>
+// v = vanilla, c = CBM. Text in {braces} is a live value; a line starting with "!" is a red fire label.
+const marine = [
+  { group: "Assist", id: "M01", name: "Nano Shield", verdict: "wrong",
+    now: [["both", "Reduce all damage by 32% on target for 5 seconds"]],
+    why: "<b>Players are shielded for 3 s, structures for 5 s.</b> Exos count as players (<code>class 'Exo' (Player)</code>), so they get 3 s too. The 32% cut is the same for everything, in vanilla and CBM (NanoShieldMixin.lua). <b>Revised per your note:</b> \"on a player\".",
+    proposed: [["both", "Target takes {32%} less damage for {3 s} on a player or {5 s} on a structure."]] },
+  { group: "Assist", id: "M02", name: "Med Pack", verdict: "partial",
+    now: [["both", "Restores 50 player health"]],
+    why: "Accurate in total: <b>25 at once, then 25 more over time</b> (MedPack.lua, RegenerationMixin.lua). <b>Revised per your note:</b> keeps the 50, split after a colon.",
+    proposed: [["both", "Restores {50} player health: {25} at once, then {25} more over time."]] },
+  { group: "Assist", id: "M03", name: "Catalyst Pack", verdict: "partial",
+    now: [["v", "Increases Marine movement and reloading speed."], ["c", "Increases Marine movement, reloading speed and welding."]],
+    why: "No numbers. For <b>5 s: +1.125 m/s and 25% faster weapon animations</b> (reloads and firing). The speed is added on top of a 5.75 m/s sprint, so it's <b>about 20% faster</b> whatever the marine carries: weight scales both afterward. <b>Revised per your note:</b> movement as a percentage, 25% kept.",
+    proposed: [["v", "For {5 s}: sprint about {20%} faster, and reloads and weapon actions {25%} faster."], ["c", "For {5 s}: sprint about {20%} faster, and reloads, weapon actions and welding {25%} faster."]] },
+  { group: "Assist", id: "M04", name: "Scan", verdict: "partial",
+    now: [["both", "Reveals cloaked units and gives line of sight to any area"]],
+    why: "No size or duration: <b>20 m radius for 10 s</b>.",
+    proposed: [["both", "Reveals cloaked units and gives sight in a {20 m} radius for {10 s}, anywhere."]] },
+  { group: "Weapons", id: "M05", name: "Drop Flamethrower", verdict: "wrong",
+    now: [["both", "Does burning damage, reduces energy regeneration rate, and disables some structures. More powerful against flammable targets."]],
+    why: "<b>Burning doesn't slow energy regeneration</b>: the on-fire energy multiplier is 1 in both rulesets. What fire does do: burning alien structures stop their abilities, and burning aliens heal at 50%.<br><b>Is x2.5 specific to the flamethrower?</b> No. It belongs to the <b>target</b>: any fire damage (flamethrower, welder, CBM's exo flamer, and the burn itself) does x2.5 to flammable things, except that direct hits do x5 to cysts and x7 to clogs. Burning damage over time is always x2.5. So the weapon label no longer quotes a number; the targets' labels carry it. <b>Revised per your note:</b> structures first, x2.5 syntax.",
+    proposed: [["both", "Burning alien structures stop their abilities, and burning aliens heal at half rate.\n!Fire: sets targets alight · extra damage vs flammable"]] },
+  { group: "Weapons", id: "M06", name: "Drop Welder", verdict: "partial",
+    now: [["both", "Repairs Marine and Exo armor and repairs structures. The fastest way to repair power nodes and good against flammable targets."]],
+    why: "Its damage is fire damage, so it gets the flammable bonus, but <b>it never sets anything alight</b>. <b>Approved.</b> The label now matches M05: the multiplier lives on the targets.",
+    proposed: [["both", "Repairs Marine and Exo armor and structures. The fastest way to repair power nodes.\n!Fire damage: extra vs flammable"]] },
+  { group: "Weapons", id: "M08", name: "Drop Mines", verdict: "partial",
+    now: [["both", "Drop 1 proximity mine."]],
+    why: "No damage figure: <b>130</b>. It's <b>Normal</b> damage in vanilla and CBM (<code>kMineDamageType</code>), so per your note the type isn't named.",
+    proposed: [["both", "Drops {1} proximity mine that deals {130} damage."]] },
+  { group: "Weapons", id: "M09", name: "Drop Heavy Machine Gun", verdict: "partial",
+    now: [["both", "Machine Gun with a large magazine. Inaccurate at mid-long range.  Extra damage against players."]],
+    why: "<b>Barely less accurate than the rifle:</b> a 3.2° cone against the rifle's 2.8°. Its bullets do <b>7 damage against the rifle's 10</b>, with no structure bonus, and <b>+50% against players and exos</b> (10.5). Same in CBM. <b>Revised per your notes:</b> the \"Inaccurate at mid-long range\" sentence stays as it is; low base damage against structures and the player bonus follow it.",
+    proposed: [["both", "Machine Gun with a large magazine. Inaccurate at mid-long range. Low base damage against structures, {+50%} against players."]] },
+  { group: "Research", id: "M10", name: "Weapons #1 to #3", verdict: "wrong",
+    now: [["v", "Marine weapons do 10% extra damage (20%, 30%)"], ["c", "Marine weapons do 10% extra player damage and 20% extra structure damage."]],
+    why: "<b>Vanilla:</b> only right for rifle, pistol and HMG; the shotgun gets 7.84% per level, the grenade launcher and flamethrower 7%.<br><b>CBM and B2TP: unchanged, per your note.</b> CBM takes the grenade launcher and flamethrower out of its per-weapon upgrade tables, so they get the default 10% and 20%; only the shotgun keeps 7.84% and 15.68%. B2TP raises the shotgun to 10% and 20%, which makes CBM's text exactly right under B2TP. The rewrite only applies when CBM isn't loaded.",
+    proposed: [["v", "Weapons do {10%} more damage (shotgun {7.8%}, grenade launcher and flamethrower {7%})."], ["c", "Unchanged: keeps CBM's own text."]] },
+  { group: "Research", id: "M11", name: "Armor #1 to #3", verdict: "partial",
+    now: [["both", "Gives Marines 20 extra armor (40, 60)"]],
+    why: "Exos gain armor too: <b>30 per level in vanilla, 40 in CBM</b>. <b>Approved.</b>",
+    proposed: [["both", "Gives Marines {20} extra armor and Exos {30}."]] },
+  { group: "Structures", id: "M12", name: "Observatory", verdict: "partial",
+    now: [["v", "Detects enemies nearby"], ["c", "Detects enemies nearby."]],
+    why: "Range is <b>22 m</b>, and it's the building that casts Distress Beacon, which the text never says. <b>Approved.</b>",
+    proposed: [["both", "Reveals cloaked aliens within {22 m}. Casts Distress Beacon."]] },
+  { group: "Structures", id: "M13", name: "Sentry Battery", verdict: "partial",
+    now: [["v", "Powers nearby sentries (max 1 per room)."]],
+    why: "\"Nearby\" is only <b>4 m</b>. The cap is <b>3 sentries per room</b> (<code>kSentriesPerBattery</code>, counted by room), and with one battery per room that's 3 per battery. <b>Revised per your note.</b>",
+    proposed: [["v", "Powers up to {3} sentries within {4 m}. One per room."]] },
+  { group: "Structures", id: "M14", name: "Sentry", verdict: "partial",
+    now: [["v", "AI sentry gun"]],
+    why: "Doesn't say it needs a Sentry Battery or give its <b>20 m range</b>. <b>Approved.</b>",
+    proposed: [["v", "Automated gun with {20 m} range. Needs a Sentry Battery nearby."]] },
+  { group: "Structures", id: "M15", name: "Infantry Portal", verdict: "ok",
+    now: [["both", "Respawns a Marine every 9 seconds. Can only be built near a Command Station. Max 3 per Command Station."]],
+    why: "Accurate. The 9 s and the cap of 3 would become live values. <b>Approved.</b>",
+    proposed: [["both", "Respawns a Marine every {9} seconds. Can only be built near a Command Station. Max {3} per Command Station."]] },
+];
+
+const alien = [
+  { group: "Commander abilities", id: "A01", name: "Heal Wave / Shield Wave", verdict: "wrong",
+    now: [["v", "Heals nearby units very quickly"], ["c", "Generates shield on all nearby lifeforms."]],
+    why: "<b>Vanilla:</b> the Crag heals 30% more for 8 s. <b>CBM: shield only, you were right.</b> CBM comments out the 30% boost in <code>Crag:TryHeal</code> (Crag.lua:335-337) and instead gives aliens within 14 m a mucous shield (20% of max health, 5 s) every second for the 8 s. Both cast from the Crag nearest your view; CBM skips unbuilt and burning ones. <b>Corrected per your note.</b>",
+    proposed: [["v", "For {8 s} the Crag nearest your view heals {30%} more.\n!Burning Crags can't cast it"], ["c", "For {8 s} the nearest Crag shields aliens within {14 m} each second ({20%} of max health).\n!Burning Crags can't cast it"]] },
+  { group: "Commander abilities", id: "A02", name: "Ink", verdict: "partial",
+    now: [["both", "Creates a cloud of Ink around the Shade for Alien units to hide in"]],
+    why: "Doesn't say which Shade: <b>the one nearest your view, anywhere on the map</b>, even off screen. In vanilla a burning or unbuilt Shade can be picked and the cast fails; CBM skips those. <b>Approved.</b> The marine rows say \"burning\" too, but the first draft of M05 used \"on fire\": the wording pass below will settle one term.",
+    proposed: [["v", "Ink cloud around the Shade nearest your view, for aliens to hide in.\n!Burning Shades can't ink"], ["c", "Ink cloud around the nearest usable Shade, for aliens to hide in.\n!Burning Shades can't ink"]] },
+  { group: "Commander abilities", id: "A03", name: "Bone Wall", verdict: "partial",
+    now: [["both", "Creates temporary wall that blocks movement and attacks"]],
+    why: "The stat row already shows current health, but not why it grows: <b>100 + 100 per biomass above 1</b> (CBM 115 + 140). Lasts <b>6 s</b>. Not flammable. <b>Approved.</b>",
+    proposed: [["v", "Wall for {6 s} that blocks movement and attacks. Gains {100} health per biomass."], ["c", "Wall for {6 s} that blocks movement and attacks. Gains {140} health per biomass."]] },
+  { group: "Commander abilities", id: "A04", name: "Contamination", verdict: "wrong",
+    now: [["both", "Creates a flammable mass which spreads infestation and sprays bile 3 times every 2 seconds. Lasts 20 seconds and can be placed anywhere."]],
+    why: "<b>It isn't flammable</b>: the code marks it not flammable. Fire only stops its bile. \"3 times every 2 seconds\" reads as 3 per 2 s; it's <b>3 sprays, 2 s apart</b>. <b>Approved.</b>",
+    proposed: [["both", "Spreads infestation anywhere for {20 s} and sprays bile {3} times, {2 s} apart.\n!Burning stops its bile"]] },
+  { group: "Commander abilities", id: "A05", name: "Nutrient Mist", verdict: "partial",
+    now: [["both", "Speeds structure maturation, speeds player evolution, and prevents damage to disconnected cysts"]],
+    why: "Missing the size of the effect: <b>66% faster for 15 s</b>. <b>Approved.</b>",
+    proposed: [["both", "For {15 s}: structures mature and aliens evolve {66%} faster, and disconnected cysts take no damage."]] },
+  { group: "Commander abilities", id: "A06", name: "Rupture", verdict: "partial",
+    now: [["both", "Splash infestation onto nearby enemy units temporarily clouding their vision and parasiting them."]],
+    why: "Bursts after <b>1.25 s</b> in an <b>8.7 m</b> radius; parasite lasts <b>10 s</b>. <b>Approved, with distances rounded to whole meters</b> (8.7 shows as 9 m).",
+    proposed: [["both", "Bursts after {1.25 s}: marines within {9 m} lose vision briefly and are parasited for {10 s}."]] },
+  { group: "Structure abilities", id: "A07", name: "Crag · Heal", verdict: "wrong",
+    now: [["both", "Heals players and structures (+10 every 2 seconds, max 3 targets)"]],
+    why: "<b>That really is today's text</b>, in vanilla (CRAG_HEAL_TOOLTIP, enUS.txt:690) and CBM, which doesn't override it. \"Increased healing\" is Heal Wave's job. So the tooltip itself still promises a 3-target cap that the code no longer has.<br><b>Crags don't stack:</b> each target keeps one shared 2 s timer for all Crags, so two Crags heal no faster than one.<br><b>Crag vs Hive, per second on players:</b> Skulk 5 vs 10, Gorge 7.5 vs 12.8, Lerk 8 vs 14.4, Fade 12.5 vs 20, Onos 40 vs 56. A Hive heals players and eggs about <b>1.4 to 2x a Crag</b>, but never structures. Hive and Crag healing do stack.",
+    proposed: [["both", "Every {2 s} heals aliens and structures within {14 m}, about half a Hive's rate. More Crags don't stack.\n!Burning stops healing"]] },
+  { group: "Structure abilities", id: "A08", name: "Shade · Cloak", verdict: "partial",
+    now: [["both", "Cloaks nearby Alien structures and players"]],
+    why: "Radius is <b>17 m</b>; switches off while the Shade burns. <b>Approved.</b>",
+    proposed: [["both", "Cloaks alien structures and players within {17 m}.\n!Burning stops cloaking"]] },
+  { group: "Structure abilities", id: "A09", name: "Shift · Energize", verdict: "partial",
+    now: [["both", "Increases energy regeneration rate for nearby units"]],
+    why: "Within <b>17 m</b>, players gain <b>15 energy</b> per second (CBM 7.5). <b>Approved.</b>",
+    proposed: [["v", "Aliens within {17 m} gain {15} energy per second.\n!Burning stops energize"], ["c", "Aliens within {17 m} gain {7.5} energy per second.\n!Burning stops energize"]] },
+  { group: "Structure abilities", id: "A10", name: "Whip · Bombard", verdict: "partial",
+    now: [["both", "Bombard targets with armor damage"]],
+    why: "<b>250 corrosive damage in 6 m</b>. Against marines it only hits armor, at reduced strength; structures take it in full. Mature Whips only. <b>Approved.</b>",
+    proposed: [["both", "Lobs {250} corrosive damage ({6 m} splash): full vs structures, armor only on marines.\n!Burning stops attacks"]] },
+  { group: "Drifter", id: "A11", name: "Mucous Membrane", verdict: "partial",
+    now: [["both", "Grants a temporary shield to friendly units."]],
+    why: "Shield is <b>20% of max health for 5 s</b>, radius <b>5 m</b> (CBM 7.5 m). <b>Approved.</b>",
+    proposed: [["v", "Aliens within {5 m} get a shield of {20%} max health for {5 s}."], ["c", "Aliens within {7.5 m} get a shield of {20%} max health for {5 s}."]] },
+  { group: "Drifter", id: "A12", name: "Enzyme Cloud", verdict: "partial",
+    now: [["both", "Creates cloud of hormones that increase rate of attack for Aliens inside it"]],
+    why: "Attack speed <b>+25%</b> inside a cloud that lasts <b>3 s</b>. <b>Approved.</b>",
+    proposed: [["both", "A {3 s} cloud: aliens inside attack {25%} faster."]] },
+  { group: "Drifter", id: "A13", name: "Drifter Celerity", verdict: "ok",
+    now: [["both", "Drifters move 18% faster"]],
+    why: "Accurate (11 to 13 m/s). The 18% would become a live value. <b>Approved.</b>",
+    proposed: [["both", "Drifters move {18%} faster"]] },
+  { group: "Structures", id: "A14", name: "Cyst", verdict: "partial",
+    now: [["both", "The Commander places Cysts, which grow infestation. If Cysts aren't connected in a chain to a Hive, they will die, causing the infestation to recede. Alien structures without infestation will also die."]],
+    why: "Accurate, and the most flame-sensitive thing the alien commander builds: <b>x5 fire damage</b>. <b>Revised per your note:</b> text unchanged, flammable label added.",
+    proposed: [["both", "The Commander places Cysts, which grow infestation. If Cysts aren't connected in a chain to a Hive, they will die, causing the infestation to recede. Alien structures without infestation will also die.\n!Flammable: {x5} fire damage"]] },
+  { group: "Structures", id: "A15", name: "Egg · Gorge, Lerk, Fade, Onos eggs", verdict: "partial",
+    now: [["both", "Aliens spawn from eggs in waves. Hives grow eggs nearby intermittently."]],
+    why: "Eggs of every kind are flammable: <b>x2.5 fire damage</b>. Text unchanged; the label is added. <b>Approved.</b>",
+    proposed: [["both", "Aliens spawn from eggs in waves. Hives grow eggs nearby intermittently.\n!Flammable: {x2.5} fire damage"]] },
+];
+
+const fire = [
+  ["Cyst", "Flammable: x5 fire damage", "Cyst:GetIsFlameableMultiplier", "x5 hits, x2.5 burn"],
+  ["Egg, lifeform eggs", "Flammable: x2.5 fire damage", "Egg:GetIsFlameAble", "x2.5"],
+  ["Drop Flamethrower", "Fire: sets targets alight · extra damage vs flammable", "kFlamethrowerDamageType = Flame", "by target"],
+  ["Drop Welder", "Fire damage: extra vs flammable", "kWelderDamageType = Flame", "by target"],
+  ["Crag, Heal, Heal Wave", "Burning stops healing", "Crag:UpdateHealing", "off"],
+  ["Shade, Cloak, Ink", "Burning stops cloaking / Burning Shades can't ink", "Shade.lua:312, :354", "off"],
+  ["Shift, Energize, Echo", "Burning stops energize and echo", "Shift.lua:320, :370", "off"],
+  ["Whip, Slap, Bombard", "Burning stops attacks", "Whip_Server.lua:231, :243", "off"],
+  ["Hive", "Burning stops healing", "Hive_Server.lua:168", "off"],
+  ["Contamination", "Burning stops its bile", "Contamination:SpewBile", "off"],
+];
+
+const pending = [
+  "Power Surge: other effects beyond the 10 s power",
+  "Distress Beacon: range and delay",
+  "Shift · Hatch: egg count and how it scales with team size",
+  "Shift · Echo: range and cost wording",
+  "Whip · Slap: 50 damage, confirm range",
+  "Drifter Regeneration: \"3% every 2 s while hurt\"",
+  "Cyst Camouflage, Celerity, Carapace",
+  "Hallucination Cloud (vanilla)",
+  "Lifeform research: Leap, Xenocide, Bile Bomb, Umbra, Spores, Metabolize, Stab, Bone Shield, Stomp, Web",
+  "Tunnels, Hive, Harvester and chamber tooltips",
+  "CBM only: Advanced Crag, Shift, Shade, Whip and their abilities",
+  "CBM only: A-MAC and its fields, SPARC, Cargo Gate, Linked Power Battery, Purification Protocol",
+  "CBM only: SMG, Scan Grenade, Exosuit Core tech, Advanced Observatory",
+  "Wording pass: settle one term for fire (\"burning\" or \"on fire\") across every row and label",
+];
+
+const RS = { v: "Vanilla", c: "CBM", both: "Vanilla and CBM" };
+const WIDTH = 37;
+
+function esc(s) { return s.replace(/[&<>]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[ch]); }
+
+// Greedy word wrap at the tooltip width, to estimate how many lines a text takes.
+function lineCount(text) {
+  let lines = 0;
+  for (const para of text.split("\n")) {
+    let cur = 0; lines++;
+    for (const w of para.split(" ")) {
+      const len = w.length;
+      if (cur === 0) cur = len;
+      else if (cur + 1 + len <= WIDTH) cur += 1 + len;
+      else { lines++; cur = len; }
+    }
+  }
+  return lines;
+}
+
+function renderTip(text) {
+  const [body, ...labels] = text.split("\n");
+  const fmt = s => esc(s).replace(/\{([^}]+)\}/g, '<span class="live">$1</span>');
+  let html = `<span class="t">${fmt(body)}</span>`;
+  for (const l of labels) html += `<span class="fire">${fmt(l.replace(/^!/, ""))}</span>`;
+  return html;
+}
+
+function plain(text) { return text.split("\n")[0].replace(/[{}]/g, ""); }
+
+function renderRows(list, target) {
+  const host = document.getElementById(target);
+  let group = null, html = "";
+  for (const r of list) {
+    if (r.group !== group) { html += `<h3 class="group">${esc(r.group)}</h3>`; group = r.group; }
+    const nowHtml = r.now.map(([rs, t]) =>
+      `<p class="variant">${r.now.length > 1 ? `<span>${RS[rs]}</span>` : ""}${esc(t)}</p>`).join("");
+    const nowLines = Math.max(...r.now.map(([, t]) => lineCount(t)));
+    const tipHtml = r.proposed.map(([rs, t]) => {
+      const n = lineCount(plain(t));
+      return `<div class="tip"><span class="rsl">${RS[rs]}</span>${renderTip(t)}</div>` +
+             `<div class="lines">${n} line${n === 1 ? "" : "s"} · now ${nowLines}</div>`;
+    }).join("");
+    const label = { wrong: "Wrong", partial: "Incomplete", ok: "Accurate", unchecked: "Unchecked" }[r.verdict];
+    html += `<article class="row">
+      <div class="meta">
+        <span class="id">${r.id}</span>
+        <span class="name">${esc(r.name)}</span>
+        <span class="chip ${r.verdict}">${label}</span>
+      </div>
+      <div class="now"><div class="col-label">Today</div>${nowHtml}<div class="why">${r.why}</div></div>
+      <div class="prop"><div class="col-label">Proposed</div>${tipHtml}</div>
+    </article>`;
+  }
+  host.innerHTML = html;
+}
+
+renderRows(marine, "rows-marine");
+renderRows(alien, "rows-alien");
+document.getElementById("count-marine").textContent = `${marine.length} rows`;
+document.getElementById("count-alien").textContent = `${alien.length} rows`;
+
+document.getElementById("fire-rows").innerHTML = fire.map(([t, l, code, m]) =>
+  `<tr><td>${esc(t)}</td><td class="label">${esc(l)}</td><td class="num">${esc(code)}</td><td class="num">${esc(m)}</td></tr>`).join("");
+
+document.getElementById("pending-list").innerHTML = pending.map(p => `<li>${esc(p)}</li>`).join("");
+
+const all = [...marine, ...alien];
+const tally = k => all.filter(r => r.verdict === k).length;
+document.getElementById("summary").innerHTML = [
+  [all.length, "Checked"], [tally("wrong"), "Wrong"], [tally("partial"), "Incomplete"],
+  [tally("ok"), "Accurate"], [fire.length, "Fire labels"], [pending.length, "Still to check"],
+].map(([n, l]) => `<div><span class="n">${n}</span><span class="l">${l}</span></div>`).join("");
+</script>

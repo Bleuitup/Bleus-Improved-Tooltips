@@ -335,6 +335,10 @@ and cost time to rule out.
   follow. The alien shield bar and Centralized bar opacity were moved out to a later 1.07 on
   `feature/centralized-bars-shields` (2026-09-15): the first in-game test showed the ydy style not
   working, the shield number misaligned and a flood of opacity-layer script errors.
+  1.06 also carries the ARC stat row fix (the row ends at the team res icon's right edge).
+- **Commander tooltip text rewrite: planning only, on `feature/tooltip-text-audit`** (branched from
+  `feature/glyph-refresh`, 2026-09-15), a candidate for a release after 1.06. Decisions, approved
+  texts and what's left are in [docs/tooltip-text-audit.md](docs/tooltip-text-audit.md). No code yet.
 - 1.04a (`v1.04a`, 2026-09-13): the big map weapon colors default to on,
   the minimap stays off. 1.04 (`v1.04`) split the weapon-color toggle into a big map and a minimap
   switch and moved everything to American spelling. 1.03 (`v1.03`) added the weapon-colored
