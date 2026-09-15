@@ -94,6 +94,12 @@ M07 (Research Hand Grenades) was dropped: left untouched.
 - HMG: 7 damage (rifle 10), no structure bonus, x1.5 vs players and exos; spread 3.2° vs rifle 2.8°.
 - Cat Pack adds 1.125 m/s to a 5.75 m/s sprint before weight scaling: about 20%.
 - Sentries: `kSentriesPerBattery = 3` is counted per room; battery range 4 m.
+- Two Crag tooltips: the building (CRAG_TOOLTIP, "Heals and protects nearby friendly units.", build
+  menu) and the Heal button on a selected Crag (CRAG_HEAL_TOOLTIP, the one with "max 3 targets"). A07
+  is the button; A16 (proposed, not yet approved) is the building: "Heals players and structures
+  within {14 m}. Can cast Heal Wave." (CBM: Shield Wave). "Protects" dates from Crag Umbra.
+- Shifts don't stack: Energize counts each Shift in range but caps the level at 1
+  (`kMaxEnergizeLevel = 1` in EnergizeMixin.lua; CBM uses the same file).
 
 ## Not yet checked
 
