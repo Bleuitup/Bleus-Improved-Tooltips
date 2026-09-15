@@ -109,3 +109,17 @@ Bomb, Umbra, Spores, Metabolize, Stab, Bone Shield, Stomp, Web), tunnels, Hive, 
 and everything CBM-only (Advanced Crag / Shift / Shade / Whip and abilities, A-MAC and fields, SPARC,
 Cargo Gate, Linked Power Battery, Purification Protocol, SMG, Scan Grenade, Exosuit Core tech,
 Advanced Observatory). Then the fire wording pass.
+
+## Idea: flame glyph (user, 2026-09-15)
+
+A small flame icon to mark the fire labels, proposed for 1.07. Not designed yet. Notes for when it is:
+
+- It would lead the red label line ("[flame] Flammable: x5 fire damage"), drawn at the label's text
+  height and tinted the label red, so the glyph and the words read as one unit.
+- The icon sheet `ui/bleu_tooltip_icons.dds` has 7 cells (448x64): 0 hourglass, 1 stopwatch,
+  2 marine speed, 3-6 health, armor, ready, not ready. A flame would be cell 7, widening the sheet to
+  512x64. `build_icons.ps1` then needs its protected-cell check bounded to cells 3-6 (it currently
+  compares from x = 192 to the end), and the new cell gets the same soft glow recipe as cells 0-2.
+- White art like the rest of the sheet, tinted at runtime.
+- Open question: whether the "burning stops ..." labels get the flame too, or only flammable targets
+  and fire weapons.
