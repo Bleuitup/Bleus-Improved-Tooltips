@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.05. Published to the Steam Workshop as
+Version 1.06. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -267,7 +267,7 @@ Only the hourglass and stopwatch are drawn from scratch. Everything else is vani
 |---|---|
 | Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds`, used straight from vanilla — CBM assigns the same index to `SpurPassive` |
 | Health, armor | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
-| Marine speed | `marine_buildmenu_insight.dds` row 2 col 4, mirrored to point right and lifted off its button plate |
+| Marine speed | Drawn: flat double chevrons with a soft glow (1.06). Up to 1.05, `marine_buildmenu_insight.dds` row 2 col 4, mirrored and lifted off its button plate |
 | Hourglass, stopwatch | Drawn in `tools/build_icons.ps1`, then measured and fitted to the same 81% of the icon the vanilla glyphs fill |
 | Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, tinted the tech map's researched-alien color |
 | Researching ring | `ui/unitstatus_alien.dds` `{256, 68, 384, 196}`, the same region `GUIUnitStatus` spins on a busy hive |
@@ -544,6 +544,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**1.06**
+- **Refreshed glyphs.** The hourglass and stopwatch get a soft vanilla-style glow and are slightly
+  smaller - the hourglass by 12%, the stopwatch by 7%, scaled evenly so neither is stretched - so they
+  sit better beside vanilla's health and armor. The marine speed icon becomes flat, thinner double
+  chevrons with the same glow. Health, armor, alien speed and the ready icons are unchanged, and the
+  build now checks that pixel for pixel. See `docs/glyph-refresh.md`.
 
 **1.05**
 - **Phase gate arrows on the commander's and spectator's corner minimap.** Vanilla draws them on the
