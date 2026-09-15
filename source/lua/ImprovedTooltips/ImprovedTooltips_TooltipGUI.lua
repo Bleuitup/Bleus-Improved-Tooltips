@@ -116,12 +116,14 @@ local kStatRowYOffset
 local kStatRowHeight
 local kStatIconTextGap
 local kStatEntryGap
+local kStatEntryMinGap
 
 local function UpdateScale()
 	kStatRowYOffset  = GUIScale(8)
 	kStatRowHeight   = GUICommanderTooltip.kResourceIconSize
 	kStatIconTextGap = GUIScale(4)
 	kStatEntryGap    = GUIScale(20)
+	kStatEntryMinGap = GUIScale(8)
 end
 
 local function GetIconColor()
@@ -361,10 +363,19 @@ local function GetDisplayValue(field, values)
 
 end
 
+-- The panel is a fixed width (tooltipWidth, 466 x kCommanderGUIsGlobalScale) and vanilla wraps its
+-- own text at tooltipWidth - GUIScale(65) from kTextXOffset (GUICommanderTooltip.lua:224). At the
+-- full gap, a row with all four figures and a four-digit one - the ARC's 2600 / 400 / 2 / 10 - ran
+-- past the frame. The gaps close up first, evenly, down to kStatEntryMinGap; only a row that still
+-- does not fit then moves each entry's number closer to its icon.
+local function GetStatRowWidth(self)
+	return self.tooltipWidth - GUIScale(65)
+end
+
 local function LayoutStatRow(self, values)
 
-	local shown = false
-	local x = GUICommanderTooltip.kTextXOffset
+	local shown = { }
+	local entriesWidth = 0
 	local y = GetTitleBottom(self) + kStatRowYOffset
 
 	for i = 1, #kRowOrder do
@@ -377,14 +388,37 @@ local function LayoutStatRow(self, values)
 
 		if display then
 			entry.text:SetText(display)
-			entry.icon:SetPosition(Vector(x, y, 0))
-			x = x + GetEntryWidth(entry) + kStatEntryGap
-			shown = true
+			entry.text:SetPosition(Vector(kStatIconTextGap, GUICommanderTooltip.kResourceIconSize / 2, 0))
+			entriesWidth = entriesWidth + GetEntryWidth(entry)
+			shown[#shown + 1] = entry
 		end
 
 	end
 
-	if shown then
+	local gap = kStatEntryGap
+	local textShift = 0
+
+	if #shown > 1 and self.tooltipWidth then
+		local spare = GetStatRowWidth(self) - entriesWidth
+		gap = Clamp(spare / (#shown - 1), kStatEntryMinGap, kStatEntryGap)
+		local overflow = entriesWidth + gap * (#shown - 1) - GetStatRowWidth(self)
+		if overflow > 0 then
+			textShift = math.min(overflow / #shown, kStatIconTextGap)
+		end
+	end
+
+	local x = GUICommanderTooltip.kTextXOffset
+
+	for i = 1, #shown do
+		local entry = shown[i]
+		if textShift > 0 then
+			entry.text:SetPosition(Vector(kStatIconTextGap - textShift, GUICommanderTooltip.kResourceIconSize / 2, 0))
+		end
+		entry.icon:SetPosition(Vector(x, y, 0))
+		x = x + GetEntryWidth(entry) - textShift + gap
+	end
+
+	if #shown > 0 then
 		local dy = kStatRowHeight + kStatRowYOffset
 		ShiftBlock(self.requires, dy)
 		ShiftBlock(self.enables, dy)
