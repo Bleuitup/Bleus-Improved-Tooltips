@@ -328,7 +328,11 @@ and cost time to rule out.
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- **1.04a is published and tagged `v1.04a`** (2026-09-13): the big map weapon colors default to on,
+- **1.05 is published and tagged `v1.05`** (2026-09-14): phase gate arrows on the commander's and
+  spectator's corner minimap, exo weapon bars beside the crosshair (hiding Centralized's weapon bar
+  while they show), and CBM's SMG blips in blue. **Next is 1.06**, starting with the approved glyph
+  refresh (see the handoff section at the end of this file) and a possible slide repolish.
+- 1.04a (`v1.04a`, 2026-09-13): the big map weapon colors default to on,
   the minimap stays off. 1.04 (`v1.04`) split the weapon-color toggle into a big map and a minimap
   switch and moved everything to American spelling. 1.03 (`v1.03`) added the weapon-colored
   marine map blips and the redrawn hourglass and stopwatch. The `it_blipcolors` and `it_blipstate`
@@ -842,3 +846,8 @@ is whether the class has subclasses, not whether the hook looks like the others.
 
 **Also worth knowing while debugging that one:** `Shared.GetEntitiesWithClassname("MapBlip")` will
 not list player blips either; they are `"PlayerMapBlip"`.
+
+
+## Approved glyph refresh handoff (2026-09-15)
+
+Before continuing glyph or slide work, read [the approved glyph handoff](../Glyph%20Consistency%20Review/HANDOFF.md). It records the approved sizing, glow, flat marine speed design, reproducible assets and pending integration. This refresh is preview-only; source DDS and Launch Pad output have not received it. Health and armor must remain unchanged.
