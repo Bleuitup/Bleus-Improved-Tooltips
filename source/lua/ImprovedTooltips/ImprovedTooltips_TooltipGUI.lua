@@ -117,6 +117,10 @@ local kStatRowHeight
 local kStatIconTextGap
 local kStatEntryGap
 local kStatEntryMinGap
+-- Allowance per figure when a row has to be refitted. The bold figures draw wider than GetTextWidth
+-- reports: fitted to the res icon's edge on measured widths alone, the ARC's "10" still ended about
+-- 9 GUI pixels past it (2026-09-15 test), and the gaps came out visibly tighter than computed.
+local kStatTextSlack
 
 local function UpdateScale()
 	kStatRowYOffset  = GUIScale(8)
@@ -124,6 +128,7 @@ local function UpdateScale()
 	kStatIconTextGap = GUIScale(4)
 	kStatEntryGap    = GUIScale(20)
 	kStatEntryMinGap = GUIScale(8)
+	kStatTextSlack   = GUIScale(3)
 end
 
 local function GetIconColor()
@@ -402,13 +407,20 @@ local function LayoutStatRow(self, values)
 
 	local gap = kStatEntryGap
 	local textShift = 0
+	local slack = 0
 
 	if #shown > 1 and self.tooltipWidth then
-		local spare = GetStatRowWidth(self) - entriesWidth
-		gap = Clamp(spare / (#shown - 1), kStatEntryMinGap, kStatEntryGap)
-		local overflow = entriesWidth + gap * (#shown - 1) - GetStatRowWidth(self)
-		if overflow > 0 then
-			textShift = math.min(overflow / #shown, kStatIconTextGap)
+		local rowWidth = GetStatRowWidth(self)
+		-- Only a row that does not fit at the full gap is refitted, and only it takes the slack, so
+		-- every row with room to spare keeps its exact spacing.
+		if entriesWidth + kStatEntryGap * (#shown - 1) > rowWidth then
+			slack = kStatTextSlack
+			entriesWidth = entriesWidth + slack * #shown
+			gap = Clamp((rowWidth - entriesWidth) / (#shown - 1), kStatEntryMinGap, kStatEntryGap)
+			local overflow = entriesWidth + gap * (#shown - 1) - rowWidth
+			if overflow > 0 then
+				textShift = math.min(overflow / #shown, kStatIconTextGap)
+			end
 		end
 	end
 
@@ -420,7 +432,7 @@ local function LayoutStatRow(self, values)
 			entry.text:SetPosition(Vector(kStatIconTextGap - textShift, GUICommanderTooltip.kResourceIconSize / 2, 0))
 		end
 		entry.icon:SetPosition(Vector(x, y, 0))
-		x = x + GetEntryWidth(entry) - textShift + gap
+		x = x + GetEntryWidth(entry) + slack - textShift + gap
 	end
 
 	if #shown > 0 then
