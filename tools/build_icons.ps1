@@ -12,14 +12,21 @@
 # The glyphs are pure white with an alpha mask, because the mod tints them per team at runtime
 # (IT.kMarineIconColor / IT.kAlienIconColor) via GUIItem:SetColor, which multiplies.
 #
-# Nothing here is drawn from scratch except the hourglass and stopwatch. The rest is vanilla art,
+# The hourglass, stopwatch and marine speed chevrons are drawn here. The rest is vanilla art,
 # resampled - the mod invents as little as possible:
 #
 #   health, armor -> vanilla's own selection-panel glyphs, resampled to match the other icons in
 #                     size and made fully opaque. See the block that builds them for why they are
 #                     baked in rather than drawn from the vanilla atlas at runtime.
-#   marine speed   -> ui/marine_buildmenu_insight.dds row 2 column 4, mirrored to point right and
-#                     lifted off its button plate.
+#
+# 1.06 GLYPH REFRESH, approved by the user on 2026-09-15 (worked out with ChatGPT Codex; the preview
+# builders live in "Glyph Consistency Review" beside the repo). At the end of the build:
+#   * the hourglass and stopwatch get a soft vanilla-style glow, then are scaled down uniformly - the
+#     hourglass to 88%, the stopwatch to 93% - never stretched, details kept;
+#   * the marine speed icon becomes flat double chevrons with the same glow, replacing the beveled
+#     chevron that used to be lifted from ui/marine_buildmenu_insight.dds;
+#   * cells 3-6 (health, armor, the ready pips) are verified pixel-identical before and after, and the
+#     build stops if they are not. Health and armor are the benchmark and must never change.
 #
 # The one icon still used straight from vanilla at runtime, with no cell here, is ALIEN speed: the
 # Celerity icon, index 64 in ui/buildmenu.dds (cell 4,5). It already points right, reads as motion,
@@ -202,53 +209,11 @@ $g.DrawLine($handPen, (Pt 32 38), (Pt 32 26))      # 12 o'clock
 $g.DrawLine($handPen, (Pt 32 38), (Pt 43 38))      # and 3 o'clock; the user settled this pairing
 $g.Dispose(); CommitFitted $b 1
 
-# 2 - speed, marine: the double chevron from ui/marine_buildmenu_insight.dds row 2 column 4
-# (12 columns of 80px, so x 240-320, y 80-160). Vanilla's points left, so it is mirrored.
-#
-# It sits on a rounded dark button plate, and unlike the buy-menu glyphs that plate is opaque - the
-# alpha channel is no use for separating them. Luminance works instead: the plate is near-black, the
-# chevron is bright cyan. So luminance becomes the alpha mask and the color is flattened to white,
-# which also lets the runtime team tint apply cleanly.
+# 2 - speed, marine: drawn in the 1.06 glyph refresh at the end of this script. Up to 1.05 it was the
+# beveled double chevron from ui/marine_buildmenu_insight.dds row 2 column 4, mirrored and lifted off
+# its button plate by luminance; the user approved a leaner flat version on 2026-09-15.
 $nvdecompress = Join-Path $NS2 "utils\nvdecompress.exe"
 if (-not (Test-Path -LiteralPath $nvdecompress)) { throw "nvdecompress.exe not found at $nvdecompress" }
-
-$insightDds = Join-Path $NS2 "ns2\ui\marine_buildmenu_insight.dds"
-$workDds = Join-Path $env:TEMP "bit_insight.dds"
-$workTga = [System.IO.Path]::ChangeExtension($workDds, ".tga")
-Copy-Item -LiteralPath $insightDds -Destination $workDds -Force
-& $nvdecompress $workDds | Out-Null
-if (-not (Test-Path -LiteralPath $workTga)) { throw "nvdecompress produced no TGA for $insightDds" }
-
-$srcW = 960
-$tga = [System.IO.File]::ReadAllBytes($workTga)
-$chevron = New-Object System.Drawing.Bitmap(80, 80, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-for ($y = 0; $y -lt 80; $y++) {
-    for ($x = 0; $x -lt 80; $x++) {
-        # 18-byte TGA header, BGRA, top-left origin. Source cell starts at (240, 80).
-        $i = 18 + ((($y + 80) * $srcW) + ($x + 240)) * 4
-        $lum = [int](0.114*$tga[$i] + 0.587*$tga[$i+1] + 0.299*$tga[$i+2])
-        # The plate floor sits around 25-40; lift off it so it goes fully clear.
-        $a = [int]((($lum - 45) * 255.0) / (200 - 45))
-        if ($a -lt 0) { $a = 0 }; if ($a -gt 255) { $a = 255 }
-        $chevron.SetPixel($x, $y, [System.Drawing.Color]::FromArgb($a, 255, 255, 255))
-    }
-}
-
-$r = New-Canvas; $b = $r[0]; $g = $r[1]
-$g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-# Negative width mirrors horizontally, turning vanilla's "<<" into ">>".
-$pad = 6 * $SS
-#
-# Cropped to (14,10)-(74,70) rather than the full 80x80 cell. Luminance alone cannot remove the
-# plate, because its rounded border is as bright as the chevron itself - but the border only touches
-# the cell's outer edge. Measured glyph extent is x 20-70, y 12-66, so this crop clears the border
-# on all four sides while keeping the whole glyph.
-$g.DrawImage($chevron,
-    (New-Object System.Drawing.Rectangle(($CELL*$SS - $pad), $pad, (-($CELL*$SS - 2*$pad)), ($CELL*$SS - 2*$pad))),
-    (New-Object System.Drawing.Rectangle(14, 10, 60, 60)),
-    [System.Drawing.GraphicsUnit]::Pixel)
-$g.Dispose(); Commit $b 2
-$chevron.Dispose()
 
 # 3, 4 - health cross and armor shield, resampled from ui/alien_commander_textures.dds at
 # (0,363)-(48,411) and (48,363)-(96,411). These are vanilla's own selection-panel glyphs, the ones
@@ -373,6 +338,118 @@ Add-ReadyPip 5 ([System.Drawing.Color]::FromArgb(255, 46, 168, 74))  $true    # 
 Add-ReadyPip 6 ([System.Drawing.Color]::FromArgb(255, 208, 48, 48))  $false   # not ready, cross
 
 $ag.Dispose()
+
+# ---------------------------------------------------------------------------------------------
+# 1.06 glyph refresh: glow, uniform resize, flat marine chevrons.
+#
+# Reproduces the preview the user approved on 2026-09-15 ("Glyph Consistency Review\
+# build_preview.ps1" and "build_resized_preview.ps1") exactly, step for step, so the atlas this
+# writes matches "candidate-resized-flat-speed.png".
+#
+# Glow recipe, per 64px cell, from the alpha mask only (color stays white for the runtime tint):
+#   core  = 0.4 * mask + 0.6 * GaussianBlur(mask, 0.70)
+#   halo  = GaussianBlur(mask, 2.5)
+#   alpha = core + 0.85 * halo * (1 - core)
+# with the outermost texel ring forced clear so the halo never bleeds into a neighboring cell.
+#
+# Order matters and follows the preview: the hourglass and stopwatch are glowed at full size and the
+# result scaled; the chevrons are drawn, scaled into their cell, and glowed there.
+#
+# Judge optical size through the tooltip's sampling windows, not raw cell bounds: health and armor are
+# sampled through a 48px window, the custom glyphs through the full 64px cell (kOwnIconCoords).
+# ---------------------------------------------------------------------------------------------
+
+Add-Type -TypeDefinition @'
+using System;
+using System.Drawing;
+public static class BitGlyphGlow {
+    static double[] Blur(double[] a, int w, int h, double sigma) {
+        int r = (int)Math.Ceiling(3 * sigma);
+        var k = new double[2 * r + 1]; double sum = 0;
+        for (int i = -r; i <= r; i++) { k[i + r] = Math.Exp(-i * i / (2 * sigma * sigma)); sum += k[i + r]; }
+        for (int i = 0; i < k.Length; i++) k[i] /= sum;
+        var tmp = new double[a.Length]; var dst = new double[a.Length];
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) for (int q = -r; q <= r; q++) { int xx = x + q; if (xx >= 0 && xx < w) tmp[y * w + x] += a[y * w + xx] * k[q + r]; }
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) for (int q = -r; q <= r; q++) { int yy = y + q; if (yy >= 0 && yy < h) dst[y * w + x] += tmp[yy * w + x] * k[q + r]; }
+        return dst;
+    }
+    // Glows one 64px cell of the atlas in place, starting at cellX.
+    public static void Apply(Bitmap atlas, int cellX, double softness, double sigma, double glow, double glowSigma) {
+        var mask = new double[64 * 64];
+        for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) mask[y * 64 + x] = atlas.GetPixel(cellX + x, y).A / 255.0;
+        var soft = Blur(mask, 64, 64, sigma); var halo = Blur(mask, 64, 64, glowSigma);
+        for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) {
+            int i = y * 64 + x;
+            double core = (1 - softness) * mask[i] + softness * soft[i];
+            double a = core + glow * halo[i] * (1 - core);
+            if (x == 0 || x == 63 || y == 0 || y == 63) a = 0;
+            atlas.SetPixel(cellX + x, y, Color.FromArgb((int)Math.Round(Math.Max(0, Math.Min(1, a)) * 255), 255, 255, 255));
+        }
+    }
+    // Throws if any pixel from firstX onward differs between the two atlases.
+    public static void CheckProtected(Bitmap before, Bitmap after, int firstX) {
+        for (int y = 0; y < before.Height; y++) for (int x = firstX; x < before.Width; x++)
+            if (before.GetPixel(x, y).ToArgb() != after.GetPixel(x, y).ToArgb())
+                throw new Exception("Protected atlas pixel changed at " + x + "," + y);
+    }
+}
+'@ -ReferencedAssemblies @([System.Drawing.Bitmap].Assembly.Location, [System.Drawing.Color].Assembly.Location)
+
+$kGlowSoftness = 0.60; $kGlowSigma = 0.70; $kGlowStrength = 0.85; $kGlowHaloSigma = 2.5
+$kProtectedFromX = 3 * $CELL      # cells 3-6: health, armor, ready, not ready
+
+$fullRect = New-Object System.Drawing.Rectangle 0, 0, $atlas.Width, $atlas.Height
+$beforeRefresh = $atlas.Clone($fullRect, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+
+# Hourglass and stopwatch: glow at full size on a copy, then draw that copy back scaled.
+$glowed = $atlas.Clone($fullRect, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+[BitGlyphGlow]::Apply($glowed, 0,       $kGlowSoftness, $kGlowSigma, $kGlowStrength, $kGlowHaloSigma)
+[BitGlyphGlow]::Apply($glowed, $CELL,   $kGlowSoftness, $kGlowSigma, $kGlowStrength, $kGlowHaloSigma)
+
+$rg = [System.Drawing.Graphics]::FromImage($atlas)
+$rg.CompositingMode   = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+$rg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+$rg.PixelOffsetMode   = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+
+# Uniform, never per axis: widening the hourglass was rejected on sight on 2026-09-08.
+$kTimeGlyphScales = @(0.88, 0.93)   # hourglass 12% smaller, stopwatch 7% smaller
+for ($slot = 0; $slot -lt 2; $slot++) {
+    $rg.FillRectangle([System.Drawing.Brushes]::Transparent, ($slot * $CELL), 0, $CELL, $CELL)
+    $side = [float]($CELL * $kTimeGlyphScales[$slot]); $inset = [float](($CELL - $side) / 2)
+    $rg.DrawImage($glowed,
+        (New-Object System.Drawing.RectangleF (($slot * $CELL) + $inset), $inset, $side, $side),
+        (New-Object System.Drawing.RectangleF ($slot * $CELL), 0, $CELL, $CELL),
+        [System.Drawing.GraphicsUnit]::Pixel)
+}
+$glowed.Dispose()
+
+# Marine speed: flat double chevrons, constant-width strokes, no bevel. 64px coordinates, drawn at 4x.
+$marine = New-Object System.Drawing.Bitmap (64 * $SS), (64 * $SS), ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$mg = [System.Drawing.Graphics]::FromImage($marine)
+$mg.Clear([System.Drawing.Color]::Transparent)
+$mg.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+$mg.ScaleTransform($SS, $SS)
+$chevronPen = New-Object System.Drawing.Pen ([System.Drawing.Color]::White), 5.2
+$chevronPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Flat
+$chevronPen.EndCap   = [System.Drawing.Drawing2D.LineCap]::Flat
+$chevronPen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+foreach ($cx in @(18, 32)) {
+    $mg.DrawLines($chevronPen, [System.Drawing.PointF[]]@(
+        (New-Object System.Drawing.PointF $cx, 13),
+        (New-Object System.Drawing.PointF ($cx + 10), 32),
+        (New-Object System.Drawing.PointF $cx, 51)))
+}
+$chevronPen.Dispose(); $mg.Dispose()
+
+$rg.FillRectangle([System.Drawing.Brushes]::Transparent, (2 * $CELL), 0, $CELL, $CELL)
+$rg.DrawImage($marine, (New-Object System.Drawing.Rectangle (2 * $CELL), 0, $CELL, $CELL), 0, 0, (64 * $SS), (64 * $SS), [System.Drawing.GraphicsUnit]::Pixel)
+$marine.Dispose(); $rg.Dispose()
+
+[BitGlyphGlow]::Apply($atlas, (2 * $CELL), $kGlowSoftness, $kGlowSigma, $kGlowStrength, $kGlowHaloSigma)
+
+[BitGlyphGlow]::CheckProtected($beforeRefresh, $atlas, $kProtectedFromX)
+$beforeRefresh.Dispose()
+
 $atlas.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)
 $atlas.Dispose()
 

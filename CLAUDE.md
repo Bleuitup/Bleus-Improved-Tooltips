@@ -166,11 +166,11 @@ NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selecti
 - The mod's own sheet is **448x64, seven cells**: hourglass, stopwatch, marine speed chevron,
   health cross, armor shield, ready tick, not-ready cross. `tools/build_icons.ps1` builds it, and
   the cell ORDER is what `kOwnIconCoords` indexes - append, never reorder.
-- **The marine chevron is lifted, not drawn**: `marine_buildmenu_insight.dds` row 2 col 4
-  (x 240-320, y 80-160), mirrored to point right. Its button plate is **opaque**, so unlike the
-  buy-menu glyphs the alpha channel is useless — luminance becomes the mask instead. Luminance alone
-  still cannot remove the plate's *border*, which is as bright as the glyph, so the extract is
-  cropped to `(14,10)-(74,70)`; the measured glyph extent is x 20-70, y 12-66.
+- **The marine chevron is drawn from 1.06** as flat double chevrons with a soft glow (see "1.06
+  glyph refresh" at the end of this file). Up to 1.05 it was lifted from
+  `marine_buildmenu_insight.dds` row 2 col 4 (x 240-320, y 80-160), mirrored, with luminance as the
+  mask because that button plate is opaque and cropped to `(14,10)-(74,70)` to clear the plate's
+  bright border. That extraction is gone from the builder; the history is here if it is wanted back.
 - **Before adding an icon, look for a vanilla one.** The atlases worth checking are
   `{marine,alien}_commander_textures.dds` (selection panel furniture), `buildmenu.dds` (all tech
   icons), and `marine_buildmenu_insight.dds` (arrows, symbols).
@@ -330,8 +330,9 @@ and cost time to rule out.
 
 - **1.05 is published and tagged `v1.05`** (2026-09-14): phase gate arrows on the commander's and
   spectator's corner minimap, exo weapon bars beside the crosshair (hiding Centralized's weapon bar
-  while they show), and CBM's SMG blips in blue. **Next is 1.06**, starting with the approved glyph
-  refresh (see the handoff section at the end of this file) and a possible slide repolish.
+  while they show), and CBM's SMG blips in blue. **1.06 is being built on
+  `feature/centralized-bars-shields`**: the alien shield bar and Centralized bar opacity, and the
+  glyph refresh (see "1.06 glyph refresh" at the end of this file). A slide repolish may follow.
 - 1.04a (`v1.04a`, 2026-09-13): the big map weapon colors default to on,
   the minimap stays off. 1.04 (`v1.04`) split the weapon-color toggle into a big map and a minimap
   switch and moved everything to American spelling. 1.03 (`v1.03`) added the weapon-colored
@@ -706,8 +707,9 @@ and armor glyphs -- baked at 39px and sampled through a centered 48px window -- 
 
 `CommitFitted` measures the drawn glyph's alpha bounding box and scales it into a 52px box centered in
 the cell (52/64 = 81.25%). Measuring rather than hand-tuning coordinates means the drawing code can
-change without the sizes drifting apart again. Slot 2 (the chevron) still uses plain `Commit`; it is
-lifted vanilla art and was never out of step.
+change without the sizes drifting apart again. From 1.06 the hourglass and stopwatch are further scaled
+to 88% and 93% after glowing, and the chevron is drawn and glowed at the end of the build; see "1.06
+glyph refresh" below.
 
 **`CommitFitted` fits the LONGEST side, so a narrow glyph is narrower than a square one at the same
 "52".** The hourglass is 40x52, aspect 0.77, against the cross's square. **Widening it was tried on
@@ -848,6 +850,30 @@ is whether the class has subclasses, not whether the hook looks like the others.
 not list player blips either; they are `"PlayerMapBlip"`.
 
 
-## Approved glyph refresh handoff (2026-09-15)
+## 1.06 glyph refresh (approved 2026-09-15, integrated the same day)
 
-Before continuing glyph or slide work, read [the approved glyph handoff](../Glyph%20Consistency%20Review/HANDOFF.md). It records the approved sizing, glow, flat marine speed design, reproducible assets and pending integration. This refresh is preview-only; source DDS and Launch Pad output have not received it. Health and armor must remain unchanged.
+Worked out by the user with ChatGPT Codex and approved ("Love it"); the handoff and its preview
+builders live outside the repo in `G:\My Drive\[01] Martin\[07] Claude Code\Glyph Consistency Review\`,
+and the decisions are copied into [docs/glyph-refresh.md](docs/glyph-refresh.md).
+
+**Integrated into `tools/build_icons.ps1`** as a step at the end of the build, on
+`feature/centralized-bars-shields`:
+
+- Hourglass and stopwatch: glow at full size, then scaled uniformly to 88% and 93%. Never per axis.
+- Marine speed: flat double chevrons, `(18,13)->(28,32)->(18,51)` and `(32,13)->(42,32)->(32,51)` in
+  64px coordinates, 5.2px pen, flat caps, round joins, drawn at 4x, then glowed in the cell.
+- Glow: `core = 0.4*mask + 0.6*blur(mask, 0.70)`, `halo = blur(mask, 2.5)`,
+  `alpha = core + 0.85*halo*(1 - core)`, outer texel ring clear, color white for the runtime tint.
+- **Cells 3-6 (health, armor, ready pips) are checked pixel-identical before and after; the build
+  throws if not.** Health and armor are the benchmark.
+
+**Verified 2026-09-15:** the unchanged builder reproduced the shipped atlas exactly (0 px), the
+updated builder reproduced Codex's approved `candidate-resized-flat-speed.png` exactly (0 px), and the
+decoded `source/ui/bleu_tooltip_icons.dds` matches it exactly (0 px).
+
+**Trap in the builder:** `New-Item -LiteralPath` at the top is not a PowerShell 5.1 parameter. It only
+runs when `source\ui` is missing, which never happens in the repo, but running a copy of the script
+elsewhere fails there first and nvcompress then fails for want of the folder. Create the folder first.
+
+Slides: the Workshop slide review set at `...\Improved Tooltips Images\Workshop Slides 1.05 Review`
+shows the old glyphs and needs refreshing for 1.06.
