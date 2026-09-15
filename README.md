@@ -548,7 +548,8 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 **1.06**
 - **Refreshed glyphs.** The hourglass and stopwatch get a soft vanilla-style glow and are slightly
   smaller - the hourglass by 12%, the stopwatch by 7%, scaled evenly so neither is stretched - so they
-  sit better beside vanilla's health and armor. The marine speed icon becomes flat, thinner double
+  sit better beside vanilla's health and armor. The hourglass also has far less sand in its lower
+  bulb, since the glow made the old mound read as a full bottom. The marine speed icon becomes flat, thinner double
   chevrons with the same glow. Health, armor, alien speed and the ready icons are unchanged, and the
   build now checks that pixel for pixel. See `docs/glyph-refresh.md`.
 - **The stat row fits the tooltip.** The panel is a fixed width, and the row used a fixed gap, so the

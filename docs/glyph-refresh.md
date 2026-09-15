@@ -12,6 +12,11 @@ The original handoff, preview images and preview builders are outside the repo, 
 
 - **Hourglass:** uniformly reduced to 88% of the glow version (12% smaller). Aspect ratio and details
   kept; never widened.
+- **Hourglass sand (follow-up, 2026-09-15, picked "B" from a sheet of glowed candidates):** the
+  lower mound drops from a peak at y 42 to a 3px hump at y 48.5 (base 22.5-41.5), and the stream is
+  lengthened to reach it. With the glow the old mound bled into the bottom cap and the lower bulb
+  looked full. The approved candidate image predates this, so cell 0 no longer matches it; cells 1-6
+  still do.
 - **Stopwatch:** uniformly reduced to 93% (7% smaller). Hands at 12 and 3, crown, and the external
   45-degree start button kept.
 - **Marine speed:** smaller, thinner, flat double chevrons replacing the beveled vanilla-derived

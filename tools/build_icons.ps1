@@ -165,12 +165,16 @@ $lower.AddBezier((Pt 48 53), (Pt 47 42), (Pt 36 37), (Pt 32 33))
 $lower.AddBezier((Pt 32 33), (Pt 28 37), (Pt 17 42), (Pt 16 53))
 $g.DrawPath($glassPen, $lower)
 
+# A low mound, 3px tall. Until 2026-09-15 it rose to y 42, two thirds of the way to the neck: clean it
+# read fine, but once the 1.06 glow was added it bled into the bottom cap and the lower bulb looked
+# full. The user picked this height ("B") from a sheet of glowed candidates. The stream is lengthened
+# to still land on it.
 $mound = New-Object System.Drawing.Drawing2D.GraphicsPath
-$mound.AddLine((Pt 19 51.5), (Pt 45 51.5))
-$mound.AddBezier((Pt 45 51.5), (Pt 41 44.5), (Pt 35 42), (Pt 32 42))
-$mound.AddBezier((Pt 32 42), (Pt 29 42), (Pt 23 44.5), (Pt 19 51.5))
+$mound.AddLine((Pt 22.5 51.5), (Pt 41.5 51.5))
+$mound.AddBezier((Pt 41.5 51.5), (Pt 38.555 49.28), (Pt 34.185 48.5), (Pt 32 48.5))
+$mound.AddBezier((Pt 32 48.5), (Pt 29.815 48.5), (Pt 25.445 49.28), (Pt 22.5 51.5))
 $g.FillPath($white, $mound)
-$g.FillRectangle($white, (Rct 31.25 30 1.5 11))    # falling stream
+$g.FillRectangle($white, (Rct 31.25 30 1.5 17.5))    # falling stream
 $g.Dispose(); CommitFitted $b 0
 
 # 1 - cooldown: stopwatch. Ring, a crown on top, and a start button on the shoulder at 45 degrees.
