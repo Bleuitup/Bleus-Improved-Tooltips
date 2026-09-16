@@ -127,6 +127,27 @@ IT.kHiveResearchIconSize = 68
 
 -- The DNA glyph as a fraction of the ring it sits inside.
 IT.kHiveResearchDnaScale = 0.55
+
+-- How research in hives is shown. Exposed in the settings panel as HIVE RESEARCH DISPLAY.
+--
+--   0 RING ONLY        the busy ring and DNA glyph above, as before 1.07. Notifications unchanged.
+--   1 BOTH (default)   each hive row shows what its hive and its evolution chamber are researching,
+--                      with the notification's own progress bar. Notifications unchanged.
+--   2 HIVE PANEL ONLY  as BOTH, and research done in hives no longer adds a notification on the
+--                      left. Research done anywhere else (CBM's Advanced upgrades, Infested Tunnel)
+--                      still does.
+IT.kHiveResearchDisplayRing = 0
+IT.kHiveResearchDisplayBoth = 1
+IT.kHiveResearchDisplayPanelOnly = 2
+IT.kHiveResearchDisplay = IT.kHiveResearchDisplayBoth
+
+-- The two research slots, for BOTH and HIVE PANEL ONLY. Pre-GUIScale, relative to the row like the
+-- ring above. Each slot is the notification's vertical bar with the research icon beside it; the
+-- first slot sits where the ring sits, and a lone research always takes it.
+IT.kHiveResearchSlotPositions = { Vector(136, 9, 0), Vector(181, 9, 0) }
+-- Height of the bar's socket. Width and the bar's glow follow from the art's own proportions.
+IT.kHiveResearchSlotBarHeight = 30
+IT.kHiveResearchSlotIconSize = 30
 -- The color of every biomass icon the mod draws or reaches: the hive HUD row, the biomass icon on
 -- the commander tooltip, and the spectator top bar counter.
 --

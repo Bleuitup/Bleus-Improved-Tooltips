@@ -8,9 +8,12 @@
 --                   name. A fresh hive shows none, the same way it shows no hive type icon until it
 --                   is upgraded; each research then adds its own button's art, in order.
 --
---   Researching   - vanilla's rotating "working" ring with the DNA glyph inside it, on any hive
---                   that is researching anything: biomass, a lifeform ability, or a hive type.
---                   The same pair a player sees in the world when they look at a busy hive.
+--   Researching   - per HIVE RESEARCH DISPLAY (IT.kHiveResearchDisplay):
+--                   RING ONLY: vanilla's rotating "working" ring with the DNA glyph inside it, on
+--                   any hive researching anything - the pair a player sees on a busy hive.
+--                   BOTH / HIVE PANEL ONLY: up to two research slots, the evolution chamber's
+--                   research and the hive's own, each the research notification's vertical bar
+--                   beside the research icon. See docs/hive-research-slots.md.
 --
 -- Every image here is vanilla's own, addressed through GetTextureCoordinatesForIcon rather than by
 -- pixel, so a mod that moves an icon in the atlas moves ours with it. Nothing new was drawn.
@@ -53,6 +56,25 @@ local kProgressRingCoords = { 256, 68, 256 + 128, 68 + 128 }
 -- the node and its icon exist, and bioMassLevel networks up to 6, so it is listed and simply never
 -- reached unless a mod adds the research.
 local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "ResearchBioMassThree", "ResearchBioMassFour" }
+
+-- The research slots borrow the research notification's own art, from GUINotificationItem.lua, so a
+-- hive row and the notification stack show progress the same way. Alien entries:
+--
+--   socket  ProgressBarBackgroundCoords {240, 6, 268, 52}, tinted ProgressBarBackgroundColor
+--   bar     kAlienBarCoordinates {240, 1, 273, 56}, which includes a 5px glow top and bottom
+--
+-- In the notification the bar sits 5px above the socket (ProgressBarPos y 6 vs
+-- ProgressBarBackgroundPos y 11) and the icon starts 22px right of it (IconPos x 18 vs -4). Those
+-- art-pixel offsets are kept here and scaled with the socket.
+local kNotificationsTexture = "ui/research_notifications.dds"
+local kSocketCoords = { 240, 6, 268, 52 }
+local kSocketArtSize = Vector(28, 46, 0)
+local kSocketColor = Color(47 / 255, 26 / 255, 11 / 255, 1)
+local kBarCoords = { 240, 1, 273, 56 }
+local kBarArtSize = Vector(33, 55, 0)
+local kBarGlow = 5
+local kBarArtOffsetY = -5
+local kIconArtOffsetX = 22
 
 -- Each entry is { coords = ..., techId = ... }. The techId is kept so a compatibility module can
 -- claim a color for it - CBM marks its biomass 5 research out in purple.
@@ -173,6 +195,143 @@ local function CreateResearchIcon(slot)
 
 end
 
+-- Two slots per row, for the BOTH and HIVE PANEL ONLY modes: the evolution chamber's research and
+-- the hive's own. Which is drawn in which slot is decided every update, so a lone research always
+-- takes the first.
+local function CreateResearchSlots(slot)
+
+	if not ResolveIcons() then
+		return
+	end
+
+	local barHeight = GUIScale(IT.kHiveResearchSlotBarHeight)
+	local scale = barHeight / kSocketArtSize.y
+	local iconSize = GUIScale(IT.kHiveResearchSlotIconSize)
+
+	slot.itResearchSlots = { }
+
+	for i = 1, #IT.kHiveResearchSlotPositions do
+
+		local origin = GUIScale(IT.kHiveResearchSlotPositions[i])
+		local entry = { origin = origin, scale = scale, iconSize = iconSize, techId = nil }
+
+		entry.socket = GUIManager:CreateGraphicItem()
+		entry.socket:SetAnchor(GUIItem.Left, GUIItem.Top)
+		entry.socket:SetPosition(origin)
+		entry.socket:SetSize(kSocketArtSize * scale)
+		entry.socket:SetTexture(kNotificationsTexture)
+		entry.socket:SetTexturePixelCoordinates(GUIUnpackCoords(kSocketCoords))
+		entry.socket:SetColor(kSocketColor)
+		entry.socket:SetLayer(kGUILayerPlayerHUDForeground4)
+		entry.socket:SetIsVisible(false)
+		slot.background:AddChild(entry.socket)
+
+		entry.bar = GUIManager:CreateGraphicItem()
+		entry.bar:SetAnchor(GUIItem.Left, GUIItem.Top)
+		entry.bar:SetTexture(kNotificationsTexture)
+		entry.bar:SetLayer(kGUILayerPlayerHUDForeground4)
+		entry.bar:SetIsVisible(false)
+		slot.background:AddChild(entry.bar)
+
+		entry.icon = GUIManager:CreateGraphicItem()
+		entry.icon:SetAnchor(GUIItem.Left, GUIItem.Top)
+		entry.icon:SetTexture(kBuildMenuTexture)
+		entry.icon:SetColor(kIconColors and kIconColors[kAlienTeamType] or Color(1, 1, 1, 1))
+		entry.icon:SetLayer(kGUILayerPlayerHUDForeground4)
+		entry.icon:SetIsVisible(false)
+		slot.background:AddChild(entry.icon)
+
+		slot.itResearchSlots[i] = entry
+
+	end
+
+end
+
+-- Points a slot at a research. The icon only changes when the research does, using the same size
+-- and position corrections the notification applies so every icon fills its box evenly.
+local function SetSlotResearch(entry, techId)
+
+	if entry.techId == techId then
+		return
+	end
+
+	entry.techId = techId
+
+	local iconScale = entry.iconSize / 80
+	local sizeOffset = GetCustomSizeOffsetForTechId and GetCustomSizeOffsetForTechId(techId) * iconScale or Vector(0, 0, 0)
+	local posOffset = GetCustomPosOffsetForTechId and GetCustomPosOffsetForTechId(techId) * iconScale or Vector(0, 0, 0)
+
+	local base = entry.origin + Vector(kIconArtOffsetX * entry.scale, (kSocketArtSize.y * entry.scale - entry.iconSize) * 0.5, 0)
+
+	entry.icon:SetSize(Vector(entry.iconSize, entry.iconSize, 0) + sizeOffset)
+	entry.icon:SetPosition(base - sizeOffset * 0.5 + posOffset)
+	entry.icon:SetTexturePixelCoordinates(GUIUnpackCoords(GetTextureCoordinatesForIcon(techId)))
+
+end
+
+-- Fills the bar the way GUIEvent fills the notification's (GUIEvent.lua, "Update the bar"): the
+-- glow is part of the art, so it is only added once there is progress, and the last stretch snaps
+-- to the full height so the top glow shows at completion.
+local function SetSlotProgress(entry, progress, visible)
+
+	local fullHeight = kBarArtSize.y
+	local fullNoGlow = fullHeight - kBarGlow * 2
+	local height = Clamp(math.floor(fullNoGlow * progress), 0, fullNoGlow)
+
+	if height > 0 then
+		height = height + kBarGlow
+		if height >= fullHeight - kBarGlow then
+			height = fullHeight
+		end
+	end
+
+	entry.bar:SetIsVisible(visible and height > 0)
+
+	if height > 0 then
+		local s = entry.scale
+		entry.bar:SetTexturePixelCoordinates(kBarCoords[1], kBarCoords[4] - height, kBarCoords[3], kBarCoords[4])
+		entry.bar:SetSize(Vector(kBarArtSize.x * s, height * s, 0))
+		entry.bar:SetPosition(entry.origin + Vector(0, (kBarArtOffsetY + fullHeight - height) * s, 0))
+	end
+
+end
+
+local function HideSlot(entry)
+	entry.socket:SetIsVisible(false)
+	entry.bar:SetIsVisible(false)
+	entry.icon:SetIsVisible(false)
+end
+
+local function UpdateResearchSlots(slot, state, visible)
+
+	local none = kTechId.None
+	local researches = { }
+
+	if state.evoResearchId ~= none then
+		researches[#researches + 1] = { techId = state.evoResearchId, progress = state.evoProgress }
+	end
+	if state.hiveResearchId ~= none then
+		researches[#researches + 1] = { techId = state.hiveResearchId, progress = state.hiveProgress }
+	end
+
+	for i = 1, #slot.itResearchSlots do
+
+		local entry = slot.itResearchSlots[i]
+		local research = researches[i]
+
+		if visible and research then
+			SetSlotResearch(entry, research.techId)
+			entry.socket:SetIsVisible(true)
+			entry.icon:SetIsVisible(true)
+			SetSlotProgress(entry, research.progress, true)
+		else
+			HideSlot(entry)
+		end
+
+	end
+
+end
+
 ------------------------------------------------------------------------------------------------
 -- Hooks
 ------------------------------------------------------------------------------------------------
@@ -194,6 +353,7 @@ function GUIHiveStatus:CreateStatusContainer(slotIdx, locationId)
 
 	if IT.kShowHiveResearchIcon then
 		CreateResearchIcon(slot)
+		CreateResearchSlots(slot)
 	end
 
 end
@@ -222,6 +382,16 @@ function GUIHiveStatus:UninitializeStatusSlot(slotIdx)
 		if slot.itResearchDna then
 			GUI.DestroyItem(slot.itResearchDna)
 			slot.itResearchDna = nil
+		end
+
+		if slot.itResearchSlots then
+			for i = 1, #slot.itResearchSlots do
+				local entry = slot.itResearchSlots[i]
+				GUI.DestroyItem(entry.socket)
+				GUI.DestroyItem(entry.bar)
+				GUI.DestroyItem(entry.icon)
+			end
+			slot.itResearchSlots = nil
 		end
 
 	end
@@ -254,9 +424,15 @@ function GUIHiveStatus:UpdateStatusSlot(slotIdx, slotData)
 		end
 	end
 
+	local ringMode = IT.kHiveResearchDisplay == IT.kHiveResearchDisplayRing
+
+	if slot.itResearchSlots then
+		UpdateResearchSlots(slot, state, visible and not ringMode)
+	end
+
 	if slot.itResearchRing then
 
-		local researching = visible and state.researching
+		local researching = visible and ringMode and state.researching
 
 		slot.itResearchRing:SetIsVisible(researching)
 		slot.itResearchDna:SetIsVisible(researching)

@@ -26,8 +26,12 @@ if Client then
 	-- Client side of Commander.lua: replays synced cooldowns into vanilla's own table when the
 	-- local player takes the chair, so vanilla's button dial works too and not just our panel.
 	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownDial.lua", "post")
-	-- The alien hive status panel in the top-left corner: biomass icons and a researching ring.
+	-- The alien hive status panel in the top-left corner: biomass icons, and each hive's research as
+	-- a busy ring or as research slots, per HIVE RESEARCH DISPLAY.
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
+	-- The research notification queue, so HIVE PANEL ONLY can keep research done in hives out of the
+	-- notification stack on the left.
+	ModLoader.SetupFileHook("lua/Hud/GUINotificationMixin.lua", "lua/ImprovedTooltips/ImprovedTooltips_ResearchNotifications.lua", "post")
 	-- The spectator top bar, for its biomass counter's color.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
 	-- The same bar again, for a supply counter per team. A separate file so the biomass tint and the

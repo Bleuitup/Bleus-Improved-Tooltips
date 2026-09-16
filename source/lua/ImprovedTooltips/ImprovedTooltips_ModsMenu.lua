@@ -38,6 +38,7 @@ local kOptionWeaponBlips        = "BIT_WeaponBlips"
 local kOptionWeaponBlipsMinimap = "BIT_WeaponBlipsMinimap"
 local kOptionMinimapPGArrows    = "BIT_MinimapPhaseGateArrows"
 local kOptionExoWeaponBars      = "BIT_ExoWeaponBars"
+local kOptionHiveResearchDisplay = "BIT_HiveResearchDisplay"
 
 -- Repeated here rather than read from the config, because in the main menu VM the config is not
 -- loaded. Keep in step with ImprovedTooltips_Config.lua.
@@ -47,6 +48,8 @@ local kDefaultWeaponBlips        = true
 local kDefaultWeaponBlipsMinimap = false
 local kDefaultMinimapPGArrows    = true
 local kDefaultExoWeaponBars      = true
+-- 0 ring only, 1 both, 2 hive panel only. IT.kHiveResearchDisplay* in the config.
+local kDefaultHiveResearchDisplay = 1
 
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
@@ -71,6 +74,9 @@ local function ApplyStoredOptions()
 	IT.kColorMarineMinimapBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlipsMinimap, kDefaultWeaponBlipsMinimap)
 	IT.kCommanderMinimapPhaseGateArrows = Client.GetOptionBoolean(kOptionMinimapPGArrows, kDefaultMinimapPGArrows)
 	IT.kShowExoWeaponBars = Client.GetOptionBoolean(kOptionExoWeaponBars, kDefaultExoWeaponBars)
+	-- Read every update by the hive panel and every time a notification is queued, so switching it
+	-- applies at once. Clamped so a hand-edited options file cannot select a mode that does not exist.
+	IT.kHiveResearchDisplay = Clamp(Client.GetOptionInteger(kOptionHiveResearchDisplay, kDefaultHiveResearchDisplay), 0, 2)
 
 	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
 	-- feeds compares against whole seconds, so round rather than truncate.
@@ -223,6 +229,31 @@ local kContents =
 		properties =
 		{
 			{ "Label", "EXO WEAPON BARS" },
+		},
+	},
+
+	{
+		name = "bitHiveResearchDisplay",
+		class = OP_TT_Choice,
+		params =
+		{
+			useResetButton = true,
+			optionPath = kOptionHiveResearchDisplay,
+			optionType = "int",
+			default = kDefaultHiveResearchDisplay,
+			tooltip = "How the alien hive panel shows research. Ring only marks a busy hive. Both shows each hive's research and progress, and keeps the research notifications on the left. Hive panel only moves research done in hives off the left. Needs the hive status panel on.",
+			immediateUpdate = ApplyStoredOptions,
+		},
+		properties =
+		{
+			{ "Label", "HIVE RESEARCH DISPLAY" },
+			{ "Choices",
+				{
+					{ value = 0, displayString = "RING ONLY" },
+					{ value = 1, displayString = "BOTH" },
+					{ value = 2, displayString = "HIVE PANEL ONLY" },
+				},
+			},
 		},
 	},
 }

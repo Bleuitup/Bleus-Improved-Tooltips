@@ -10,9 +10,9 @@
 -- the same tick as vanilla's, so the HUD can never show a biomass count from one moment and a
 -- health bar from another.
 --
--- Only changes are sent. The state is two small numbers per location that move a handful of times
--- a round, so diffing against what was last published keeps this to a few messages per game rather
--- than a stream.
+-- Only changes are sent. Biomass and which research is running move a handful of times a round and
+-- go out at once; research progress moves constantly, so it goes out at most once every
+-- IT.kHiveResearchProgressSendInterval seconds per location, and only while something is running.
 
 if not Server then
 	return
@@ -59,20 +59,62 @@ local function GetIsEntityResearching(entity)
 
 end
 
-local function GetIsHiveResearching(hive)
+-- What one of the two entities is researching: its tech id and progress, or None and 0. Only while
+-- it is actually researching, so a hive holding a research it cannot progress shows as idle - the
+-- same rule the busy ring has always used.
+local function GetResearch(entity)
 
-	if GetIsEntityResearching(hive) then
-		return true
+	if not GetIsEntityResearching(entity) or not entity.GetResearchingId then
+		return kTechId.None, 0
 	end
 
-	if hive.GetEvolutionChamber then
-		local ok, evoChamber = pcall(hive.GetEvolutionChamber, hive)
-		if ok and GetIsEntityResearching(evoChamber) then
-			return true
+	local okId, researchId = pcall(entity.GetResearchingId, entity)
+	if not okId or not researchId or researchId == kTechId.None then
+		return kTechId.None, 0
+	end
+
+	local progress = 0
+	if entity.GetResearchProgress then
+		local okProgress, value = pcall(entity.GetResearchProgress, entity)
+		if okProgress and type(value) == "number" then
+			progress = value
 		end
 	end
 
-	return false
+	return researchId, progress
+
+end
+
+local function GetEvolutionChamber(hive)
+	if hive.GetEvolutionChamber then
+		local ok, evoChamber = pcall(hive.GetEvolutionChamber, hive)
+		if ok then
+			return evoChamber
+		end
+	end
+	return nil
+end
+
+local function ToSteps(progress)
+	return math.floor(Clamp(progress or 0, 0, 1) * IT.kHiveResearchProgressSteps + 0.5)
+end
+
+-- Whether a new reading is worth sending, given what was last published for the location.
+local function GetShouldPublish(published, state, now)
+
+	if not published then
+		return true
+	end
+
+	if published.biomass ~= state.biomass or published.researching ~= state.researching
+		or published.hiveResearchId ~= state.hiveResearchId or published.evoResearchId ~= state.evoResearchId then
+		return true
+	end
+
+	local progressMoved = ToSteps(published.hiveProgress) ~= ToSteps(state.hiveProgress)
+		or ToSteps(published.evoProgress) ~= ToSteps(state.evoProgress)
+
+	return progressMoved and now - (published.sentAt or 0) >= IT.kHiveResearchProgressSendInterval
 
 end
 
@@ -95,19 +137,18 @@ function AlienTeamInfo:UpdateAllLocationsSlotData()
 
 		if hive:GetIsAlive() and locationId and locationId > 0 then
 
-			local biomass = hive.bioMassLevel or 0
-			local researching = GetIsHiveResearching(hive)
+			local hiveResearchId, hiveProgress = GetResearch(hive)
+			local evoResearchId, evoProgress = GetResearch(GetEvolutionChamber(hive))
+			local state = IT.MakeHiveState(hive.bioMassLevel or 0,
+				hiveResearchId ~= kTechId.None or evoResearchId ~= kTechId.None,
+				hiveResearchId, hiveProgress, evoResearchId, evoProgress)
 
 			-- Two hives sharing a location is not a thing vanilla builds for - AlienTeamInfo keeps
-			-- one slot per location and the last hive walked wins - but take the higher biomass and
-			-- the busier flag rather than letting iteration order decide.
+			-- one slot per location and the last hive walked wins - but keep the higher biomass
+			-- rather than letting iteration order decide.
 			local existing = current[locationId]
-
-			if existing then
-				existing.biomass = math.max(existing.biomass, biomass)
-				existing.researching = existing.researching or researching
-			else
-				current[locationId] = { biomass = biomass, researching = researching }
+			if not existing or state.biomass > existing.biomass then
+				current[locationId] = state
 			end
 
 		end
@@ -117,24 +158,27 @@ function AlienTeamInfo:UpdateAllLocationsSlotData()
 	-- Locations that had a hive and no longer do are published as empty once, so the HUD drops
 	-- their icons rather than keeping the last thing they showed.
 	for locationId, published in pairs(IT.publishedHiveState) do
-		if not current[locationId] and (published.biomass > 0 or published.researching) then
-			current[locationId] = { biomass = 0, researching = false }
+		if not current[locationId] and not IT.GetHiveStateIsEmpty(published) then
+			current[locationId] = IT.MakeHiveState()
 		end
 	end
+
+	local now = Shared.GetTime()
 
 	for locationId, state in pairs(current) do
 
 		local published = IT.publishedHiveState[locationId]
-		local isEmpty = state.biomass <= 0 and not state.researching
+		local isEmpty = IT.GetHiveStateIsEmpty(state)
 
 		-- An empty state with nothing published is a hive that has nothing to say yet - one still
 		-- being built, which is biomass 0 until construction finishes. Publishing it would send the
 		-- same "nothing" every tick for the whole build, because an empty state is not cached.
 		if isEmpty and not published then
 			-- nothing to announce, and nothing outstanding to retract
-		elseif not published or published.biomass ~= state.biomass or published.researching ~= state.researching then
+		elseif GetShouldPublish(published, state, now) then
 
-			IT.BroadcastHiveState(teamNumber, locationId, state.biomass, state.researching)
+			IT.BroadcastHiveState(teamNumber, locationId, state)
+			state.sentAt = now
 			IT.publishedHiveState[locationId] = not isEmpty and state or nil
 
 		end

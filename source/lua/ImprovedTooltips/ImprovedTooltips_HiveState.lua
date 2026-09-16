@@ -1,14 +1,14 @@
 -- Bleu's Improved Tooltips
 -- lua/ImprovedTooltips/ImprovedTooltips_HiveState.lua
 --
--- Per-hive biomass level and "is this hive researching anything", keyed by location, for the alien
--- hive status HUD in the top-left corner.
+-- Per-hive biomass level and research, keyed by location, for the alien hive status HUD in the
+-- top-left corner.
 --
 -- Why this has to be networked by the mod at all:
 --
--- Both numbers are already on the Hive entity, and both are already network vars - Hive.lua's
--- bioMassLevel, and ResearchMixin's researchingId. But a Hive is only relevant to players within
--- kMaxRelevancyDistance (40m, ns2/lua/Globals.lua:348) plus the team's own commander, per
+-- Both are already on the Hive entity, and both are already network vars - Hive.lua's bioMassLevel,
+-- and ResearchMixin's researchingId and researchProgress. But a Hive is only relevant to players
+-- within kMaxRelevancyDistance (40m, ns2/lua/Globals.lua:348) plus the team's own commander, per
 -- Hive:SetIncludeRelevancyMask. GUIHiveStatus is shown to field aliens (kShowAsClass["Alien"] in
 -- ClientUI.lua) and its whole point is reporting on hives across the map, which is exactly the
 -- case where the client does not have the entity. That is why vanilla feeds that HUD from
@@ -18,18 +18,32 @@
 -- and not research. Its networkVars are file-local and the class is already linked by the time a
 -- post-hook could run, so extending them would mean re-linking the whole class - brittle, and it
 -- would fight any other mod doing the same. Sending our own message instead is the same approach
--- the cooldown panel already uses, and it costs one small message per hive per change.
+-- the cooldown panel already uses.
 --
--- Nothing here is sent per frame. Biomass changes a handful of times a round and research starts
--- and stops; ImprovedTooltips_HiveSync.lua diffs against the last published value and only sends
--- when something actually moved.
+-- The tech tree does not fill the gap either. Research is only tracked per entity for the techs in
+-- GetTechIdIsInstanced (TechTree.lua:386) - of the alien ones, just the three hive type upgrades.
+-- Biomass and lifeform abilities keep one progress value per tech, and biomass can be researched by
+-- two hives at once, so "which hive, how far" has to come from the server.
+--
+-- A hive runs up to two researches at once, because "the hive" is two entities: the Hive itself
+-- (biomass or a hive type upgrade) and the EvolutionChamber it owns (lifeform abilities off the DNA
+-- menu). Each gets its own slot here.
+--
+-- Nothing here is sent per frame. ImprovedTooltips_HiveSync.lua diffs against the last published
+-- value and sends a research id change at once, but a progress change at most every
+-- kHiveResearchProgressSendInterval seconds.
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
--- [locationId] = { biomass = 0..6, researching = boolean }
+-- Progress travels as a whole percentage. The bar it drives is 30 pixels tall.
+IT.kHiveResearchProgressSteps = 100
+
+-- [locationId] = state, where state is
+--   { biomass = 0..6, researching = boolean,
+--     hiveResearchId = kTechId, hiveProgress = 0..1, evoResearchId = kTechId, evoProgress = 0..1 }
 -- Parked on the shared table so a Script.Load with reload does not drop live state.
 IT.hiveState = IT.hiveState or { }
 
@@ -37,7 +51,34 @@ function IT.ClearHiveState()
 	IT.hiveState = { }
 end
 
-function IT.SetHiveState(locationId, biomass, researching)
+local function GetNone()
+	return kTechId and kTechId.None or 1
+end
+
+-- Builds a normalized state table. Everything optional, so old callers passing only biomass and
+-- researching still get a complete table.
+function IT.MakeHiveState(biomass, researching, hiveResearchId, hiveProgress, evoResearchId, evoProgress)
+
+	local none = GetNone()
+
+	return {
+		biomass = biomass or 0,
+		researching = researching == true,
+		hiveResearchId = hiveResearchId or none,
+		hiveProgress = Clamp(hiveProgress or 0, 0, 1),
+		evoResearchId = evoResearchId or none,
+		evoProgress = Clamp(evoProgress or 0, 0, 1),
+	}
+
+end
+
+function IT.GetHiveStateIsEmpty(state)
+	local none = GetNone()
+	return state.biomass <= 0 and not state.researching
+		and state.hiveResearchId == none and state.evoResearchId == none
+end
+
+function IT.SetHiveState(locationId, state)
 
 	if not locationId or locationId <= 0 then
 		return
@@ -46,20 +87,34 @@ function IT.SetHiveState(locationId, biomass, researching)
 	-- Biomass 0 with nothing researching means the location has no hive worth drawing for - a dead
 	-- hive, or one that has not finished building. Drop the entry rather than keeping a row of
 	-- zeroes around.
-	if (biomass or 0) <= 0 and not researching then
+	if not state or IT.GetHiveStateIsEmpty(state) then
 		IT.hiveState[locationId] = nil
 		return
 	end
 
-	IT.hiveState[locationId] = { biomass = biomass or 0, researching = researching == true }
+	IT.hiveState[locationId] = state
 
 end
 
--- Always returns a table, so callers do not have to nil-check before reading either field.
-local kEmptyHiveState = { biomass = 0, researching = false }
+-- Always returns a table, so callers do not have to nil-check before reading any field.
+local kEmptyHiveState = nil
 
 function IT.GetHiveState(locationId)
+	if not kEmptyHiveState then
+		kEmptyHiveState = IT.MakeHiveState()
+	end
 	return IT.hiveState[locationId] or kEmptyHiveState
+end
+
+-- True while any hive or evolution chamber on the team is researching techId, per the last state
+-- the server sent. Used to keep those researches out of the notification stack in hive panel mode.
+function IT.GetIsResearchedInHive(techId)
+	for _, state in pairs(IT.hiveState) do
+		if state.hiveResearchId == techId or state.evoResearchId == techId then
+			return true
+		end
+	end
+	return false
 end
 
 ------------------------------------------------------------------------------------------------
@@ -75,7 +130,10 @@ if not Server then
 	return
 end
 
-function IT.SendHiveStateTo(player, locationId, biomass, researching, clear)
+-- Seconds between progress updates for one location. A research id change is sent at once.
+IT.kHiveResearchProgressSendInterval = 1
+
+function IT.SendHiveStateTo(player, locationId, state, clear)
 
 	-- Bots go through the same join path but have no client to message.
 	if not player or (player.GetIsVirtual and player:GetIsVirtual()) then
@@ -83,14 +141,14 @@ function IT.SendHiveStateTo(player, locationId, biomass, researching, clear)
 	end
 
 	Server.SendNetworkMessage(player, "ImprovedTooltipsHiveState",
-		BuildImprovedTooltipsHiveStateMessage(locationId, biomass, researching, clear), true)
+		BuildImprovedTooltipsHiveStateMessage(locationId, state or IT.MakeHiveState(), clear), true)
 
 end
 
-function IT.BroadcastHiveState(teamNumber, locationId, biomass, researching)
+function IT.BroadcastHiveState(teamNumber, locationId, state)
 
 	for _, player in ipairs(GetEntitiesForTeam("Player", teamNumber)) do
-		IT.SendHiveStateTo(player, locationId, biomass, researching, false)
+		IT.SendHiveStateTo(player, locationId, state, false)
 	end
 
 end
@@ -103,10 +161,10 @@ IT.publishedHiveState = IT.publishedHiveState or { }
 -- everyone else is seeing.
 function IT.ResyncPlayerHiveState(player)
 
-	IT.SendHiveStateTo(player, 0, 0, false, true)
+	IT.SendHiveStateTo(player, 0, nil, true)
 
 	for locationId, state in pairs(IT.publishedHiveState) do
-		IT.SendHiveStateTo(player, locationId, state.biomass, state.researching, false)
+		IT.SendHiveStateTo(player, locationId, state, false)
 	end
 
 end

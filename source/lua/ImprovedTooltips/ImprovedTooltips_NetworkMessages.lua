@@ -82,20 +82,34 @@ local kHiveStateMessage =
 	locationId = "integer",
 	-- Matches Hive.lua's own network var range.
 	biomass = "integer (0 to 6)",
-	-- Any research at all: biomass, a lifeform ability, or a hive type upgrade. Deliberately not
-	-- which one, and not a progress fraction - the HUD only shows that the hive is busy.
+	-- Any research at all: biomass, a lifeform ability, or a hive type upgrade. Drives the busy ring
+	-- in the panel's "ring only" mode.
 	researching = "boolean",
+	-- The two research slots of a hive, for the panel's other modes. The Hive researches biomass or
+	-- a hive type upgrade; its EvolutionChamber researches lifeform abilities. kTechId.None when idle.
+	hiveResearchId = "enum kTechId",
+	hiveProgress = string.format("integer (0 to %d)", IT.kHiveResearchProgressSteps),
+	evoResearchId = "enum kTechId",
+	evoProgress = string.format("integer (0 to %d)", IT.kHiveResearchProgressSteps),
 	-- Set on the first message of a full resync (team join) so the client drops anything stale
 	-- from a previous team or round.
 	clear = "boolean",
 }
 
-function BuildImprovedTooltipsHiveStateMessage(locationId, biomass, researching, clear)
+local function ToSteps(progress)
+	return math.floor(Clamp(progress or 0, 0, 1) * IT.kHiveResearchProgressSteps + 0.5)
+end
+
+function BuildImprovedTooltipsHiveStateMessage(locationId, state, clear)
 
 	return {
 		locationId = locationId or 0,
-		biomass = math.max(0, math.min(6, biomass or 0)),
-		researching = researching == true,
+		biomass = math.max(0, math.min(6, state.biomass or 0)),
+		researching = state.researching == true,
+		hiveResearchId = state.hiveResearchId or kTechId.None,
+		hiveProgress = ToSteps(state.hiveProgress),
+		evoResearchId = state.evoResearchId or kTechId.None,
+		evoProgress = ToSteps(state.evoProgress),
 		clear = clear == true,
 	}
 
@@ -111,7 +125,9 @@ if Client then
 			IT.ClearHiveState()
 		end
 
-		IT.SetHiveState(msg.locationId, msg.biomass, msg.researching)
+		local steps = IT.kHiveResearchProgressSteps
+		IT.SetHiveState(msg.locationId, IT.MakeHiveState(msg.biomass, msg.researching,
+			msg.hiveResearchId, msg.hiveProgress / steps, msg.evoResearchId, msg.evoProgress / steps))
 
 	end
 

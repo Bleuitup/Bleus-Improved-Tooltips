@@ -545,6 +545,14 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
+**Unreleased (1.07 candidate)**
+- **Hive research slots.** The alien hive status panel can show what each hive is researching in
+  that hive's row: the evolution chamber's research on the left, the hive's own (biomass or a hive
+  type upgrade) on the right, each with the research notification's own progress bar. New setting
+  HIVE RESEARCH DISPLAY: RING ONLY (as before), BOTH (default, notifications unchanged) or HIVE
+  PANEL ONLY (research done in hives leaves the notifications on the left; Advanced structure
+  upgrades and other research stay). See `docs/hive-research-slots.md`.
+
 **1.06**
 - **Refreshed glyphs.** The hourglass and stopwatch get a soft vanilla-style glow and are slightly
   smaller - the hourglass by 12%, the stopwatch by 7%, scaled evenly so neither is stretched - so they
