@@ -627,6 +627,9 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   running, vanilla dropped the ones pushed below the three shown for good, and only played the
   "trait available" sound for research on screen. Every research now returns to the list when a
   place frees up, and every completion plays the sound.
+- **Biomass is right on the tech map from the start of a round.** A vanilla typo meant a change in
+  alien biomass never refreshed the tech tree, so a round could start showing biomass 0 until a
+  structure was dropped or a research started. Already fixed on the game's beta branch.
 - **The spectator supply counter follows a re-themed top bar**, as the commander tooltip already did.
   It read the top bar's icon settings under the wrong names and always used its built-in copy.
 - **Code cleanup, no visible change.** Duplicated helpers merged into `ImprovedTooltips_Common.lua`,
