@@ -546,12 +546,16 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased (1.07 candidate)**
-- **Hive research slots.** The alien hive status panel can show what each hive is researching in
-  that hive's row: the evolution chamber's research on the left, the hive's own (biomass or a hive
-  type upgrade) on the right, each with the research notification's own progress bar. New setting
-  HIVE RESEARCH DISPLAY: RING ONLY (as before), BOTH (default, notifications unchanged) or HIVE
-  PANEL ONLY (research done in hives leaves the notifications on the left; Advanced structure
-  upgrades and other research stay). See `docs/hive-research-slots.md`.
+- **Hive research in the hive panel.** New setting HIVE RESEARCH DISPLAY. NOTIFICATIONS (default)
+  keeps research on the left with the busy ring on the hive, as before. HIVE PANEL moves research
+  done in hives into that hive's row instead: the hive's own research (biomass or a hive type upgrade)
+  on the left, the evolution chamber's on the right, each drawn like a small research notification
+  with its progress bar and time left. Advanced structure upgrades and other research stay on the
+  left. See `docs/hive-research-slots.md`.
+- **Research notifications for aliens no longer go missing.** With more than three researches
+  running, vanilla dropped the ones pushed below the three shown for good, and only played the
+  "trait available" sound for research on screen. Every research now returns to the list when a
+  place frees up, and every completion plays the sound.
 
 **1.06**
 - **Refreshed glyphs.** The hourglass and stopwatch get a soft vanilla-style glow and are slightly

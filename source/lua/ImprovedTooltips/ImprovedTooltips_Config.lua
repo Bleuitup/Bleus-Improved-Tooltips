@@ -128,20 +128,21 @@ IT.kHiveResearchIconSize = 68
 -- The DNA glyph as a fraction of the ring it sits inside.
 IT.kHiveResearchDnaScale = 0.55
 
--- How research in hives is shown. Exposed in the settings panel as HIVE RESEARCH DISPLAY.
+-- Where research done in hives is shown. Exposed in the settings panel as HIVE RESEARCH DISPLAY.
 --
---   0 RING ONLY        the busy ring and DNA glyph above, as before 1.07. Notifications unchanged.
---   1 BOTH (default)   each hive row shows what its hive and its evolution chamber are researching,
---                      with the notification's own progress bar. Notifications unchanged.
---   2 HIVE PANEL ONLY  as BOTH, and research done in hives no longer adds a notification on the
---                      left. Research done anywhere else (CBM's Advanced upgrades, Infested Tunnel)
---                      still does.
+--   0 NOTIFICATIONS (default)  as vanilla: research notifications on the left, and the busy ring
+--                              with the DNA glyph above on any hive researching anything.
+--   1 HIVE PANEL               each hive row shows what its hive and its evolution chamber are
+--                              researching, with progress and time left, and that research no
+--                              longer adds a notification on the left. Research done anywhere else
+--                              (CBM's Advanced upgrades, Infested Tunnel) still does.
+--
+-- A third mode showing both was built and tested, and dropped on 2026-09-17.
 IT.kHiveResearchDisplayRing = 0
-IT.kHiveResearchDisplayBoth = 1
-IT.kHiveResearchDisplayPanelOnly = 2
-IT.kHiveResearchDisplay = IT.kHiveResearchDisplayBoth
+IT.kHiveResearchDisplayPanel = 1
+IT.kHiveResearchDisplay = IT.kHiveResearchDisplayRing
 
--- The two research slots, for BOTH and HIVE PANEL ONLY. Each is the left part of vanilla's research
+-- The two research slots, for HIVE PANEL. Each is the left part of vanilla's research
 -- notification - ringed circle, progress bar, icon and countdown - at kHiveResearchSlotScale of its
 -- size. Positions are the notification's top-left, pre-GUIScale and relative to the row like the ring
 -- above. At 0.85 a slot is 75 tall, filling the hive image (y 6 to 78) from y 5, and 60 wide from

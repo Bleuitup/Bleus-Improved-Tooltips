@@ -76,7 +76,7 @@ local function ApplyStoredOptions()
 	IT.kShowExoWeaponBars = Client.GetOptionBoolean(kOptionExoWeaponBars, kDefaultExoWeaponBars)
 	-- Read every update by the hive panel and every time a notification is queued, so switching it
 	-- applies at once. Clamped so a hand-edited options file cannot select a mode that does not exist.
-	IT.kHiveResearchDisplay = Clamp(Client.GetOptionInteger(kOptionHiveResearchDisplay, kDefaultHiveResearchDisplay), 0, 2)
+	IT.kHiveResearchDisplay = Clamp(Client.GetOptionInteger(kOptionHiveResearchDisplay, kDefaultHiveResearchDisplay), 0, 1)
 
 	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
 	-- feeds compares against whole seconds, so round rather than truncate.
@@ -241,7 +241,7 @@ local kContents =
 			optionPath = kOptionHiveResearchDisplay,
 			optionType = "int",
 			default = kDefaultHiveResearchDisplay,
-			tooltip = "How the alien hive panel shows research. Ring only marks a busy hive. Both shows each hive's research and progress, and keeps the research notifications on the left. Hive panel only moves research done in hives off the left. Needs the hive status panel on.",
+			tooltip = "Where research done in hives is shown. Notifications keeps it on the left, with a ring on the busy hive. Hive panel shows it in each hive's row instead, with progress and time left. Needs the hive status panel on.",
 			immediateUpdate = ApplyStoredOptions,
 		},
 		properties =
@@ -249,9 +249,8 @@ local kContents =
 			{ "Label", "HIVE RESEARCH DISPLAY" },
 			{ "Choices",
 				{
-					{ value = 0, displayString = "RING ONLY" },
-					{ value = 1, displayString = "BOTH" },
-					{ value = 2, displayString = "HIVE PANEL ONLY" },
+					{ value = 0, displayString = "NOTIFICATIONS" },
+					{ value = 1, displayString = "HIVE PANEL" },
 				},
 			},
 		},

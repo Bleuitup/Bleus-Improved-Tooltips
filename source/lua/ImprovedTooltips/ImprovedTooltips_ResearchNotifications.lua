@@ -3,7 +3,7 @@
 --
 -- Post-hook on lua/Hud/GUINotificationMixin.lua. Client only.
 --
--- In the HIVE PANEL ONLY display mode, research done in a hive no longer adds a research
+-- In the HIVE PANEL display mode, research done in a hive no longer adds a research
 -- notification on the left, because the hive status panel already shows it in that hive's row.
 --
 -- Every research notification enters through GUINotificationMixin:AddNotification: the tech tree's
@@ -82,9 +82,9 @@ local function GetHiveResearchSet()
 
 end
 
-local function GetIsPanelOnlyActiveFor(player)
+local function GetIsHivePanelActiveFor(player)
 
-	if IT.kHiveResearchDisplay ~= IT.kHiveResearchDisplayPanelOnly or not IT.kShowHiveResearchIcon then
+	if IT.kHiveResearchDisplay ~= IT.kHiveResearchDisplayPanel or not IT.kShowHiveResearchIcon then
 		return false
 	end
 
@@ -104,7 +104,7 @@ local function GetIsPanelOnlyActiveFor(player)
 end
 
 -- ImprovedTooltips_ResearchStack.lua watches this to rebuild the stack when it changes mid-round.
-IT.GetIsHivePanelOnlyActiveFor = GetIsPanelOnlyActiveFor
+IT.GetIsHivePanelActiveFor = GetIsHivePanelActiveFor
 
 local originalAddNotification = GUINotificationMixin.AddNotification
 
@@ -112,7 +112,7 @@ if originalAddNotification then
 
 	function GUINotificationMixin:AddNotification(notification)
 
-		if notification and notification.techId and GetIsPanelOnlyActiveFor(self) then
+		if notification and notification.techId and GetIsHivePanelActiveFor(self) then
 
 			local set = GetHiveResearchSet()
 			if (set and set[notification.techId]) or IT.GetIsResearchedInHive(notification.techId) then

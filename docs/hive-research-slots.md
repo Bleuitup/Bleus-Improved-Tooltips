@@ -1,92 +1,93 @@
 # Hive research slots
 
 Branch `feature/hive-research-slots`, a 1.07 candidate. Designed with the user on 2026-09-16 from
-concept sheets v1 and v2. **Status: written, never run.** `luac -p` passes on every changed file.
+concept sheets v1 and v2, then shaped over five in-game test rounds on 2026-09-17 (history at the
+end). **Status: tested in game, not yet published.**
 
 ## What it does
 
-The alien hive status panel (top left, Advanced Options > UI > hive status) can show what each hive
-is researching, in that hive's row, instead of only a busy ring. A new setting, HIVE RESEARCH
-DISPLAY, picks one of three modes:
+A setting, HIVE RESEARCH DISPLAY, picks where research done in hives is shown:
 
-| Mode | Hive row | Research notifications on the left |
+| Mode | Hive status panel row | Research notifications on the left |
 | --- | --- | --- |
-| 0 RING ONLY | Busy ring with the DNA glyph, exactly as in 1.06 | Unchanged |
-| 1 BOTH (default) | Up to two research slots | Unchanged |
-| 2 HIVE PANEL ONLY | Up to two research slots | Research done in hives no longer appears |
+| 0 NOTIFICATIONS (default) | Busy ring with the DNA glyph, as in 1.06 | As vanilla |
+| 1 HIVE PANEL | Up to two research slots, with progress and time left | Research done in hives no longer appears |
 
-BOTH is the default so nothing vanilla is lost; players choose RING ONLY or HIVE PANEL ONLY.
+A third mode, BOTH (slots and notifications together), was built, tested and dropped on 2026-09-17.
+The default stays closest to vanilla.
 
 ## Decisions
 
 - **Two slots per hive**, because a hive researches in two places at once: the Hive itself (biomass
   or a hive type upgrade) and the EvolutionChamber it owns (lifeform abilities off the DNA menu).
   Each has its own `ResearchMixin`.
-- **Left slot: hive (biomass, hive type). Right slot: evolution chamber (abilities).** Swapped from
-  the original order at the user's request on 2026-09-17. A lone research always takes the left slot.
-- **The slot shows the research's own icon** (Leap, Metabolize, Biomass, Crag Hive), not the DNA
-  glyph. The DNA glyph remains only in RING ONLY.
-- **Progress uses the research notification's own vertical bar art** (`ui/research_notifications.dds`,
-  alien socket and bar), filled the way GUIEvent fills it, including the glow handling. No new art.
-- **A countdown under each slot's icon** (`00:17`, the notification's font and color). First
-  decided against, then asked for on 2026-09-17 to try; `IT.kShowHiveResearchSlotTimers = false`
-  removes it. Progress arrives in whole percent at most once a second, so the slot keeps its own
-  estimated finish time and counts down smoothly, only taking a new estimate when a research
-  starts or the two drift more than 2 seconds apart.
-- **CBM's Advanced (Fortress) structure upgrades are not in the hive panel** and stay on the left in
-  every mode, sound included: they are researched on the Crag, Shade, Shift or Whip itself, which
-  has no hive row, and the filter only takes hive and evolution chamber research.
-- **Only hive research moves.** HIVE PANEL ONLY filters biomass, the three hive type upgrades and
-  every ability in `EvolutionChamber.kUpgradeButtons`. CBM's Advanced Crag, Shift, Shade and Whip
-  upgrades run on the structure itself, the Infested Tunnel upgrade on the tunnel, so their
-  notifications stay on the left.
+- **Left slot: hive (biomass, hive type). Right slot: evolution chamber (abilities).** A lone
+  research always takes the left slot.
+- **Each slot is the left part of vanilla's research notification, in miniature**: the ringed
+  circle, the socket and progress bar, the icon inside the circle and the countdown under it, at the
+  notification's own relative positions, scaled by `IT.kHiveResearchSlotScale = 0.85`. At that scale
+  a slot is 75 tall from y 5, filling the hive image (y 6 to 78). Slots at x 139 and 203.
+- **The frame is drawn in two pieces**: the circle down to atlas y 72, and the dark backing under the
+  countdown squashed from 22 to 14 pixels to suit the smaller countdown. Its width is unchanged: the
+  backing's top sits behind the rim inside the first piece, so a narrower lower part would step.
+- **Icons use the notification's own per-tech size and position corrections.** Those tables are
+  file-local in GUINotificationItem.lua, so the alien entries are copied, keyed by tech name. One
+  addition of the mod's own: Biomass One +16 cell pixels, as its three-sphere art read small at 0.85.
+  Anything not listed (other biomass researches, modded abilities) is drawn plain, as the
+  notification draws it.
+- **A countdown under each icon** (`00:17`, the notification's font and color) at 0.64 scale,
+  centered under the circle. Progress arrives in whole percent at most once a second, so a slot keeps
+  its own estimated finish time and only takes a new estimate when a research starts or the two drift
+  more than 2 seconds apart. `IT.kShowHiveResearchSlotTimers = false` removes it.
+- **Only hive research moves.** HIVE PANEL filters biomass, the three hive type upgrades and every
+  ability in `EvolutionChamber.kUpgradeButtons`. CBM's Advanced (Fortress) upgrades run on the
+  structure itself and the Infested Tunnel upgrade on the tunnel, so their notifications stay.
 - **Field aliens only.** The panel is shown to `kShowAsClass["Alien"]`; spectators, dead aliens and
   the commander are unaffected, and the filter checks `isa("Alien")`.
-- **HIVE PANEL ONLY does nothing when the hive status panel is off**, so nothing is hidden without a
+- **HIVE PANEL does nothing when the hive status panel is off**, so nothing is hidden without a
   replacement.
-- **HIVE PANEL ONLY hides the whole notification**: start, the green complete flash and the red
-  cancel state share one item in GUIEvent. **The "trait available" sound is kept.** GUIEvent plays
-  it itself (`TriggerEffects("upgrade_complete")`, GUIEvent.lua:348) when a notification it shows
-  completes, so hiding the notification silenced it. `ImprovedTooltips_ResearchStack.lua` remembers
-  each hidden research and plays the sound with GUIEvent's own rules: checked from
-  `GUIEvent:Update`, progress exactly 1 is complete, neither complete nor in progress is a silent
-  cancel. Vanilla only sounds for the 3 notifications on screen; hidden researches always sound.
-- **Changing mode mid-round rebuilds the stack.** The filter only sees notifications as they are
-  queued, so in the first test (2026-09-17) switching to HIVE PANEL ONLY left existing hive research
-  on the left, and switching away never brought hidden research back. `ResearchStack.lua` now
-  watches the filter's answer and, when it changes, clears the stack and re-queues every research
-  in progress, as `GUIEvent:Initialize` does.
-- **Icons are fitted by their drawn shape, not their cell.** The first test showed small, uneven,
-  slightly off-center icons: buildmenu.dds cells vary widely (Biomass One's shape is 44px, Leap's
-  56x30, Biomass Three's 62x66), and vanilla's per-tech size fixes are private to
-  GUINotificationItem.lua. `HiveStatusGUI.lua` carries measured shape bounds per atlas index and
-  fits each shape into a box centered on the bar; slots moved to x 136 and 198. After the second test (icons still small, room under the timers) the box became 50x40, the slots x 136 and 208 at y 14, and the timer sits under the icon box rather than the bar. Unlisted
-  indices (modded abilities) use a typical 56px centered shape. The table was measured on vanilla's
-  atlas; CBM ships its own buildmenu.dds, so check CBM icons in game.
+- **Hiding a notification hides all of it**: its start, green complete state and red cancel state
+  are one item in GUIEvent.
+- **Changing mode mid-round rebuilds the stack**: cleared and every research in progress queued
+  again through the filter, as `GUIEvent:Initialize` does.
+
+## Vanilla GUIEvent bugs fixed for the alien stack
+
+Both apply in either mode. `ImprovedTooltips_ResearchStack.lua` skips the marine stack, which has
+the same bugs (parked, below).
+
+- **The "trait available" sound.** GUIEvent plays it (`TriggerEffects("upgrade_complete")`,
+  GUIEvent.lua:348) only for a notification it is showing when the research completes, and aliens are
+  shown three. The mod watches research in progress directly and plays the sound once per
+  completion, shown or not, silencing GUIEvent's own call while GUIEvent updates. Entities are
+  userdata, so the call is silenced on the player's class table, not the player.
+- **Research pushed out of the stack.** When a notification sorts above the last one shown, the one
+  pushed below the three is faded out, destroyed and dropped from GUIEvent's list, and nothing queues
+  it again. After each update the mod re-queues any research in progress that is neither in that list
+  nor in the player's queue; it waits below the three and shows when a place frees.
 
 ## Why the data comes from the server
 
 Research is only tracked per entity for the techs in `GetTechIdIsInstanced` (TechTree.lua:386); of
 the alien ones, just the three hive type upgrades. Biomass and lifeform abilities keep one progress
 value per tech, and two hives can research biomass at once. Hives are also not relevant to distant
-clients. So the existing `ImprovedTooltipsHiveState` message gains four fields:
-`hiveResearchId`, `hiveProgress`, `evoResearchId`, `evoProgress` (progress as 0-100).
+clients. So the existing `ImprovedTooltipsHiveState` message carries `hiveResearchId`,
+`hiveProgress`, `evoResearchId` and `evoProgress` (progress as 0-100).
 
 `ImprovedTooltips_HiveSync.lua` sends a change of biomass or research id at once, and a progress
 change at most once a second per location (`IT.kHiveResearchProgressSendInterval`). A research is
-only reported while `GetIsResearching` is true, the same rule the ring always used.
+only reported while `GetIsResearching` is true.
 
 ## Files
 
-| File | Change |
+| File | Role |
 | --- | --- |
-| `ImprovedTooltips_HiveState.lua` | State tables with the two slots; send, broadcast and resync take a state table |
-| `ImprovedTooltips_NetworkMessages.lua` | Four new message fields |
-| `ImprovedTooltips_HiveSync.lua` | Reads both entities' research and progress; throttled progress sends |
-| `ImprovedTooltips_HiveStatusGUI.lua` | Research slots, and the mode switch between ring and slots |
-| `ImprovedTooltips_ResearchNotifications.lua` | New. Post-hook on `lua/Hud/GUINotificationMixin.lua` for HIVE PANEL ONLY |
-| `ImprovedTooltips_ResearchStack.lua` | New. Post-hook on `lua/Hud/GUIEvent.lua`: rebuilds the stack on a mode change, and plays the completion sound for hidden research |
-| `ImprovedTooltips_FileHooks.lua` | Registers both |
+| `ImprovedTooltips_HiveState.lua` | Hive state tables; send, broadcast and join resync |
+| `ImprovedTooltips_NetworkMessages.lua` | The hive state message and its fields |
+| `ImprovedTooltips_HiveSync.lua` | Server: reads both entities' research and progress; throttled sends |
+| `ImprovedTooltips_HiveStatusGUI.lua` | The ring, the research slots, and the switch between them |
+| `ImprovedTooltips_ResearchNotifications.lua` | Post-hook on `lua/Hud/GUINotificationMixin.lua`: the HIVE PANEL filter |
+| `ImprovedTooltips_ResearchStack.lua` | Post-hook on `lua/Hud/GUIEvent.lua`: mode-change rebuild, sound, re-queue |
 | `ImprovedTooltips_Config.lua` | `kHiveResearchDisplay` and slot geometry |
 | `ImprovedTooltips_ModsMenu.lua` | HIVE RESEARCH DISPLAY combobox, key `BIT_HiveResearchDisplay` |
 
@@ -94,80 +95,43 @@ only reported while `GetIsResearching` is true, the same rule the ring always us
 
 Hive status panel on (Advanced Options > UI). Test in vanilla, then CBM.
 
-- **BOTH, evolution only:** research Leap. Leap icon and a filling bar in the hive's left slot; the
-  notification on the left as usual.
-- **BOTH, hive only:** research Biomass. Biomass icon in the left slot.
-- **BOTH, both at once:** research Biomass and Metabolize in the same hive. Biomass left,
-  Metabolize right. Neither overlaps the biomass icons above or the name plate.
-- **Hive type upgrade:** upgrade to a Crag Hive; its icon uses the right slot beside a lifeform
-  research, or the left slot alone.
-- **Two hives:** biomass in one hive and an ability in another, each in its own row.
-- **Completion and cancel:** the slot disappears when a research finishes or is cancelled.
-- **RING ONLY:** identical to 1.06 - ring and DNA glyph, no slots.
-- **HIVE PANEL ONLY:** a new hive research adds no notification on the left; the row shows it.
-- **HIVE PANEL ONLY sound:** the "trait available" sound plays once when that research finishes,
-  and not at all when it is cancelled.
-- **HIVE PANEL ONLY with CBM:** an Advanced Crag upgrade still appears on the left.
-- **HIVE PANEL ONLY with the hive status panel off:** notifications on the left as normal.
-- **Switching modes mid-research**, in every direction between the three: the left stack gains or
-  loses the hive research at once, and nothing appears twice.
-- **Timers:** each slot counts down under its icon without stalling or jumping, agrees with the
-  notification's time in BOTH to within a second or two, and never overlaps the next hive's row.
-- **Icon sizes:** Leap, Bile Bomb, Metabolize, Biomass One to Three and a hive type upgrade all read
-  about the same size and sit centered beside their bar. On CBM, check the same plus Babbler Bomb.
-- **Joining mid-round:** rows fill in at once.
-- **Devnull's Enhanced HUD:** BOTH and RING ONLY unaffected; check HIVE PANEL ONLY still filters.
-- **Bars at real size:** the bar reads as progress and the icon is legible at 1080p.
+- **NOTIFICATIONS (default):** ring and DNA glyph on a busy hive, no slots; notifications on the left
+  as vanilla.
+- **HIVE PANEL, one research:** it takes the left slot, and adds no notification on the left.
+- **HIVE PANEL, two at once in one hive:** Biomass left, Metabolize right, neither overlapping the
+  biomass icons above or the name plate.
+- **Two hives:** each research in its own row.
+- **Completion and cancel:** the slot disappears; the sound plays once on completion, never on cancel.
+- **CBM:** an Advanced Crag upgrade still appears on the left in HIVE PANEL.
+- **Hive status panel off:** notifications on the left as normal in HIVE PANEL.
+- **Switching modes mid-research**, both ways: the left stack gains or loses the hive research at
+  once, and nothing appears twice.
+- **Six researches at once** (three hive type upgrades, three abilities), in NOTIFICATIONS: all six
+  appear on the left in turn, and each plays the sound once.
+- **Timers:** count down smoothly, and clear the next hive's row.
+- **Icon sizes:** Leap, Bile Bomb, Metabolize, Biomass One to Three and a hive type upgrade read about
+  the same size inside their circles. On CBM, also Babbler Bomb.
+- **Joining mid-round:** rows fill in at once, and no sound plays for research already running.
 - **Console:** no script errors.
 
-## Third in-game test (2026-09-17)
+## Test history (2026-09-17)
 
-The slot became **the left part of vanilla's research notification, in miniature**: the ringed
-circle (frame cropped at x 72, where the rim ends and the name plate would begin), the socket and
-bar, the icon inside the circle and the countdown under it, all at the notification's own relative
-positions, scaled by `IT.kHiveResearchSlotScale = 0.85`. Asked for by the user, who wanted the circle
-and outline kept, and the full height of the hive image used rather than the band under the name
-plate: at 0.85 a slot is 75 tall from y 5, against the hive image's 6 to 78. Slots at x 139 and 203.
+1. **First round:** icons small and off center; switching mode mid-research did not change the left
+   stack. Fixed with fitted icons and the mode-change rebuild.
+2. **Second round:** icons still small; room under the timers. Icons and slots enlarged.
+3. **Third round:** keep the notification's circle and outline, use the hive image's full height,
+   size icons as the notification does. Slots rebuilt as the notification in miniature.
+4. **Fourth round:** order swapped to hive left; Biomass One enlarged; timer 20% smaller; sound missing
+   with six researches. Sound taken over for the alien stack. The first attempt shadowed
+   `TriggerEffects` on the player with `rawget`, which raises on userdata and threw every update.
+5. **Fifth round:** the countdown's backing shortened; with six researches the last three never
+   appeared on the left. Dropped research is re-queued.
 
-Icon sizing now copies GUINotificationItem's own per-tech corrections (its size and position offset
-tables are file-local, so the alien entries are copied, keyed by tech name), replacing the measured
-shape table. A tech it does not list - every biomass research, and modded abilities - is drawn plain,
-exactly as the notification draws it. Mockup: scratchpad `hive/row_mock.png`.
-
-## Fourth in-game test (2026-09-17)
-
-- **Order swapped:** hive research (biomass, hive type) in the left slot, abilities in the right.
-- **Biomass One enlarged** (+16 cell pixels, icon 48 instead of 40): its three-sphere art reads
-  smaller than the notification's at the slot's 0.85 scale. The only mod-specific icon correction.
-- **Timer 20% smaller** (`kHiveResearchSlotTimerScale` 0.8 to 0.64), centered under the circle and
-  one art pixel higher: it touched the next row's biomass icons.
-- **The "trait available" sound is now the mod's for the whole alien stack.** Tested with three hive
-  type upgrades and three abilities at once: the first three completions sounded, the next three did
-  not. GUIEvent only sounds for a notification it is showing (three for aliens), and it clears the
-  per-hive progress of any completed notification in its list, visible or not, so a hive type upgrade
-  that completes while waiting below the three later reads as cancelled. `ResearchStack.lua` now
-  watches research in progress directly and plays the sound once per completion whether or not it is
-  shown, silencing GUIEvent's own call while GUIEvent updates. This replaced the hidden-research list.
-  The marine stack is untouched. Note this changes BOTH mode too: completions that vanilla would not
-  have sounded now do.
-
-## Fifth in-game test (2026-09-17)
-
-- **Timer backing shortened.** The dark gradient under the countdown is part of the notification
-  frame and was sized for the full countdown. The frame is now two pieces: the circle down to atlas
-  y 72, and the backing's lower 22 pixels squashed to 14. Width unchanged, since the backing's top
-  sits behind the circle's rim inside the first piece and a narrower lower part would step.
-- **Research pushed out of the stack is queued again.** Correction to the fourth test: with six
-  researches, the last three never appeared on the left at all (their sound did play, from the
-  mod). In GUIEvent a notification pushed below the three shown is faded out, which marks it for
-  destruction, and once destroyed it is left out of the list carried to the next update - nothing
-  queues it again. `ResearchStack.lua` now re-queues, after each update, any research in progress
-  that is neither in GUIEvent's list nor in the player's queue. Alien stack only.
+After the fifth round the BOTH mode was dropped, leaving NOTIFICATIONS as the default.
 
 ## Parked: the same vanilla bugs in the marine stack
 
-Both GUIEvent bugs fixed above for aliens - a notification pushed below the shown ones is dropped and
-never returns, and the completion sound only plays for shown notifications - also affect marines,
-who are shown five (three with the NS1 HUD bars). Left alone on 2026-09-17 at the user's call. To
-revisit: remove the `useMarineStyle` gate in `ImprovedTooltips_ResearchStack.lua` (TriggerEffects
-already picks the marine sound), or report it upstream as an issue on the ns2-game repository.
+Both GUIEvent bugs above also affect marines, who are shown five notifications (three with the NS1
+HUD bars). Left alone on 2026-09-17 at the user's call. To revisit: remove the `useMarineStyle` gate
+in `ImprovedTooltips_ResearchStack.lua` (TriggerEffects already picks the marine sound), or report it
+upstream as an issue on the ns2-game repository.

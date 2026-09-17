@@ -29,7 +29,7 @@ if Client then
 	-- The alien hive status panel in the top-left corner: biomass icons, and each hive's research as
 	-- a busy ring or as research slots, per HIVE RESEARCH DISPLAY.
 	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
-	-- The research notification queue, so HIVE PANEL ONLY can keep research done in hives out of the
+	-- The research notification queue, so HIVE PANEL can keep research done in hives out of the
 	-- notification stack on the left.
 	ModLoader.SetupFileHook("lua/Hud/GUINotificationMixin.lua", "lua/ImprovedTooltips/ImprovedTooltips_ResearchNotifications.lua", "post")
 	-- The stack itself, which plays the "trait available" sound, so research kept out of it still

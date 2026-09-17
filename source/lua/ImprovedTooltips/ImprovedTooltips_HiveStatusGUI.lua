@@ -9,10 +9,10 @@
 --                   is upgraded; each research then adds its own button's art, in order.
 --
 --   Researching   - per HIVE RESEARCH DISPLAY (IT.kHiveResearchDisplay):
---                   RING ONLY: vanilla's rotating "working" ring with the DNA glyph inside it, on
+--                   NOTIFICATIONS: vanilla's rotating "working" ring with the DNA glyph inside it, on
 --                   any hive researching anything - the pair a player sees on a busy hive.
---                   BOTH / HIVE PANEL ONLY: up to two research slots, the evolution chamber's
---                   research and the hive's own, each the research notification's vertical bar
+--                   HIVE PANEL: up to two research slots, the hive's own research and the
+--                   evolution chamber's, each the research notification's vertical bar
 --                   beside the research icon. See docs/hive-research-slots.md.
 --
 -- Every image here is vanilla's own, addressed through GetTextureCoordinatesForIcon rather than by
@@ -270,7 +270,7 @@ local function CreateResearchIcon(slot)
 
 end
 
--- Two slots per row, for the BOTH and HIVE PANEL ONLY modes: the hive's own research and the
+-- Two slots per row, for the HIVE PANEL mode: the hive's own research and the
 -- evolution chamber's. Which is drawn in which slot is decided every update, so a lone research always
 -- takes the first.
 local function CreateResearchSlots(slot)

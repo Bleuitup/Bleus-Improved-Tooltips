@@ -6,7 +6,7 @@
 -- Three jobs, all for the alien stack except the first.
 --
 -- SWITCHING MODE MID-ROUND. ImprovedTooltips_ResearchNotifications.lua keeps hive research out of
--- this stack in HIVE PANEL ONLY, but only sees notifications as they are queued, so on its own a mode
+-- this stack in HIVE PANEL, but only sees notifications as they are queued, so on its own a mode
 -- change left the stack as it was. So whenever the filter's answer changes - the HIVE RESEARCH
 -- DISPLAY setting, the hive status panel option, or anything else it checks - the stack is rebuilt
 -- the way GUIEvent:Initialize builds it: cleared, then every research in progress queued again, this
@@ -16,7 +16,7 @@
 -- (TriggerEffects("upgrade_complete"), GUIEvent.lua:348), but only for a notification it is showing
 -- when the research completes, and aliens are shown three. That loses sounds in two ways:
 --
---   - Research hidden by HIVE PANEL ONLY is never shown, so it never sounds.
+--   - Research hidden by HIVE PANEL is never shown, so it never sounds.
 --   - With more than three researches running, a notification pushed below the three is faded out,
 --     destroyed and dropped from GUIEvent's list (see below), so it is never there to complete.
 --     Seen in testing with three hive type upgrades and three abilities at once.
@@ -36,7 +36,7 @@
 -- it never reappears when a place frees up. Found in testing: of six researches the last three never
 -- showed. So after each update, any research still in progress that is neither in GUIEvent's list nor
 -- waiting in the player's queue is queued again. It sorts below the three shown, so it waits in the
--- list and is shown when a place frees, as GUIEvent intended. Hive research hidden by HIVE PANEL ONLY
+-- list and is shown when a place frees, as GUIEvent intended. Hive research hidden by HIVE PANEL
 -- goes back through the same filter and stays hidden.
 
 if not Client then
@@ -52,8 +52,8 @@ local kCompleteEffect = "upgrade_complete"
 -- GUIEvent.Update as it was before this file wrapped it.
 local originalUpdate = GUIEvent.Update
 
-local function GetIsPanelOnlyActive()
-	return IT.GetIsHivePanelOnlyActiveFor ~= nil and IT.GetIsHivePanelOnlyActiveFor(Client.GetLocalPlayer())
+local function GetIsHivePanelActive()
+	return IT.GetIsHivePanelActiveFor ~= nil and IT.GetIsHivePanelActiveFor(Client.GetLocalPlayer())
 end
 
 local function GetResearchKey(research)
@@ -192,7 +192,7 @@ local originalInitialize = GUIEvent.Initialize
 function GUIEvent:Initialize(...)
 
 	local result = originalInitialize(self, ...)
-	self.itPanelOnlyActive = GetIsPanelOnlyActive()
+	self.itHivePanelActive = GetIsHivePanelActive()
 	-- Start from what is already running, so joining mid-round plays nothing.
 	self.itWatchedResearch = nil
 	return result
@@ -201,9 +201,9 @@ end
 
 function GUIEvent:Update(deltaTime, newNotification, ...)
 
-	local panelOnly = GetIsPanelOnlyActive()
+	local hivePanel = GetIsHivePanelActive()
 
-	if self.itPanelOnlyActive ~= nil and self.itPanelOnlyActive ~= panelOnly then
+	if self.itHivePanelActive ~= nil and self.itHivePanelActive ~= hivePanel then
 
 		-- The notification handed in this frame was already taken off the queue. It is research in
 		-- progress, so the rebuild queues it again; passing it on as well would show it twice.
@@ -212,7 +212,7 @@ function GUIEvent:Update(deltaTime, newNotification, ...)
 
 	end
 
-	self.itPanelOnlyActive = panelOnly
+	self.itHivePanelActive = hivePanel
 
 	local techTree = GetTechTree and GetTechTree()
 	if self.useMarineStyle or not techTree then
