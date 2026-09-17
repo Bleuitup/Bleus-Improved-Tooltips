@@ -106,6 +106,13 @@ local kIconShapes =
 }
 local kDefaultIconShape = { 56, 56, 40, 40 }
 
+-- The notification's countdown: GUINotificationItem.kDefaultFontName (Fonts.kAgencyFB_Small, read
+-- when a slot is made) and the alien TextColor.
+local kTimerColor = Color(221 / 255, 188 / 255, 7 / 255, 1)
+-- Progress arrives in whole percent, up to a second late, so an estimate can honestly be off by
+-- about 1% of the research time plus a second. Only a bigger gap moves the countdown.
+local kTimerResyncSeconds = 2
+
 -- Each entry is { coords = ..., techId = ... }. The techId is kept so a compatibility module can
 -- claim a color for it - CBM marks its biomass 5 research out in purple.
 local kBiomassIcons = nil
@@ -272,6 +279,25 @@ local function CreateResearchSlots(slot)
 		entry.icon:SetIsVisible(false)
 		slot.background:AddChild(entry.icon)
 
+		-- Time left, centered under the icon, in the notification's own font and color.
+		entry.timer = GUIManager:CreateTextItem()
+		entry.timer:SetAnchor(GUIItem.Left, GUIItem.Top)
+		entry.timer:SetFontName(Fonts.kAgencyFB_Small)
+		entry.timer:SetScale(GUIScale(Vector(1, 1, 0)) * IT.kHiveResearchSlotTimerScale)
+		if GUIMakeFontScale then
+			GUIMakeFontScale(entry.timer)
+		end
+		entry.timer:SetTextAlignmentX(GUIItem.Align_Center)
+		entry.timer:SetTextAlignmentY(GUIItem.Align_Min)
+		entry.timer:SetColor(kTimerColor)
+		entry.timer:SetPosition(origin + Vector(
+			kCrescentArtWidth * scale + iconGap + iconMax.x * 0.5,
+			kSocketArtSize.y * scale + GUIScale(IT.kHiveResearchSlotTimerGap),
+			0))
+		entry.timer:SetLayer(kGUILayerPlayerHUDForeground4)
+		entry.timer:SetIsVisible(false)
+		slot.background:AddChild(entry.timer)
+
 		slot.itResearchSlots[i] = entry
 
 	end
@@ -332,10 +358,44 @@ local function SetSlotProgress(entry, progress, visible)
 
 end
 
+-- The countdown, "00:17" like the notification's. The server sends progress in whole percent at
+-- most once a second, so the time left is not read straight off it - that would stall and jump.
+-- Each update gives an estimated finish time; the slot keeps its own and counts down to it
+-- smoothly, and only takes the new estimate when a research starts or the two drift apart by more
+-- than that coarseness explains.
+local function SetSlotTimer(entry, techId, progress)
+
+	local researchTime = LookupTechData(techId, kTechDataResearchTimeKey, 0)
+	if not researchTime or researchTime <= 0 then
+		entry.timer:SetIsVisible(false)
+		return
+	end
+
+	local now = Shared.GetTime()
+	local estimatedEnd = now + researchTime * (1 - progress)
+
+	if entry.timerTechId ~= techId or not entry.timerEnd
+			or math.abs(estimatedEnd - entry.timerEnd) > kTimerResyncSeconds then
+		entry.timerTechId = techId
+		entry.timerEnd = estimatedEnd
+	end
+
+	local timeLeft = math.max(0, entry.timerEnd - now)
+	local minutes = math.floor(timeLeft / 60)
+	local seconds = math.floor(timeLeft - minutes * 60)
+
+	entry.timer:SetText(string.format("%02d:%02d", minutes, seconds))
+	entry.timer:SetIsVisible(true)
+
+end
+
 local function HideSlot(entry)
 	entry.socket:SetIsVisible(false)
 	entry.bar:SetIsVisible(false)
 	entry.icon:SetIsVisible(false)
+	entry.timer:SetIsVisible(false)
+	entry.timerTechId = nil
+	entry.timerEnd = nil
 end
 
 local function UpdateResearchSlots(slot, state, visible)
@@ -360,6 +420,11 @@ local function UpdateResearchSlots(slot, state, visible)
 			entry.socket:SetIsVisible(true)
 			entry.icon:SetIsVisible(true)
 			SetSlotProgress(entry, research.progress, true)
+			if IT.kShowHiveResearchSlotTimers then
+				SetSlotTimer(entry, research.techId, research.progress)
+			else
+				entry.timer:SetIsVisible(false)
+			end
 		else
 			HideSlot(entry)
 		end
@@ -426,6 +491,7 @@ function GUIHiveStatus:UninitializeStatusSlot(slotIdx)
 				GUI.DestroyItem(entry.socket)
 				GUI.DestroyItem(entry.bar)
 				GUI.DestroyItem(entry.icon)
+				GUI.DestroyItem(entry.timer)
 			end
 			slot.itResearchSlots = nil
 		end

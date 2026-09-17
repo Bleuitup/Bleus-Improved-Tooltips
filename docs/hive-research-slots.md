@@ -27,7 +27,14 @@ BOTH is the default so nothing vanilla is lost; players choose RING ONLY or HIVE
   glyph. The DNA glyph remains only in RING ONLY.
 - **Progress uses the research notification's own vertical bar art** (`ui/research_notifications.dds`,
   alien socket and bar), filled the way GUIEvent fills it, including the glow handling. No new art.
-- **No countdown in the row.** Times stay in the notifications.
+- **A countdown under each slot's icon** (`00:17`, the notification's font and color). First
+  decided against, then asked for on 2026-09-17 to try; `IT.kShowHiveResearchSlotTimers = false`
+  removes it. Progress arrives in whole percent at most once a second, so the slot keeps its own
+  estimated finish time and counts down smoothly, only taking a new estimate when a research
+  starts or the two drift more than 2 seconds apart.
+- **CBM's Advanced (Fortress) structure upgrades are not in the hive panel** and stay on the left in
+  every mode, sound included: they are researched on the Crag, Shade, Shift or Whip itself, which
+  has no hive row, and the filter only takes hive and evolution chamber research.
 - **Only hive research moves.** HIVE PANEL ONLY filters biomass, the three hive type upgrades and
   every ability in `EvolutionChamber.kUpgradeButtons`. CBM's Advanced Crag, Shift, Shade and Whip
   upgrades run on the structure itself, the Infested Tunnel upgrade on the tunnel, so their
@@ -103,6 +110,8 @@ Hive status panel on (Advanced Options > UI). Test in vanilla, then CBM.
 - **HIVE PANEL ONLY with the hive status panel off:** notifications on the left as normal.
 - **Switching modes mid-research**, in every direction between the three: the left stack gains or
   loses the hive research at once, and nothing appears twice.
+- **Timers:** each slot counts down under its icon without stalling or jumping, agrees with the
+  notification's time in BOTH to within a second or two, and never overlaps the next hive's row.
 - **Icon sizes:** Leap, Bile Bomb, Metabolize, Biomass One to Three and a hive type upgrade all read
   about the same size and sit centered beside their bar. On CBM, check the same plus Babbler Bomb.
 - **Joining mid-round:** rows fill in at once.
