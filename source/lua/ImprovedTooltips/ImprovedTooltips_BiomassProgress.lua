@@ -2,9 +2,16 @@
 -- lua/ImprovedTooltips/ImprovedTooltips_BiomassProgress.lua
 --
 -- Post-hook on lua/AlienTeam.lua. Server only - AlienTeam.lua is loaded by Server.lua and by
--- nothing else, so the class does not exist in the client VM at all.
+-- nothing else, so the class does not exist in the client VM at all. Two fixes to how the tech tree
+-- sees biomass.
 --
--- Fixes the tech map showing only ONE biomass level in progress when several hives are researching
+-- 1. THE TECH TREE IS NOT TOLD WHEN BIOMASS CHANGES. A vanilla typo, fixed on the ns2-game beta
+--    branch; see OnUpdateBiomass below. Unlike the second fix this one is not display only: the flag
+--    it sets is what makes the tree recompute which biomass levels the team has, and so which
+--    biomass-gated tech is available. It restores the timing vanilla intended, and changes nothing
+--    once the game ships its own fix.
+--
+-- 2. Fixes the tech map showing only ONE biomass level in progress when several hives are researching
 -- biomass at the same time. With two hives at biomass 1 each (team biomass 2) both researching,
 -- vanilla lights up BioMassThree alone; BioMassFour stays dark even though it is just as much on
 -- its way.
@@ -23,7 +30,7 @@
 -- server, it is discarded one step before it would have been sent: each hive knows its own
 -- fraction, and the team throws all but the largest away.
 --
--- This is display only. Node research progress is not what gates anything - availability runs off
+-- That one is display only. Node research progress is not what gates anything - availability runs off
 -- GetHasTech / GetAvailable / GetResearched, and the per-hive research itself is driven by
 -- ResearchMixin against the ResearchBioMassN nodes, none of which this file touches. Fixing it
 -- server-side rather than in the GUI means it flows out through vanilla's own TechNodeUpdate
@@ -104,6 +111,35 @@ end
 
 local function SortBySoonest(a, b)
 	return a.remaining < b.remaining
+end
+
+-- THE TECH TREE IS NOT TOLD WHEN BIOMASS CHANGES, in build 344. Which biomass levels the team has
+-- (BioMassOne and up) is computed from the team's level, but only when the tech tree is flagged as
+-- changed, and vanilla's flag on a biomass change never fires:
+--
+--     function AlienTeam:OnUpdateBiomass(oldBiomass, newBiomass)
+--         if self.techtree then                  -- lowercase: always nil
+--             self.techTree:SetTechChanged()
+--
+-- Found in testing on 2026-09-17: at the start of a round the tech map showed biomass 0 with a hive
+-- standing, because the tree was computed before the first biomass update and nothing flagged it
+-- again until a structure was dropped or a research started. The ns2-game beta branch has the typo
+-- fixed; CBM 3.5 still carries it. This does what the fix does. Once the game ships it the flag is
+-- simply set twice, which changes nothing - SetTechChanged only sets a boolean.
+local originalOnUpdateBiomass = AlienTeam.OnUpdateBiomass
+
+if originalOnUpdateBiomass then
+
+	function AlienTeam:OnUpdateBiomass(oldBiomass, newBiomass)
+
+		originalOnUpdateBiomass(self, oldBiomass, newBiomass)
+
+		if self.techTree then
+			self.techTree:SetTechChanged()
+		end
+
+	end
+
 end
 
 local originalUpdateBioMassLevel = AlienTeam.UpdateBioMassLevel

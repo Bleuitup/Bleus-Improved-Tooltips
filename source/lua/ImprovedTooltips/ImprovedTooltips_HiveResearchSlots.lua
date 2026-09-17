@@ -17,8 +17,11 @@
 --   socket  ProgressBarBackgroundCoords {240, 6, 268, 52} at (-4, 11), tinted ProgressBarBackgroundColor
 --   bar     kAlienBarCoordinates {240, 1, 273, 56} at (-4, 6), with a 5px glow top and bottom
 --   icon    kAlienIconSize 40 at IconPos (18, 19), corrected per tech as below
---   timer   BottomTextPos (20, -15) from the bottom, centered vertically; here also centered under the
---           circle (x 37) and 1 higher, since the smaller text would otherwise sit left of center
+--   timer   BottomTextPos (20, -15) from the bottom, centered vertically. Here it is centered in the
+--           dark backing instead: x 38.5 is the backing's own middle (art x 22-67), and y 70 sits
+--           above the backing's geometric middle because a centered line of digits draws low (the
+--           line's height includes room below the baseline that digits never use) and the backing
+--           fades towards its bottom. Placed there after the 2026-09-17 test showed it sitting low.
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_HiveState.lua")
@@ -46,7 +49,7 @@ local kBarArtPos = Vector(-4, 6, 0)
 local kBarGlow = 5
 local kIconArtSize = 40
 local kIconArtPos = Vector(18, 19, 0)
-local kTimerArtPos = Vector(37, 88 - 16, 0)
+local kTimerArtPos = Vector(38.5, 70, 0)
 
 -- The notification's countdown: GUINotificationItem.kDefaultFontName (Fonts.kAgencyFB_Small, read
 -- when a slot is made) and the alien TextColor.
