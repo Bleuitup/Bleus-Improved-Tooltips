@@ -304,24 +304,19 @@ function IT.GetValues(techId)
 		return nil
 	end
 
-	local values = {
-		-- Carried so the renderer can ask HasResolver and tell a meaningful zero from an absent
-		-- one. Not a field in kFields, so it does not affect the "anything to show?" test below.
-		techId       = techId,
-		health       = IT.GetValue("health", techId),
-		armor        = IT.GetValue("armor", techId),
-		researchTime = IT.GetValue("researchTime", techId),
-		cooldown     = IT.GetValue("cooldown", techId),
-		speed        = IT.GetValue("speed", techId),
-	}
+	-- techId is carried so the renderer can ask HasResolver and tell a meaningful zero from an absent
+	-- one. It is not a field in kFields, so it does not count towards "anything to show".
+	local values = { techId = techId }
+	local anything = false
 
 	for i = 1, #IT.kFields do
-		if values[IT.kFields[i]] > 0 then
-			return values
-		end
+		local field = IT.kFields[i]
+		local value = IT.GetValue(field, techId)
+		values[field] = value
+		anything = anything or value > 0
 	end
 
-	return nil
+	return anything and values or nil
 
 end
 
@@ -336,6 +331,10 @@ end
 -- Built once on first use rather than at load time, because TechData is assembled during startup
 -- and mods post-hook it - asking too early would miss whatever had not been added yet.
 local cooldownTechIds = nil
+
+-- [minDuration] = the list filtered to it. The In Cooldown panel asks every frame, and cooldowns in
+-- TechData do not change once the game is running.
+local filteredByMinDuration = { }
 
 function IT.GetTechIdsWithCooldown(minDuration)
 
@@ -363,12 +362,17 @@ function IT.GetTechIdsWithCooldown(minDuration)
 		return cooldownTechIds
 	end
 
-	local filtered = { }
-	for i = 1, #cooldownTechIds do
-		local techId = cooldownTechIds[i]
-		if LookupTechData(techId, kTechDataCooldown, 0) >= minDuration then
-			table.insert(filtered, techId)
+	local filtered = filteredByMinDuration[minDuration]
+
+	if not filtered then
+		filtered = { }
+		for i = 1, #cooldownTechIds do
+			local techId = cooldownTechIds[i]
+			if LookupTechData(techId, kTechDataCooldown, 0) >= minDuration then
+				table.insert(filtered, techId)
+			end
 		end
+		filteredByMinDuration[minDuration] = filtered
 	end
 
 	return filtered
