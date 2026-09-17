@@ -118,3 +118,17 @@ Hive status panel on (Advanced Options > UI). Test in vanilla, then CBM.
 - **Devnull's Enhanced HUD:** BOTH and RING ONLY unaffected; check HIVE PANEL ONLY still filters.
 - **Bars at real size:** the bar reads as progress and the icon is legible at 1080p.
 - **Console:** no script errors.
+
+## Third in-game test (2026-09-17)
+
+The slot became **the left part of vanilla's research notification, in miniature**: the ringed
+circle (frame cropped at x 72, where the rim ends and the name plate would begin), the socket and
+bar, the icon inside the circle and the countdown under it, all at the notification's own relative
+positions, scaled by `IT.kHiveResearchSlotScale = 0.85`. Asked for by the user, who wanted the circle
+and outline kept, and the full height of the hive image used rather than the band under the name
+plate: at 0.85 a slot is 75 tall from y 5, against the hive image's 6 to 78. Slots at x 139 and 203.
+
+Icon sizing now copies GUINotificationItem's own per-tech corrections (its size and position offset
+tables are file-local, so the alien entries are copied, keyed by tech name), replacing the measured
+shape table. A tech it does not list - every biomass research, and modded abilities - is drawn plain,
+exactly as the notification draws it. Mockup: scratchpad `hive/row_mock.png`.

@@ -141,21 +141,16 @@ IT.kHiveResearchDisplayBoth = 1
 IT.kHiveResearchDisplayPanelOnly = 2
 IT.kHiveResearchDisplay = IT.kHiveResearchDisplayBoth
 
--- The two research slots, for BOTH and HIVE PANEL ONLY. Pre-GUIScale, relative to the row like the
--- ring above. Each slot is the notification's vertical bar with the research icon beside it; the
--- first slot sits where the ring sits, and a lone research always takes it.
-IT.kHiveResearchSlotPositions = { Vector(136, 14, 0), Vector(208, 14, 0) }
--- Height of the bar's socket. Width and the bar's glow follow from the art's own proportions.
-IT.kHiveResearchSlotBarHeight = 30
--- The box each research icon's drawn shape is fitted into, beside the bar and centered on it. The
--- shape, not its 80px atlas cell, is fitted, so a wide Leap and a round Biomass read the same size.
-IT.kHiveResearchSlotIconMaxWidth = 50
-IT.kHiveResearchSlotIconMaxHeight = 40
-IT.kHiveResearchSlotIconGap = 3
+-- The two research slots, for BOTH and HIVE PANEL ONLY. Each is the left part of vanilla's research
+-- notification - ringed circle, progress bar, icon and countdown - at kHiveResearchSlotScale of its
+-- size. Positions are the notification's top-left, pre-GUIScale and relative to the row like the ring
+-- above. At 0.85 a slot is 75 tall, filling the hive image (y 6 to 78) from y 5, and 60 wide from
+-- its bar to its rim. A lone research always takes the first slot.
+IT.kHiveResearchSlotPositions = { Vector(139, 5, 0), Vector(203, 5, 0) }
+IT.kHiveResearchSlotScale = 0.85
 -- Time left under each slot's icon, as the notification shows it. Set false to drop the timers.
 IT.kShowHiveResearchSlotTimers = true
 IT.kHiveResearchSlotTimerScale = 0.8
-IT.kHiveResearchSlotTimerGap = 1
 -- The color of every biomass icon the mod draws or reaches: the hive HUD row, the biomass icon on
 -- the commander tooltip, and the spectator top bar counter.
 --

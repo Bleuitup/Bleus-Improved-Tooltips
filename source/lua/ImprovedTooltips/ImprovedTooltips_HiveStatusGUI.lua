@@ -57,54 +57,74 @@ local kProgressRingCoords = { 256, 68, 256 + 128, 68 + 128 }
 -- reached unless a mod adds the research.
 local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "ResearchBioMassThree", "ResearchBioMassFour" }
 
--- The research slots borrow the research notification's own art, from GUINotificationItem.lua, so a
--- hive row and the notification stack show progress the same way. Alien entries:
+-- The research slots are the left part of vanilla's own research notification (GUINotificationItem.lua,
+-- alien style) - the ringed circle, the vertical progress bar, the icon inside the circle and the
+-- countdown under it - without the name plate, drawn at IT.kHiveResearchSlotScale. Every position
+-- and size below is the notification's own, in its art pixels, relative to the notification's
+-- top-left, so the slot is the notification in miniature:
 --
---   socket  ProgressBarBackgroundCoords {240, 6, 268, 52}, tinted ProgressBarBackgroundColor
---   bar     kAlienBarCoordinates {240, 1, 273, 56}, which includes a 5px glow top and bottom
---
--- In the notification the bar sits 5px above the socket (ProgressBarPos y 6 vs
--- ProgressBarBackgroundPos y 11). That art-pixel offset is kept here and scaled with the socket.
--- The visible crescent ends about 14 art pixels in, which is where the icon's box starts.
+--   frame   kAlienFrameCoordinates {6, 6, 213, 94}, cropped at x 72 where the circle's rim ends and
+--           the name plate would begin
+--   socket  ProgressBarBackgroundCoords {240, 6, 268, 52} at (-4, 11), tinted ProgressBarBackgroundColor
+--   bar     kAlienBarCoordinates {240, 1, 273, 56} at (-4, 6), with a 5px glow top and bottom
+--   icon    kAlienIconSize 40 at IconPos (18, 19), corrected per tech as below
+--   timer   BottomTextPos (20, -15) from the bottom, left aligned, centered vertically
 local kNotificationsTexture = "ui/research_notifications.dds"
+local kFrameCoords = { 6, 6, 72, 94 }
+local kFrameArtSize = Vector(66, 88, 0)
 local kSocketCoords = { 240, 6, 268, 52 }
 local kSocketArtSize = Vector(28, 46, 0)
+local kSocketArtPos = Vector(-4, 11, 0)
 local kSocketColor = Color(47 / 255, 26 / 255, 11 / 255, 1)
 local kBarCoords = { 240, 1, 273, 56 }
 local kBarArtSize = Vector(33, 55, 0)
+local kBarArtPos = Vector(-4, 6, 0)
 local kBarGlow = 5
-local kBarArtOffsetY = -5
-local kCrescentArtWidth = 14
+local kIconArtSize = 40
+local kIconArtPos = Vector(18, 19, 0)
+local kTimerArtPos = Vector(20, 88 - 15, 0)
 
--- Where each research icon's drawn shape sits inside its 80x80 buildmenu.dds cell, as
--- { width, height, centerX, centerY }, keyed by atlas index (row * 12 + column). Measured
--- from the texture's alpha (> 60 of 255) on 2026-09-17. The cells are far from uniform - Biomass
--- One's shape is 44px, Leap's is 56x30 and Biomass Three's 62x66, some off center - which is why
--- drawing whole cells at one size made small, uneven, off-center icons. The notification copes
--- with a private per-tech table in GUINotificationItem.lua that a hook cannot reach. An index not
--- listed here, such as a modded ability, is drawn as a typical 56px shape centered in its cell.
-local kIconShapes =
+-- GUINotificationItem's per-tech icon corrections, which make each icon fill its circle evenly:
+-- { size offset, position offset x, position offset y }, in 80px icon cell pixels, applied at half
+-- (the icon is 40 of those 80) exactly as GUINotificationItem:Initialize does. Copied because both
+-- tables are file-local there (GetCustomSizeOffsetForTechId / GetCustomPosOffsetForTechId); only the
+-- alien entries, keyed by name so a missing tech is skipped. A tech not listed - biomass, or a mod's
+-- ability - is drawn plain, which is also what the notification does.
+local kVanillaIconCorrections =
 {
-	[67]  = { 56, 30, 41.5, 42.5 },   -- Leap
-	[95]  = { 55, 47, 37, 38 },       -- Xenocide
-	[68]  = { 50, 40, 40.5, 40.5 },   -- Bile Bomb
-	[102] = { 66, 49, 38.5, 40 },     -- Webs
-	[75]  = { 46, 49, 35.5, 35 },     -- Umbra
-	[69]  = { 54, 45, 38.5, 39 },     -- Spores
-	[169] = { 66, 45, 39.5, 37 },     -- Metabolize
-	[170] = { 66, 45, 39.5, 38 },     -- Advanced Metabolize
-	[105] = { 57, 62, 42, 39.5 },     -- Stab
-	[111] = { 68, 48, 37.5, 36.5 },   -- Charge
-	[156] = { 62, 57, 42.5, 41 },     -- Bone Shield
-	[72]  = { 54, 56, 39.5, 38.5 },   -- Stomp
-	[157] = { 61, 57, 46, 40 },       -- Crag Hive
-	[158] = { 56, 57, 43.5, 40 },     -- Shade Hive
-	[159] = { 60, 57, 45.5, 40 },     -- Shift Hive
-	[150] = { 44, 46, 39.5, 39.5 },   -- Biomass One
-	[112] = { 55, 58, 37, 37.5 },     -- Biomass Two and Four
-	[175] = { 62, 66, 39.5, 40.5 },   -- Biomass Three
+	Leap = { 33, -4, -3 },
+	Xenocide = { 25, 5, 3 },
+	BileBomb = { 29, -3, -2 },
+	Umbra = { 31, 7, 8 },
+	Spores = { 25, 1, 1 },
+	MetabolizeEnergy = { 14, 0, -1 },
+	MetabolizeHealth = { 14, 0, -2 },
+	Stab = { 18, -5, 0 },
+	Charge = { 13, -1, 6 },
+	BoneShield = { 18, -6, -3 },
+	Stomp = { 24, 2, 2 },
+	UpgradeToCragHive = { 19, -6, -1 },
+	UpgradeToShadeHive = { 23, -8, -1 },
+	UpgradeToShiftHive = { 20, -4, -1 },
 }
-local kDefaultIconShape = { 56, 56, 40, 40 }
+local kIconCorrections = nil
+
+local function GetIconCorrection(techId)
+
+	if not kIconCorrections then
+		local corrections = { }
+		for name, correction in pairs(kVanillaIconCorrections) do
+			local id = IT.GetTechIdByName(name)
+			if id then
+				corrections[id] = correction
+			end
+		end
+		kIconCorrections = corrections
+	end
+
+	return kIconCorrections[techId]
+
+end
 
 -- The notification's countdown: GUINotificationItem.kDefaultFontName (Fonts.kAgencyFB_Small, read
 -- when a slot is made) and the alien TextColor.
@@ -241,45 +261,43 @@ local function CreateResearchSlots(slot)
 		return
 	end
 
-	local barHeight = GUIScale(IT.kHiveResearchSlotBarHeight)
-	local scale = barHeight / kSocketArtSize.y
-	local iconMax = GUIScale(Vector(IT.kHiveResearchSlotIconMaxWidth, IT.kHiveResearchSlotIconMaxHeight, 0))
-	local iconGap = GUIScale(IT.kHiveResearchSlotIconGap)
+	-- One art pixel of the notification, on screen.
+	local scale = GUIScale(IT.kHiveResearchSlotScale)
+
+	local function NewGraphic(texture)
+		local item = GUIManager:CreateGraphicItem()
+		item:SetAnchor(GUIItem.Left, GUIItem.Top)
+		item:SetTexture(texture)
+		item:SetLayer(kGUILayerPlayerHUDForeground4)
+		item:SetIsVisible(false)
+		slot.background:AddChild(item)
+		return item
+	end
 
 	slot.itResearchSlots = { }
 
 	for i = 1, #IT.kHiveResearchSlotPositions do
 
 		local origin = GUIScale(IT.kHiveResearchSlotPositions[i])
-		local entry = { origin = origin, scale = scale, iconMax = iconMax, iconGap = iconGap, techId = nil }
+		local entry = { origin = origin, scale = scale, techId = nil }
 
-		entry.socket = GUIManager:CreateGraphicItem()
-		entry.socket:SetAnchor(GUIItem.Left, GUIItem.Top)
-		entry.socket:SetPosition(origin)
+		-- Created in the notification's draw order: frame, socket, icon, bar.
+		entry.frame = NewGraphic(kNotificationsTexture)
+		entry.frame:SetPosition(origin)
+		entry.frame:SetSize(kFrameArtSize * scale)
+		entry.frame:SetTexturePixelCoordinates(GUIUnpackCoords(kFrameCoords))
+
+		entry.socket = NewGraphic(kNotificationsTexture)
+		entry.socket:SetPosition(origin + kSocketArtPos * scale)
 		entry.socket:SetSize(kSocketArtSize * scale)
-		entry.socket:SetTexture(kNotificationsTexture)
 		entry.socket:SetTexturePixelCoordinates(GUIUnpackCoords(kSocketCoords))
 		entry.socket:SetColor(kSocketColor)
-		entry.socket:SetLayer(kGUILayerPlayerHUDForeground4)
-		entry.socket:SetIsVisible(false)
-		slot.background:AddChild(entry.socket)
 
-		entry.bar = GUIManager:CreateGraphicItem()
-		entry.bar:SetAnchor(GUIItem.Left, GUIItem.Top)
-		entry.bar:SetTexture(kNotificationsTexture)
-		entry.bar:SetLayer(kGUILayerPlayerHUDForeground4)
-		entry.bar:SetIsVisible(false)
-		slot.background:AddChild(entry.bar)
-
-		entry.icon = GUIManager:CreateGraphicItem()
-		entry.icon:SetAnchor(GUIItem.Left, GUIItem.Top)
-		entry.icon:SetTexture(kBuildMenuTexture)
+		entry.icon = NewGraphic(kBuildMenuTexture)
 		entry.icon:SetColor(kIconColors and kIconColors[kAlienTeamType] or Color(1, 1, 1, 1))
-		entry.icon:SetLayer(kGUILayerPlayerHUDForeground4)
-		entry.icon:SetIsVisible(false)
-		slot.background:AddChild(entry.icon)
 
-		-- Time left, centered under the icon box (which is centered on the bar), in the notification's own font and color.
+		entry.bar = NewGraphic(kNotificationsTexture)
+
 		entry.timer = GUIManager:CreateTextItem()
 		entry.timer:SetAnchor(GUIItem.Left, GUIItem.Top)
 		entry.timer:SetFontName(Fonts.kAgencyFB_Small)
@@ -287,13 +305,10 @@ local function CreateResearchSlots(slot)
 		if GUIMakeFontScale then
 			GUIMakeFontScale(entry.timer)
 		end
-		entry.timer:SetTextAlignmentX(GUIItem.Align_Center)
-		entry.timer:SetTextAlignmentY(GUIItem.Align_Min)
+		entry.timer:SetTextAlignmentX(GUIItem.Align_Min)
+		entry.timer:SetTextAlignmentY(GUIItem.Align_Center)
 		entry.timer:SetColor(kTimerColor)
-		entry.timer:SetPosition(origin + Vector(
-			kCrescentArtWidth * scale + iconGap + iconMax.x * 0.5,
-			kSocketArtSize.y * scale * 0.5 + iconMax.y * 0.5 + GUIScale(IT.kHiveResearchSlotTimerGap),
-			0))
+		entry.timer:SetPosition(origin + kTimerArtPos * scale)
 		entry.timer:SetLayer(kGUILayerPlayerHUDForeground4)
 		entry.timer:SetIsVisible(false)
 		slot.background:AddChild(entry.timer)
@@ -304,8 +319,8 @@ local function CreateResearchSlots(slot)
 
 end
 
--- Points a slot at a research. The icon only changes when the research does. Its drawn shape, not
--- its cell, is scaled to fit the icon box and centered in it, and the box is centered on the bar.
+-- Points a slot at a research. The icon only changes when the research does, sized and placed as
+-- GUINotificationItem:Initialize places it.
 local function SetSlotResearch(entry, techId)
 
 	if entry.techId == techId then
@@ -314,19 +329,16 @@ local function SetSlotResearch(entry, techId)
 
 	entry.techId = techId
 
-	-- kTechIdToMaterialOffset is file-local in TechTreeButtons.lua; GetMaterialXYOffset is the
-	-- public way to its index, as a column and row of the 12-wide atlas.
-	local column, row = GetMaterialXYOffset(techId)
-	local shape = column and kIconShapes[row * 12 + column] or kDefaultIconShape
+	local correction = GetIconCorrection(techId)
+	local cellToIcon = kIconArtSize / 80
+	local sizeOffset = correction and correction[1] * cellToIcon or 0
+	local posOffset = correction and Vector(correction[2], correction[3], 0) * cellToIcon or Vector(0, 0, 0)
 
-	local pixelsPerArt = math.min(entry.iconMax.x / shape[1], entry.iconMax.y / shape[2])
-	local center = entry.origin + Vector(
-		kCrescentArtWidth * entry.scale + entry.iconGap + entry.iconMax.x * 0.5,
-		kSocketArtSize.y * entry.scale * 0.5,
-		0)
+	local size = kIconArtSize + sizeOffset
+	local position = kIconArtPos - Vector(sizeOffset, sizeOffset, 0) * 0.5 + posOffset
 
-	entry.icon:SetSize(Vector(80, 80, 0) * pixelsPerArt)
-	entry.icon:SetPosition(center - Vector(shape[3], shape[4], 0) * pixelsPerArt)
+	entry.icon:SetSize(Vector(size, size, 0) * entry.scale)
+	entry.icon:SetPosition(entry.origin + position * entry.scale)
 	entry.icon:SetTexturePixelCoordinates(GUIUnpackCoords(GetTextureCoordinatesForIcon(techId)))
 
 end
@@ -352,8 +364,8 @@ local function SetSlotProgress(entry, progress, visible)
 	if height > 0 then
 		local s = entry.scale
 		entry.bar:SetTexturePixelCoordinates(kBarCoords[1], kBarCoords[4] - height, kBarCoords[3], kBarCoords[4])
-		entry.bar:SetSize(Vector(kBarArtSize.x * s, height * s, 0))
-		entry.bar:SetPosition(entry.origin + Vector(0, (kBarArtOffsetY + fullHeight - height) * s, 0))
+		entry.bar:SetSize(Vector(kBarArtSize.x, height, 0) * s)
+		entry.bar:SetPosition(entry.origin + (kBarArtPos + Vector(0, fullHeight - height, 0)) * s)
 	end
 
 end
@@ -390,6 +402,7 @@ local function SetSlotTimer(entry, techId, progress)
 end
 
 local function HideSlot(entry)
+	entry.frame:SetIsVisible(false)
 	entry.socket:SetIsVisible(false)
 	entry.bar:SetIsVisible(false)
 	entry.icon:SetIsVisible(false)
@@ -417,6 +430,7 @@ local function UpdateResearchSlots(slot, state, visible)
 
 		if visible and research then
 			SetSlotResearch(entry, research.techId)
+			entry.frame:SetIsVisible(true)
 			entry.socket:SetIsVisible(true)
 			entry.icon:SetIsVisible(true)
 			SetSlotProgress(entry, research.progress, true)
@@ -488,6 +502,7 @@ function GUIHiveStatus:UninitializeStatusSlot(slotIdx)
 		if slot.itResearchSlots then
 			for i = 1, #slot.itResearchSlots do
 				local entry = slot.itResearchSlots[i]
+				GUI.DestroyItem(entry.frame)
 				GUI.DestroyItem(entry.socket)
 				GUI.DestroyItem(entry.bar)
 				GUI.DestroyItem(entry.icon)
