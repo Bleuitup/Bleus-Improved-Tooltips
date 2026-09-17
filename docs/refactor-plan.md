@@ -1,8 +1,7 @@
 # Refactor plan
 
 Written 2026-09-17 after reading all 32 Lua files (6,526 lines, about a third of them comments) on
-`feature/hive-research-slots` at `ce1ae75`. **Status: proposed, waiting on the user's decisions at
-the end.** Nothing below has been changed yet.
+`feature/hive-research-slots` at `ce1ae75`. **Status: approved 2026-09-17, in progress on `refactor/cleanup`.** Decisions recorded at the end.
 
 ## Ground rules
 
@@ -106,7 +105,12 @@ the end.** Nothing below has been changed yet.
 
 The code should shrink by a few hundred lines, most of it the menu and the duplicates.
 
-## Decisions for the user
+## Decisions (2026-09-17)
+
+Answered: 1 now, rebase the shield branch later; 2 keep, in a file of their own; 4 fix the status and
+move the history into `docs/`. Decision 3 was unclear to the user and is explained again; the
+settings stay unless they say otherwise.
+
 
 1. **Timing and the shield branch.** Recommended: refactor now on top of the hive research work, and
    when the alien shield bar resumes, I rebase `feature/centralized-bars-shields` onto the result. It
