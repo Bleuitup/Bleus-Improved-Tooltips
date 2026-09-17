@@ -144,10 +144,14 @@ IT.kHiveResearchDisplay = IT.kHiveResearchDisplayBoth
 -- The two research slots, for BOTH and HIVE PANEL ONLY. Pre-GUIScale, relative to the row like the
 -- ring above. Each slot is the notification's vertical bar with the research icon beside it; the
 -- first slot sits where the ring sits, and a lone research always takes it.
-IT.kHiveResearchSlotPositions = { Vector(136, 9, 0), Vector(181, 9, 0) }
+IT.kHiveResearchSlotPositions = { Vector(136, 9, 0), Vector(198, 9, 0) }
 -- Height of the bar's socket. Width and the bar's glow follow from the art's own proportions.
 IT.kHiveResearchSlotBarHeight = 30
-IT.kHiveResearchSlotIconSize = 30
+-- The box each research icon's drawn shape is fitted into, beside the bar and centered on it. The
+-- shape, not its 80px atlas cell, is fitted, so a wide Leap and a round Biomass read the same size.
+IT.kHiveResearchSlotIconMaxWidth = 40
+IT.kHiveResearchSlotIconMaxHeight = 30
+IT.kHiveResearchSlotIconGap = 3
 -- The color of every biomass icon the mod draws or reaches: the hive HUD row, the biomass icon on
 -- the commander tooltip, and the spectator top bar counter.
 --

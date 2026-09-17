@@ -31,7 +31,7 @@
 -- GUIEvent, so filtering the notification removes all three for those researches. It would also
 -- remove the "trait available" sound, which GUIEvent plays itself when a notification it shows
 -- completes. So each hidden research is remembered in IT.hiddenResearchNotifications, and
--- ImprovedTooltips_ResearchSound.lua plays that sound for it the way GUIEvent would have.
+-- ImprovedTooltips_ResearchStack.lua plays that sound for it the way GUIEvent would have.
 
 if not Client then
 	return
@@ -50,7 +50,7 @@ local kHiveResearchNames =
 
 -- Research notifications hidden from the stack, keyed "techId:entityId" so a catch-up sync adding
 -- the same research again does not queue its sound twice. Read and emptied by
--- ImprovedTooltips_ResearchSound.lua.
+-- ImprovedTooltips_ResearchStack.lua.
 IT.hiddenResearchNotifications = IT.hiddenResearchNotifications or { }
 
 function IT.RememberHiddenResearch(techId, entityId)
@@ -113,6 +113,9 @@ local function GetIsPanelOnlyActiveFor(player)
 	return true
 
 end
+
+-- ImprovedTooltips_ResearchStack.lua watches this to rebuild the stack when it changes mid-round.
+IT.GetIsHivePanelOnlyActiveFor = GetIsPanelOnlyActiveFor
 
 local originalAddNotification = GUINotificationMixin.AddNotification
 

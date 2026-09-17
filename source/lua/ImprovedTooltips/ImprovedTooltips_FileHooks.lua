@@ -34,7 +34,7 @@ if Client then
 	ModLoader.SetupFileHook("lua/Hud/GUINotificationMixin.lua", "lua/ImprovedTooltips/ImprovedTooltips_ResearchNotifications.lua", "post")
 	-- The stack itself, which plays the "trait available" sound, so research kept out of it still
 	-- plays that sound when it completes.
-	ModLoader.SetupFileHook("lua/Hud/GUIEvent.lua", "lua/ImprovedTooltips/ImprovedTooltips_ResearchSound.lua", "post")
+	ModLoader.SetupFileHook("lua/Hud/GUIEvent.lua", "lua/ImprovedTooltips/ImprovedTooltips_ResearchStack.lua", "post")
 	-- The spectator top bar, for its biomass counter's color.
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
 	-- The same bar again, for a supply counter per team. A separate file so the biomass tint and the

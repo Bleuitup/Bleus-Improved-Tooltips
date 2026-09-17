@@ -39,10 +39,22 @@ BOTH is the default so nothing vanilla is lost; players choose RING ONLY or HIVE
 - **HIVE PANEL ONLY hides the whole notification**: start, the green complete flash and the red
   cancel state share one item in GUIEvent. **The "trait available" sound is kept.** GUIEvent plays
   it itself (`TriggerEffects("upgrade_complete")`, GUIEvent.lua:348) when a notification it shows
-  completes, so hiding the notification silenced it. `ImprovedTooltips_ResearchSound.lua` remembers
+  completes, so hiding the notification silenced it. `ImprovedTooltips_ResearchStack.lua` remembers
   each hidden research and plays the sound with GUIEvent's own rules: checked from
   `GUIEvent:Update`, progress exactly 1 is complete, neither complete nor in progress is a silent
   cancel. Vanilla only sounds for the 3 notifications on screen; hidden researches always sound.
+- **Changing mode mid-round rebuilds the stack.** The filter only sees notifications as they are
+  queued, so in the first test (2026-09-17) switching to HIVE PANEL ONLY left existing hive research
+  on the left, and switching away never brought hidden research back. `ResearchStack.lua` now
+  watches the filter's answer and, when it changes, clears the stack and re-queues every research
+  in progress, as `GUIEvent:Initialize` does.
+- **Icons are fitted by their drawn shape, not their cell.** The first test showed small, uneven,
+  slightly off-center icons: buildmenu.dds cells vary widely (Biomass One's shape is 44px, Leap's
+  56x30, Biomass Three's 62x66), and vanilla's per-tech size fixes are private to
+  GUINotificationItem.lua. `HiveStatusGUI.lua` carries measured shape bounds per atlas index and
+  fits each shape into a 40x30 box centered on the bar; slots moved to x 136 and 198. Unlisted
+  indices (modded abilities) use a typical 56px centered shape. The table was measured on vanilla's
+  atlas; CBM ships its own buildmenu.dds, so check CBM icons in game.
 
 ## Why the data comes from the server
 
@@ -65,7 +77,7 @@ only reported while `GetIsResearching` is true, the same rule the ring always us
 | `ImprovedTooltips_HiveSync.lua` | Reads both entities' research and progress; throttled progress sends |
 | `ImprovedTooltips_HiveStatusGUI.lua` | Research slots, and the mode switch between ring and slots |
 | `ImprovedTooltips_ResearchNotifications.lua` | New. Post-hook on `lua/Hud/GUINotificationMixin.lua` for HIVE PANEL ONLY |
-| `ImprovedTooltips_ResearchSound.lua` | New. Post-hook on `lua/Hud/GUIEvent.lua`: the completion sound for hidden research |
+| `ImprovedTooltips_ResearchStack.lua` | New. Post-hook on `lua/Hud/GUIEvent.lua`: rebuilds the stack on a mode change, and plays the completion sound for hidden research |
 | `ImprovedTooltips_FileHooks.lua` | Registers both |
 | `ImprovedTooltips_Config.lua` | `kHiveResearchDisplay` and slot geometry |
 | `ImprovedTooltips_ModsMenu.lua` | HIVE RESEARCH DISPLAY combobox, key `BIT_HiveResearchDisplay` |
@@ -89,7 +101,10 @@ Hive status panel on (Advanced Options > UI). Test in vanilla, then CBM.
   and not at all when it is cancelled.
 - **HIVE PANEL ONLY with CBM:** an Advanced Crag upgrade still appears on the left.
 - **HIVE PANEL ONLY with the hive status panel off:** notifications on the left as normal.
-- **Switching modes** in the Mods panel applies immediately.
+- **Switching modes mid-research**, in every direction between the three: the left stack gains or
+  loses the hive research at once, and nothing appears twice.
+- **Icon sizes:** Leap, Bile Bomb, Metabolize, Biomass One to Three and a hive type upgrade all read
+  about the same size and sit centered beside their bar. On CBM, check the same plus Babbler Bomb.
 - **Joining mid-round:** rows fill in at once.
 - **Devnull's Enhanced HUD:** BOTH and RING ONLY unaffected; check HIVE PANEL ONLY still filters.
 - **Bars at real size:** the bar reads as progress and the icon is legible at 1080p.

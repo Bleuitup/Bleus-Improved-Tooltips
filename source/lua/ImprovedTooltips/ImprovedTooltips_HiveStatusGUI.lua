@@ -64,8 +64,8 @@ local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "Res
 --   bar     kAlienBarCoordinates {240, 1, 273, 56}, which includes a 5px glow top and bottom
 --
 -- In the notification the bar sits 5px above the socket (ProgressBarPos y 6 vs
--- ProgressBarBackgroundPos y 11) and the icon starts 22px right of it (IconPos x 18 vs -4). Those
--- art-pixel offsets are kept here and scaled with the socket.
+-- ProgressBarBackgroundPos y 11). That art-pixel offset is kept here and scaled with the socket.
+-- The visible crescent ends about 14 art pixels in, which is where the icon's box starts.
 local kNotificationsTexture = "ui/research_notifications.dds"
 local kSocketCoords = { 240, 6, 268, 52 }
 local kSocketArtSize = Vector(28, 46, 0)
@@ -74,7 +74,37 @@ local kBarCoords = { 240, 1, 273, 56 }
 local kBarArtSize = Vector(33, 55, 0)
 local kBarGlow = 5
 local kBarArtOffsetY = -5
-local kIconArtOffsetX = 22
+local kCrescentArtWidth = 14
+
+-- Where each research icon's drawn shape sits inside its 80x80 buildmenu.dds cell, as
+-- { width, height, centerX, centerY }, keyed by atlas index (row * 12 + column). Measured
+-- from the texture's alpha (> 60 of 255) on 2026-09-17. The cells are far from uniform - Biomass
+-- One's shape is 44px, Leap's is 56x30 and Biomass Three's 62x66, some off center - which is why
+-- drawing whole cells at one size made small, uneven, off-center icons. The notification copes
+-- with a private per-tech table in GUINotificationItem.lua that a hook cannot reach. An index not
+-- listed here, such as a modded ability, is drawn as a typical 56px shape centered in its cell.
+local kIconShapes =
+{
+	[67]  = { 56, 30, 41.5, 42.5 },   -- Leap
+	[95]  = { 55, 47, 37, 38 },       -- Xenocide
+	[68]  = { 50, 40, 40.5, 40.5 },   -- Bile Bomb
+	[102] = { 66, 49, 38.5, 40 },     -- Webs
+	[75]  = { 46, 49, 35.5, 35 },     -- Umbra
+	[69]  = { 54, 45, 38.5, 39 },     -- Spores
+	[169] = { 66, 45, 39.5, 37 },     -- Metabolize
+	[170] = { 66, 45, 39.5, 38 },     -- Advanced Metabolize
+	[105] = { 57, 62, 42, 39.5 },     -- Stab
+	[111] = { 68, 48, 37.5, 36.5 },   -- Charge
+	[156] = { 62, 57, 42.5, 41 },     -- Bone Shield
+	[72]  = { 54, 56, 39.5, 38.5 },   -- Stomp
+	[157] = { 61, 57, 46, 40 },       -- Crag Hive
+	[158] = { 56, 57, 43.5, 40 },     -- Shade Hive
+	[159] = { 60, 57, 45.5, 40 },     -- Shift Hive
+	[150] = { 44, 46, 39.5, 39.5 },   -- Biomass One
+	[112] = { 55, 58, 37, 37.5 },     -- Biomass Two and Four
+	[175] = { 62, 66, 39.5, 40.5 },   -- Biomass Three
+}
+local kDefaultIconShape = { 56, 56, 40, 40 }
 
 -- Each entry is { coords = ..., techId = ... }. The techId is kept so a compatibility module can
 -- claim a color for it - CBM marks its biomass 5 research out in purple.
@@ -206,14 +236,15 @@ local function CreateResearchSlots(slot)
 
 	local barHeight = GUIScale(IT.kHiveResearchSlotBarHeight)
 	local scale = barHeight / kSocketArtSize.y
-	local iconSize = GUIScale(IT.kHiveResearchSlotIconSize)
+	local iconMax = GUIScale(Vector(IT.kHiveResearchSlotIconMaxWidth, IT.kHiveResearchSlotIconMaxHeight, 0))
+	local iconGap = GUIScale(IT.kHiveResearchSlotIconGap)
 
 	slot.itResearchSlots = { }
 
 	for i = 1, #IT.kHiveResearchSlotPositions do
 
 		local origin = GUIScale(IT.kHiveResearchSlotPositions[i])
-		local entry = { origin = origin, scale = scale, iconSize = iconSize, techId = nil }
+		local entry = { origin = origin, scale = scale, iconMax = iconMax, iconGap = iconGap, techId = nil }
 
 		entry.socket = GUIManager:CreateGraphicItem()
 		entry.socket:SetAnchor(GUIItem.Left, GUIItem.Top)
@@ -247,8 +278,8 @@ local function CreateResearchSlots(slot)
 
 end
 
--- Points a slot at a research. The icon only changes when the research does, using the same size
--- and position corrections the notification applies so every icon fills its box evenly.
+-- Points a slot at a research. The icon only changes when the research does. Its drawn shape, not
+-- its cell, is scaled to fit the icon box and centered in it, and the box is centered on the bar.
 local function SetSlotResearch(entry, techId)
 
 	if entry.techId == techId then
@@ -257,14 +288,19 @@ local function SetSlotResearch(entry, techId)
 
 	entry.techId = techId
 
-	local iconScale = entry.iconSize / 80
-	local sizeOffset = GetCustomSizeOffsetForTechId and GetCustomSizeOffsetForTechId(techId) * iconScale or Vector(0, 0, 0)
-	local posOffset = GetCustomPosOffsetForTechId and GetCustomPosOffsetForTechId(techId) * iconScale or Vector(0, 0, 0)
+	-- kTechIdToMaterialOffset is file-local in TechTreeButtons.lua; GetMaterialXYOffset is the
+	-- public way to its index, as a column and row of the 12-wide atlas.
+	local column, row = GetMaterialXYOffset(techId)
+	local shape = column and kIconShapes[row * 12 + column] or kDefaultIconShape
 
-	local base = entry.origin + Vector(kIconArtOffsetX * entry.scale, (kSocketArtSize.y * entry.scale - entry.iconSize) * 0.5, 0)
+	local pixelsPerArt = math.min(entry.iconMax.x / shape[1], entry.iconMax.y / shape[2])
+	local center = entry.origin + Vector(
+		kCrescentArtWidth * entry.scale + entry.iconGap + entry.iconMax.x * 0.5,
+		kSocketArtSize.y * entry.scale * 0.5,
+		0)
 
-	entry.icon:SetSize(Vector(entry.iconSize, entry.iconSize, 0) + sizeOffset)
-	entry.icon:SetPosition(base - sizeOffset * 0.5 + posOffset)
+	entry.icon:SetSize(Vector(80, 80, 0) * pixelsPerArt)
+	entry.icon:SetPosition(center - Vector(shape[3], shape[4], 0) * pixelsPerArt)
 	entry.icon:SetTexturePixelCoordinates(GUIUnpackCoords(GetTextureCoordinatesForIcon(techId)))
 
 end
