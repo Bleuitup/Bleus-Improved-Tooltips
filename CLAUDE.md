@@ -879,3 +879,12 @@ elsewhere fails there first and nvcompress then fails for want of the folder. Cr
 
 Slides: the Workshop slide review set at `...\Improved Tooltips Images\Workshop Slides 1.05 Review`
 shows the old glyphs and needs refreshing for 1.06.
+
+## Entities are userdata, not tables (found 2026-09-17)
+
+`rawget(player, ...)` raises `table expected, got userdata`. The first sound fix for hive research
+did exactly that inside `GUIEvent:Update` and threw on every notification update (3445 errors in one
+session), which also stopped the alien notification stack from updating. To override a method on
+one entity temporarily, swap it on its class table (`_G[entity:GetClassName()]`, with
+`rawget`/`rawset` on that table) and restore it with the call wrapped in `pcall`.
+`ImprovedTooltips_ResearchStack.lua` is the example.
