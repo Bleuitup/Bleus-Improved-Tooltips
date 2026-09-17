@@ -144,13 +144,13 @@ IT.kHiveResearchDisplay = IT.kHiveResearchDisplayBoth
 -- The two research slots, for BOTH and HIVE PANEL ONLY. Pre-GUIScale, relative to the row like the
 -- ring above. Each slot is the notification's vertical bar with the research icon beside it; the
 -- first slot sits where the ring sits, and a lone research always takes it.
-IT.kHiveResearchSlotPositions = { Vector(136, 9, 0), Vector(198, 9, 0) }
+IT.kHiveResearchSlotPositions = { Vector(136, 14, 0), Vector(208, 14, 0) }
 -- Height of the bar's socket. Width and the bar's glow follow from the art's own proportions.
 IT.kHiveResearchSlotBarHeight = 30
 -- The box each research icon's drawn shape is fitted into, beside the bar and centered on it. The
 -- shape, not its 80px atlas cell, is fitted, so a wide Leap and a round Biomass read the same size.
-IT.kHiveResearchSlotIconMaxWidth = 40
-IT.kHiveResearchSlotIconMaxHeight = 30
+IT.kHiveResearchSlotIconMaxWidth = 50
+IT.kHiveResearchSlotIconMaxHeight = 40
 IT.kHiveResearchSlotIconGap = 3
 -- Time left under each slot's icon, as the notification shows it. Set false to drop the timers.
 IT.kShowHiveResearchSlotTimers = true

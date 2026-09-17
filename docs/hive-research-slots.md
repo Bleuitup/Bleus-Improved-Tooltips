@@ -59,7 +59,7 @@ BOTH is the default so nothing vanilla is lost; players choose RING ONLY or HIVE
   slightly off-center icons: buildmenu.dds cells vary widely (Biomass One's shape is 44px, Leap's
   56x30, Biomass Three's 62x66), and vanilla's per-tech size fixes are private to
   GUINotificationItem.lua. `HiveStatusGUI.lua` carries measured shape bounds per atlas index and
-  fits each shape into a 40x30 box centered on the bar; slots moved to x 136 and 198. Unlisted
+  fits each shape into a box centered on the bar; slots moved to x 136 and 198. After the second test (icons still small, room under the timers) the box became 50x40, the slots x 136 and 208 at y 14, and the timer sits under the icon box rather than the bar. Unlisted
   indices (modded abilities) use a typical 56px centered shape. The table was measured on vanilla's
   atlas; CBM ships its own buildmenu.dds, so check CBM icons in game.
 

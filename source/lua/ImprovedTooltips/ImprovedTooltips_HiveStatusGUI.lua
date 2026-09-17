@@ -279,7 +279,7 @@ local function CreateResearchSlots(slot)
 		entry.icon:SetIsVisible(false)
 		slot.background:AddChild(entry.icon)
 
-		-- Time left, centered under the icon, in the notification's own font and color.
+		-- Time left, centered under the icon box (which is centered on the bar), in the notification's own font and color.
 		entry.timer = GUIManager:CreateTextItem()
 		entry.timer:SetAnchor(GUIItem.Left, GUIItem.Top)
 		entry.timer:SetFontName(Fonts.kAgencyFB_Small)
@@ -292,7 +292,7 @@ local function CreateResearchSlots(slot)
 		entry.timer:SetColor(kTimerColor)
 		entry.timer:SetPosition(origin + Vector(
 			kCrescentArtWidth * scale + iconGap + iconMax.x * 0.5,
-			kSocketArtSize.y * scale + GUIScale(IT.kHiveResearchSlotTimerGap),
+			kSocketArtSize.y * scale * 0.5 + iconMax.y * 0.5 + GUIScale(IT.kHiveResearchSlotTimerGap),
 			0))
 		entry.timer:SetLayer(kGUILayerPlayerHUDForeground4)
 		entry.timer:SetIsVisible(false)
