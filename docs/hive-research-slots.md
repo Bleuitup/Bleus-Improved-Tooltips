@@ -22,7 +22,8 @@ BOTH is the default so nothing vanilla is lost; players choose RING ONLY or HIVE
 - **Two slots per hive**, because a hive researches in two places at once: the Hive itself (biomass
   or a hive type upgrade) and the EvolutionChamber it owns (lifeform abilities off the DNA menu).
   Each has its own `ResearchMixin`.
-- **Left slot: evolution chamber. Right slot: hive.** A lone research always takes the left slot.
+- **Left slot: hive (biomass, hive type). Right slot: evolution chamber (abilities).** Swapped from
+  the original order at the user's request on 2026-09-17. A lone research always takes the left slot.
 - **The slot shows the research's own icon** (Leap, Metabolize, Biomass, Crag Hive), not the DNA
   glyph. The DNA glyph remains only in RING ONLY.
 - **Progress uses the research notification's own vertical bar art** (`ui/research_notifications.dds`,
@@ -96,8 +97,8 @@ Hive status panel on (Advanced Options > UI). Test in vanilla, then CBM.
 - **BOTH, evolution only:** research Leap. Leap icon and a filling bar in the hive's left slot; the
   notification on the left as usual.
 - **BOTH, hive only:** research Biomass. Biomass icon in the left slot.
-- **BOTH, both at once:** research Biomass and Metabolize in the same hive. Metabolize left,
-  Biomass right. Neither overlaps the biomass icons above or the name plate.
+- **BOTH, both at once:** research Biomass and Metabolize in the same hive. Biomass left,
+  Metabolize right. Neither overlaps the biomass icons above or the name plate.
 - **Hive type upgrade:** upgrade to a Crag Hive; its icon uses the right slot beside a lifeform
   research, or the left slot alone.
 - **Two hives:** biomass in one hive and an ability in another, each in its own row.

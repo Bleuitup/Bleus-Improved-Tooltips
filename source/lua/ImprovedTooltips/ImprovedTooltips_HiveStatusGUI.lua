@@ -252,8 +252,8 @@ local function CreateResearchIcon(slot)
 
 end
 
--- Two slots per row, for the BOTH and HIVE PANEL ONLY modes: the evolution chamber's research and
--- the hive's own. Which is drawn in which slot is decided every update, so a lone research always
+-- Two slots per row, for the BOTH and HIVE PANEL ONLY modes: the hive's own research and the
+-- evolution chamber's. Which is drawn in which slot is decided every update, so a lone research always
 -- takes the first.
 local function CreateResearchSlots(slot)
 
@@ -416,11 +416,12 @@ local function UpdateResearchSlots(slot, state, visible)
 	local none = kTechId.None
 	local researches = { }
 
-	if state.evoResearchId ~= none then
-		researches[#researches + 1] = { techId = state.evoResearchId, progress = state.evoProgress }
-	end
+	-- The hive's own research (biomass, hive type) first, then the evolution chamber's.
 	if state.hiveResearchId ~= none then
 		researches[#researches + 1] = { techId = state.hiveResearchId, progress = state.hiveProgress }
+	end
+	if state.evoResearchId ~= none then
+		researches[#researches + 1] = { techId = state.evoResearchId, progress = state.evoProgress }
 	end
 
 	for i = 1, #slot.itResearchSlots do
