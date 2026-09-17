@@ -33,66 +33,24 @@ local IT = ImprovedTooltips
 --
 -- The chamber is reached through the hive's public accessor, and Shared.GetEntity returns nil for
 -- the -1 the id is initialized to, so an unbuilt hive simply has none.
-local function GetIsEntityResearching(entity)
-
-	if not entity then
-		return false
-	end
-
-	-- GetIsResearching accounts for a structure that holds a researchingId but is not actually
-	-- progressing, since ResearchMixin only advances while GetIsUnitActive is true.
-	if entity.GetIsResearching then
-		local ok, researching = pcall(entity.GetIsResearching, entity)
-		if ok then
-			return researching == true
-		end
-	end
-
-	if entity.GetResearchingId then
-		local ok, researchingId = pcall(entity.GetResearchingId, entity)
-		if ok then
-			return researchingId ~= nil and researchingId ~= kTechId.None
-		end
-	end
-
-	return false
-
-end
-
+--
 -- What one of the two entities is researching: its tech id and progress, or None and 0. Only while
--- it is actually researching, so a hive holding a research it cannot progress shows as idle - the
--- same rule the busy ring has always used.
+-- GetIsResearching says so, which is ResearchMixin's own test: it treats a finished research that
+-- the tech tree has not yet processed as no longer researching. All three accessors are plain field
+-- reads on ResearchMixin (ResearchMixin.lua:124-130, :191).
 local function GetResearch(entity)
 
-	if not GetIsEntityResearching(entity) or not entity.GetResearchingId then
+	if not entity or not entity.GetIsResearching or not entity:GetIsResearching() then
 		return kTechId.None, 0
 	end
 
-	local okId, researchId = pcall(entity.GetResearchingId, entity)
-	if not okId or not researchId or researchId == kTechId.None then
+	local researchId = entity:GetResearchingId()
+	if not researchId or researchId == kTechId.None then
 		return kTechId.None, 0
 	end
 
-	local progress = 0
-	if entity.GetResearchProgress then
-		local okProgress, value = pcall(entity.GetResearchProgress, entity)
-		if okProgress and type(value) == "number" then
-			progress = value
-		end
-	end
+	return researchId, entity:GetResearchProgress() or 0
 
-	return researchId, progress
-
-end
-
-local function GetEvolutionChamber(hive)
-	if hive.GetEvolutionChamber then
-		local ok, evoChamber = pcall(hive.GetEvolutionChamber, hive)
-		if ok then
-			return evoChamber
-		end
-	end
-	return nil
 end
 
 -- Whether a new reading is worth sending, given what was last published for the location.
@@ -102,7 +60,7 @@ local function GetShouldPublish(published, state, now)
 		return true
 	end
 
-	if published.biomass ~= state.biomass or published.researching ~= state.researching
+	if published.biomass ~= state.biomass
 		or published.hiveResearchId ~= state.hiveResearchId or published.evoResearchId ~= state.evoResearchId then
 		return true
 	end
@@ -121,7 +79,7 @@ function AlienTeamInfo:UpdateAllLocationsSlotData()
 
 	originalUpdateAllLocationsSlotData(self)
 
-	if not IT.kShowHiveBiomassIcons and not IT.kShowHiveResearchIcon then
+	if not IT.kShowHiveBiomassIcons and not IT.kShowHiveResearch then
 		return
 	end
 
@@ -135,9 +93,8 @@ function AlienTeamInfo:UpdateAllLocationsSlotData()
 		if hive:GetIsAlive() and locationId and locationId > 0 then
 
 			local hiveResearchId, hiveProgress = GetResearch(hive)
-			local evoResearchId, evoProgress = GetResearch(GetEvolutionChamber(hive))
+			local evoResearchId, evoProgress = GetResearch(hive.GetEvolutionChamber and hive:GetEvolutionChamber())
 			local state = IT.MakeHiveState(hive.bioMassLevel or 0,
-				hiveResearchId ~= kTechId.None or evoResearchId ~= kTechId.None,
 				hiveResearchId, hiveProgress, evoResearchId, evoProgress)
 
 			-- Two hives sharing a location is not a thing vanilla builds for - AlienTeamInfo keeps

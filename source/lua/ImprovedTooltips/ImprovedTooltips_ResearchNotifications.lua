@@ -84,7 +84,7 @@ end
 
 local function GetIsHivePanelActiveFor(player)
 
-	if IT.kHiveResearchDisplay ~= IT.kHiveResearchDisplayPanel or not IT.kShowHiveResearchIcon then
+	if IT.kHiveResearchDisplay ~= IT.kHiveResearchDisplayPanel or not IT.kShowHiveResearch then
 		return false
 	end
 

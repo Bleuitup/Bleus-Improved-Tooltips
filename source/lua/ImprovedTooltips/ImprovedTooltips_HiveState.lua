@@ -48,7 +48,7 @@ function IT.ToHiveProgressSteps(progress)
 end
 
 -- [locationId] = state, where state is
---   { biomass = 0..6, researching = boolean,
+--   { biomass = 0..6,
 --     hiveResearchId = kTechId, hiveProgress = 0..1, evoResearchId = kTechId, evoProgress = 0..1 }
 -- Parked on the shared table so a Script.Load with reload does not drop live state.
 IT.hiveState = IT.hiveState or { }
@@ -57,31 +57,27 @@ function IT.ClearHiveState()
 	IT.hiveState = { }
 end
 
-local function GetNone()
-	return kTechId and kTechId.None or 1
-end
-
 -- Builds a normalized state table. Every argument is optional; a missing one reads as nothing
 -- researching and no biomass, so MakeHiveState() is the empty state.
-function IT.MakeHiveState(biomass, researching, hiveResearchId, hiveProgress, evoResearchId, evoProgress)
-
-	local none = GetNone()
+function IT.MakeHiveState(biomass, hiveResearchId, hiveProgress, evoResearchId, evoProgress)
 
 	return {
 		biomass = biomass or 0,
-		researching = researching == true,
-		hiveResearchId = hiveResearchId or none,
+		hiveResearchId = hiveResearchId or kTechId.None,
 		hiveProgress = Clamp(hiveProgress or 0, 0, 1),
-		evoResearchId = evoResearchId or none,
+		evoResearchId = evoResearchId or kTechId.None,
 		evoProgress = Clamp(evoProgress or 0, 0, 1),
 	}
 
 end
 
+-- Researching anything at all, in the hive or its evolution chamber: what the busy ring shows.
+function IT.GetHiveIsResearching(state)
+	return state.hiveResearchId ~= kTechId.None or state.evoResearchId ~= kTechId.None
+end
+
 function IT.GetHiveStateIsEmpty(state)
-	local none = GetNone()
-	return state.biomass <= 0 and not state.researching
-		and state.hiveResearchId == none and state.evoResearchId == none
+	return state.biomass <= 0 and not IT.GetHiveIsResearching(state)
 end
 
 function IT.SetHiveState(locationId, state)

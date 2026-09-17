@@ -82,11 +82,9 @@ local kHiveStateMessage =
 	locationId = "integer",
 	-- Matches Hive.lua's own network var range.
 	biomass = "integer (0 to 6)",
-	-- Any research at all: biomass, a lifeform ability, or a hive type upgrade. Drives the busy ring
-	-- in the panel's "ring only" mode.
-	researching = "boolean",
-	-- The two research slots of a hive, for the panel's other modes. The Hive researches biomass or
-	-- a hive type upgrade; its EvolutionChamber researches lifeform abilities. kTechId.None when idle.
+	-- What a hive is researching, in its two places. The Hive researches biomass or a hive type
+	-- upgrade; its EvolutionChamber researches lifeform abilities. kTechId.None when idle. Whether the
+	-- hive is busy at all, for the ring, follows from these (IT.GetHiveIsResearching).
 	hiveResearchId = "enum kTechId",
 	hiveProgress = string.format("integer (0 to %d)", IT.kHiveResearchProgressSteps),
 	evoResearchId = "enum kTechId",
@@ -101,7 +99,6 @@ function BuildImprovedTooltipsHiveStateMessage(locationId, state, clear)
 	return {
 		locationId = locationId or 0,
 		biomass = math.max(0, math.min(6, state.biomass or 0)),
-		researching = state.researching == true,
 		hiveResearchId = state.hiveResearchId or kTechId.None,
 		hiveProgress = IT.ToHiveProgressSteps(state.hiveProgress),
 		evoResearchId = state.evoResearchId or kTechId.None,
@@ -122,7 +119,7 @@ if Client then
 		end
 
 		local steps = IT.kHiveResearchProgressSteps
-		IT.SetHiveState(msg.locationId, IT.MakeHiveState(msg.biomass, msg.researching,
+		IT.SetHiveState(msg.locationId, IT.MakeHiveState(msg.biomass,
 			msg.hiveResearchId, msg.hiveProgress / steps, msg.evoResearchId, msg.evoProgress / steps))
 
 	end
