@@ -164,10 +164,17 @@ fresh hive shows none, the same way it shows no hive type icon until it is upgra
 or Shift; each research then adds its own button's art. That the hive is worth 1 on its own is
 already legible from the biomass bar, the map's upgrade summary and the tech tree.
 
-**Researching** — vanilla's rotating "working" ring with the DNA glyph inside it, on any hive that is
-researching anything: biomass, a lifeform ability off the DNA menu, or a hive type upgrade. It is the
-same pair a player already sees in the world when they look at a busy hive, at the same rotation
-speed, so the two read as one indicator rather than two.
+**Researching** — in one of two forms, chosen with HIVE RESEARCH DISPLAY in the settings panel:
+
+- **NOTIFICATIONS** (default): vanilla's rotating "working" ring with the DNA glyph inside it, on any
+  hive that is researching anything: biomass, a lifeform ability off the DNA menu, or a hive type
+  upgrade. It is the same pair a player already sees in the world when they look at a busy hive, at
+  the same rotation speed, so the two read as one indicator rather than two. Research notifications
+  stay on the left as in vanilla.
+- **HIVE PANEL**: up to two research slots per row, the hive's own research and then its evolution
+  chamber's, each drawn as a small research notification with its progress bar and time left. That
+  research no longer appears on the left; research done anywhere else, like CBM's Advanced structure
+  upgrades, still does. See `docs/hive-research-slots.md`.
 
 Every image is vanilla's own, addressed through `GetTextureCoordinatesForIcon` rather than by pixel,
 so a mod that moves an icon in the atlas moves ours with it. Nothing new was drawn.
@@ -353,62 +360,105 @@ end
 
 ## How it hooks in
 
-Two post-hooks cover every commander tooltip in the game, because vanilla funnels all four
-consumers — `GUICommanderButtons`, `GUITechMap`, `GUIBioMassDisplay`, `GUICommanderHelpWidget` —
-through one pair of functions:
+Every hook is a post-hook, so the mod stacks with anything that ships its own copy of a file — CBM,
+for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is deliberately low (5);
+ModLoader sorts entries by *descending* priority and appends post-hooks in that order, so a low
+number means these hooks run last and wrap whatever else loaded. `ImprovedTooltips_FileHooks.lua`
+lists them grouped by feature.
+
+Two of them cover every commander tooltip in the game, because vanilla funnels all four consumers —
+`GUICommanderButtons`, `GUITechMap`, `GUIBioMassDisplay`, `GUICommanderHelpWidget` — through one pair
+of functions.
 
 | Hook target | Our file | What it does |
 |---|---|---|
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
-| `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the row, place it under the title, and shift the description blocks down to make room |
-| `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client only.** Wraps `CreateStatusContainer` / `UpdateStatusSlot` / `UninitializeStatusSlot` to add biomass icons and a researching ring to each hive row |
-| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightTopBar.lua` | **Client only.** Wraps `Initialize` to color the spectator bar's biomass counter, catching the item as it is created since nothing in that file is reachable afterwards |
-| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, so the whole team sees it |
-| `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health/armor icons to match their figures |
-| `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client only.** Wraps `OnInitialized` to replay synced cooldowns into vanilla's own table, fixing vanilla's button dial |
-| `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's cooldown and hive-state messages in every VM |
-| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server only.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
-| `lua/NS2Gamerules.lua` | `ImprovedTooltips_CooldownJoin.lua` | **Server only.** Wraps `JoinTeam` to hand a joining player the current cooldowns |
-| `lua/AlienTeam.lua` | `ImprovedTooltips_BiomassProgress.lua` | **Server only.** Wraps `UpdateBioMassLevel` to spread in-progress biomass across every level being worked on |
-| `lua/AlienTeamInfo.lua` | `ImprovedTooltips_HiveSync.lua` | **Server only.** Wraps `UpdateAllLocationsSlotData` to publish per-hive biomass and research to the team |
-| `lua/NS2Gamerules.lua` | `ImprovedTooltips_HiveJoin.lua` | **Server only.** Wraps `JoinTeam` to hand a joining player the current hive state |
-
-Post-hooks rather than file replacements, so the mod stacks with anything that ships its own copy
-of either file — CBM, for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is
-deliberately low (5); ModLoader sorts entries by *descending* priority and appends post-hooks in
-that order, so a low number means these hooks run last and wrap whatever else loaded.
+| `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the stat row, place it under the title, and shift the description down |
+| `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health and armor icons to match their figures |
+| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, and the exo weapon bars for `Exo` |
+| `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client.** Replays synced cooldowns into vanilla's own table when the local player takes the chair, fixing vanilla's button dial |
+| `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client.** Adds biomass icons and the research ring or research slots to each hive row |
+| `lua/Hud/GUINotificationMixin.lua` | `ImprovedTooltips_ResearchNotifications.lua` | **Client.** In HIVE PANEL, keeps research done in hives out of the notifications on the left |
+| `lua/Hud/GUIEvent.lua` | `ImprovedTooltips_ResearchStack.lua` | **Client.** Rebuilds the notification stack on a mode change, plays the completion sound for every alien research, and queues again research the stack dropped |
+| `lua/GUIBioMassDisplay.lua` | `ImprovedTooltips_BiomassOverlay.lua` | **Client.** Partial fills on the biomass beads being researched, and progress meters under the ability icons |
+| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightTopBar.lua` | **Client.** Colors the spectator bar's biomass counter, catching the item as it is created since nothing in that file is reachable afterwards |
+| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightSupply.lua` | **Client.** Adds a supply counter per team to the spectator bar |
+| `lua/Hud/Marine/GUIMarineHUD.lua` | `ImprovedTooltips_ArmsLabAlert.lua` | **Client.** Keeps researched weapon and armor icons in alert red when the arms lab is lost |
+| `lua/GUIAdvancedHUDBars.lua` | `ImprovedTooltips_AdvancedHUDBars.lua` | **Client.** Hides the Centralized HUD bars' weapon bar while the exo weapon bars show |
+| `lua/MapBlip.lua` | `ImprovedTooltips_MapBlipColor.lua` | **Client.** Colors marine blips by weapon |
+| `lua/GUIMinimapConnection.lua` | `ImprovedTooltips_MinimapConnection.lua` | **Client.** Phase gate arrows on the commander's and spectator's corner minimap |
+| `lua/GUIScoreboard.lua` | `ImprovedTooltips_TournamentReady.lua` | **Client.** Ready labels on the team headers under Shine's tournament mode |
+| `lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua` | `ImprovedTooltips_ModsMenu.lua` | **Client and main menu.** The settings panel under Options > Mods |
+| `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's cooldown and hive state messages in every VM |
+| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
+| `lua/NS2Gamerules.lua` | `ImprovedTooltips_TeamJoin.lua` | **Server.** Wraps `JoinTeam` to hand a joining player the team's cooldowns and hive state |
+| `lua/AlienTeam.lua` | `ImprovedTooltips_BiomassProgress.lua` | **Server.** Wraps `UpdateBioMassLevel` to spread in-progress biomass across every level being worked on |
+| `lua/AlienTeamInfo.lua` | `ImprovedTooltips_HiveSync.lua` | **Server.** Wraps `UpdateAllLocationsSlotData` to publish per-hive biomass and research to the team |
 
 ## Layout
 
 `source/` is the tree Launch Pad builds from; `output/` is generated and git-ignored.
 
 ```
-source/lua/entry/ImprovedTooltips.entry     mod entry, points at the FileHooks file
+source/lua/entry/ImprovedTooltips.entry          mod entry, points at the FileHooks file
 source/lua/ImprovedTooltips/
-    ImprovedTooltips_FileHooks.lua          registers the post-hooks
-    ImprovedTooltips_Config.lua             display options (time format, tints, panel, tech map)
-    ImprovedTooltips_Values.lua             value resolution + the resolver and icon registries
-    ImprovedTooltips_CBM.lua                CBM compatibility (inert without CBM)
-    ImprovedTooltips_TooltipData.lua        post-hook on Player_Client.lua       (client)
-    ImprovedTooltips_TooltipGUI.lua         post-hook on GUICommanderTooltip.lua (client)
-    ImprovedTooltips_ClientUI.lua           post-hook on ClientUI.lua            (client)
-    ImprovedTooltips_SelectionPanel.lua     post-hook on GUISelectionPanel.lua   (client)
-    ImprovedTooltips_CooldownDial.lua       post-hook on Commander.lua           (client)
-    ImprovedTooltips_HiveStatusGUI.lua      post-hook on GUIHiveStatus.lua       (client)
-    ImprovedTooltips_InsightTopBar.lua      post-hook on GUIInsight_TopBar.lua   (client)
-    ImprovedTooltips_NetworkMessages.lua    post-hook on NetworkMessages.lua     (shared)
-    ImprovedTooltips_CooldownState.lua      team cooldown table + server publish
-    ImprovedTooltips_CooldownSync.lua       post-hook on Commander.lua           (server)
-    ImprovedTooltips_CooldownJoin.lua       post-hook on NS2Gamerules.lua        (server)
-    ImprovedTooltips_BiomassProgress.lua    post-hook on AlienTeam.lua           (server)
-    ImprovedTooltips_HiveState.lua          per-hive biomass + research + server publish
-    ImprovedTooltips_HiveSync.lua           post-hook on AlienTeamInfo.lua       (server)
-    ImprovedTooltips_HiveJoin.lua           post-hook on NS2Gamerules.lua        (server)
-    GUIImprovedTooltipsCooldowns.lua        the "In Cooldown" panel
-source/ui/bleu_tooltip_icons.dds            320x64 icon sheet, 5 cells of 64x64
-tools/build_icons.ps1                       regenerates the icon sheet
-preview.jpg                                 Workshop preview, 512x512
-mod.settings                                Launch Pad project settings
+    ImprovedTooltips_FileHooks.lua               registers every hook, grouped by feature
+    ImprovedTooltips_Config.lua                  display options
+    ImprovedTooltips_Common.lua                  shared helpers: textures and icon cells, supply icon,
+                                                 item capture, biomass tech ids, tech lookup, sending
+    ImprovedTooltips_Values.lua                  value resolution + the resolver and icon registries
+    ImprovedTooltips_CBM.lua                     CBM compatibility (inert without CBM)
+    ImprovedTooltips_ModsMenu.lua                the settings panel, built from one table of options
+
+  commander tooltips
+    ImprovedTooltips_TooltipData.lua             hook on Player_Client.lua
+    ImprovedTooltips_TooltipGUI.lua              hook on GUICommanderTooltip.lua
+    ImprovedTooltips_SelectionPanel.lua          hook on GUISelectionPanel.lua
+
+  In Cooldown panel
+    GUIImprovedTooltipsCooldowns.lua             the panel
+    ImprovedTooltips_ClientUI.lua                hook on ClientUI.lua
+    ImprovedTooltips_CooldownState.lua           team cooldown table + server publish
+    ImprovedTooltips_CooldownDial.lua            hook on Commander.lua          (client)
+    ImprovedTooltips_CooldownSync.lua            hook on Commander.lua          (server)
+
+  hive status panel and research
+    ImprovedTooltips_HiveState.lua               per-hive biomass and research + server publish
+    ImprovedTooltips_HiveSync.lua                hook on AlienTeamInfo.lua      (server)
+    ImprovedTooltips_HiveStatusGUI.lua           hook on GUIHiveStatus.lua
+    ImprovedTooltips_HiveResearchSlots.lua       the HIVE PANEL research slots
+    ImprovedTooltips_ResearchNotifications.lua   hook on GUINotificationMixin.lua
+    ImprovedTooltips_ResearchStack.lua           hook on GUIEvent.lua
+
+  biomass
+    ImprovedTooltips_BiomassProgress.lua         hook on AlienTeam.lua          (server)
+    ImprovedTooltips_BiomassOverlay.lua          hook on GUIBioMassDisplay.lua
+
+  spectator top bar
+    ImprovedTooltips_InsightTopBar.lua           hook on GUIInsight_TopBar.lua
+    ImprovedTooltips_InsightSupply.lua           hook on GUIInsight_TopBar.lua
+
+  marine HUD and exos
+    ImprovedTooltips_ArmsLabAlert.lua            hook on GUIMarineHUD.lua
+    GUIImprovedTooltipsExoBars.lua               the exo weapon bars
+    ImprovedTooltips_ExoBarsState.lua            whether the exo bars are showing
+    ImprovedTooltips_AdvancedHUDBars.lua         hook on GUIAdvancedHUDBars.lua
+
+  maps and scoreboard
+    ImprovedTooltips_MapBlipColor.lua            hook on MapBlip.lua
+    ImprovedTooltips_MapBlipDiagnostics.lua      it_blipcolors and it_blipstate console commands
+    ImprovedTooltips_MinimapConnection.lua       hook on GUIMinimapConnection.lua
+    ImprovedTooltips_TournamentReady.lua         hook on GUIScoreboard.lua
+
+  every VM
+    ImprovedTooltips_NetworkMessages.lua         hook on NetworkMessages.lua
+    ImprovedTooltips_TeamJoin.lua                hook on NS2Gamerules.lua       (server)
+
+source/ui/bleu_tooltip_icons.dds                 448x64 icon sheet, 7 cells of 64x64
+tools/build_icons.ps1                            regenerates the icon sheet
+tools/check_mod.lua                              static check of source/, run before committing
+preview.jpg                                      Workshop preview, 512x512
+mod.settings                                     Launch Pad project settings
 ```
 
 The repo root doubles as the NS2 Launch Pad project — `mod.settings`, `preview.jpg` and `output/`
@@ -416,6 +466,22 @@ are all Launch Pad needs, so it can be opened and published directly from here.
 
 `preview.jpg` **must stay 512x512 and must stay a JPEG**; Steam rejects other sizes for this item,
 and `mod.settings` names the file by extension.
+
+## Checking the code
+
+NS2 Lua only really runs in game, so `tools/check_mod.lua` catches what can be caught without it.
+Run it from the repository root with Lua 5.4, `luac` beside `lua`:
+
+```
+lua tools/check_mod.lua
+```
+
+It checks that every file parses; every `Script.Load` and file hook target exists; every
+`ImprovedTooltips` field read is assigned somewhere; no function reads a global its own file declares
+as a local later; no unknown global names appear (known NS2 names are listed in
+`tools/check_mod_globals.txt`, rewritten with `--write-baseline` after checking a new one); every
+file's top level runs against a stub game; and every settings panel default matches the config. A
+pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 
 ## Config
 
@@ -434,7 +500,12 @@ and `mod.settings` names the file by extension.
 - `kSpreadBiomassProgress` — show every biomass level in progress on the tech map, not just the next
   one. Server-side, like the two hive HUD toggles below; false restores vanilla exactly
 - `kShowHiveBiomassIcons` — biomass icons beside each hive name on the hive status HUD
-- `kShowHiveResearchIcon` — the rotating ring and DNA glyph on a hive that is researching
+- `kShowHiveResearch` — research on the hive rows at all, as the ring or as research slots
+- `kHiveResearchDisplay` — which: `0` NOTIFICATIONS (ring, notifications on the left) or `1` HIVE PANEL
+  (research slots, hive research kept off the left). Exposed in the settings panel
+- `kHiveResearchSlotPositions` / `kHiveResearchSlotScale` — where the research slots sit in a row, and
+  their size as a fraction of a research notification
+- `kShowHiveResearchSlotTimers` / `kHiveResearchSlotTimerScale` — the countdown under each slot
 - `kHiveBiomassIconOrigin` / `kHiveBiomassIconSize` / `kHiveBiomassIconSpacing` — placement of that row
 - `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
 - `kBiomassIconColor` — the color of every biomass icon the mod draws or reaches: the hive HUD row,
@@ -544,6 +615,14 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   so there is no generic way to read them. Only the drop-time value is shown.
 
 ## Changelog
+
+**Unreleased (1.08 candidate)**
+- **The spectator supply counter follows a re-themed top bar**, as the commander tooltip already did.
+  It read the top bar's icon settings under the wrong names and always used its built-in copy.
+- **Code cleanup, no visible change.** Duplicated helpers merged into `ImprovedTooltips_Common.lua`,
+  the settings panel built from one table, the two team join hooks merged into one, the hive research
+  slots moved to their own file, and a static check added in `tools/check_mod.lua`. See
+  `docs/refactor-plan.md`.
 
 **Unreleased (1.07 candidate)**
 - **Hive research in the hive panel.** New setting HIVE RESEARCH DISPLAY. NOTIFICATIONS (default)

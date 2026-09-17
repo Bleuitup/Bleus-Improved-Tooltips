@@ -1,7 +1,23 @@
 # Refactor plan
 
 Written 2026-09-17 after reading all 32 Lua files (6,526 lines, about a third of them comments) on
-`feature/hive-research-slots` at `ce1ae75`. **Status: approved 2026-09-17, in progress on `refactor/cleanup`.** Decisions recorded at the end.
+`feature/hive-research-slots` at `ce1ae75`. **Status: all six phases done on `refactor/cleanup`
+(2026-09-17); both in-game test sessions still owed.** Decisions recorded at the end.
+
+## Done
+
+| Phase | Commit | Notes |
+| --- | --- | --- |
+| 0 | `cfc8fa5` | `tools/check_mod.lua` and its globals baseline. Proven against six deliberate mistakes. |
+| 1 | `d524c72` | A1, A2, A4. |
+| 2 | `49d8990` | `ImprovedTooltips_Common.lua`, `ImprovedTooltips_TeamJoin.lua`. |
+| - | `8ad50d5` | Not refactor: the HIVE RESEARCH DISPLAY default was still 1 (now HIVE PANEL) after BOTH was dropped, because a text substitution missed a CRLF file. Fixed on the hive branch and merged in. |
+| 3 | `e4749fb` | Mods panel from one table, verified identical to the old panel in both VMs; the check also compares panel defaults with the config. File hooks grouped. |
+| 4 | `3110fcd` | Hive state without `researching`, slots in `ImprovedTooltips_HiveResearchSlots.lua`, `kShowHiveResearch`. Verified by a simulation of the sync over fake hives (15 cases). |
+| 5 | `295461c` | C4, C5, C7; diagnostics in `ImprovedTooltips_MapBlipDiagnostics.lua`. |
+| 6 | this commit | README hooks, layout, config, check section; `CLAUDE.md` status rewritten and feature history moved to `docs/development-notes.md`. |
+
+Decision 3 was not acted on: the unused duration formats and the panel backing opacity remain.
 
 ## Ground rules
 
