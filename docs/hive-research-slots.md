@@ -150,3 +150,16 @@ exactly as the notification draws it. Mockup: scratchpad `hive/row_mock.png`.
   shown, silencing GUIEvent's own call while GUIEvent updates. This replaced the hidden-research list.
   The marine stack is untouched. Note this changes BOTH mode too: completions that vanilla would not
   have sounded now do.
+
+## Fifth in-game test (2026-09-17)
+
+- **Timer backing shortened.** The dark gradient under the countdown is part of the notification
+  frame and was sized for the full countdown. The frame is now two pieces: the circle down to atlas
+  y 72, and the backing's lower 22 pixels squashed to 14. Width unchanged, since the backing's top
+  sits behind the circle's rim inside the first piece and a narrower lower part would step.
+- **Research pushed out of the stack is queued again.** Correction to the fourth test: with six
+  researches, the last three never appeared on the left at all (their sound did play, from the
+  mod). In GUIEvent a notification pushed below the three shown is faded out, which marks it for
+  destruction, and once destroyed it is left out of the list carried to the next update - nothing
+  queues it again. `ResearchStack.lua` now re-queues, after each update, any research in progress
+  that is neither in GUIEvent's list nor in the player's queue. Alien stack only.

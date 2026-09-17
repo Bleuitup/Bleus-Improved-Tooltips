@@ -3,7 +3,7 @@
 --
 -- Post-hook on lua/Hud/GUIEvent.lua, the research notification stack on the left. Client only.
 --
--- Two jobs.
+-- Three jobs, all for the alien stack except the first.
 --
 -- SWITCHING MODE MID-ROUND. ImprovedTooltips_ResearchNotifications.lua keeps hive research out of
 -- this stack in HIVE PANEL ONLY, but only sees notifications as they are queued, so on its own a mode
@@ -17,10 +17,8 @@
 -- when the research completes, and aliens are shown three. That loses sounds in two ways:
 --
 --   - Research hidden by HIVE PANEL ONLY is never shown, so it never sounds.
---   - With more than three researches running, one that completes while waiting below the three is
---     never marked complete. For a per-hive research (the hive type upgrades) it is worse: GUIEvent
---     clears the per-hive progress of a completed notification it has in its list, visible or not,
---     so when the waiting one moves up it reads as cancelled - no sound, and a red notification.
+--   - With more than three researches running, a notification pushed below the three is faded out,
+--     destroyed and dropped from GUIEvent's list (see below), so it is never there to complete.
 --     Seen in testing with three hive type upgrades and three abilities at once.
 --
 -- So the alien stack's sound is taken over here. Every research in progress is watched directly
@@ -30,6 +28,16 @@
 -- no sound. Several completing in the same frame play it once. GUIEvent's own call is silenced while
 -- it updates, so nothing plays twice. It still only runs while the alien HUD does, as before. The
 -- marine stack is left entirely alone.
+--
+-- RESEARCH PUSHED OUT OF THE STACK. GUIEvent keeps its notifications sorted by time left and shows
+-- three. When a new one sorts above the last shown, it is inserted and the one pushed to fourth is
+-- faded out, which also marks it for destruction; once destroyed it is left out of the list GUIEvent
+-- carries to the next update. Its research is still running, but nothing will ever queue it again, so
+-- it never reappears when a place frees up. Found in testing: of six researches the last three never
+-- showed. So after each update, any research still in progress that is neither in GUIEvent's list nor
+-- waiting in the player's queue is queued again. It sorts below the three shown, so it waits in the
+-- list and is shown when a place frees, as GUIEvent intended. Hive research hidden by HIVE PANEL ONLY
+-- goes back through the same filter and stays hidden.
 
 if not Client then
 	return
@@ -126,6 +134,33 @@ local function UpdateSilenced(self, ...)
 
 end
 
+-- Queues again any research in progress that GUIEvent has lost track of. See the header.
+local function RequeueDroppedResearch(self, techTree)
+
+	local player = Client.GetLocalPlayer()
+	if not player or not HasMixin(player, "GUINotification") then
+		return
+	end
+
+	local known = { }
+	for _, data in ipairs(self.notificationsData or { }) do
+		known[GetResearchKey(data)] = true
+	end
+	for _, queued in ipairs(player.notifications or { }) do
+		known[GetResearchKey(queued)] = true
+	end
+
+	local inProgress = { }
+	techTree:GetResearchInProgressTable(inProgress)
+
+	for _, v in ipairs(inProgress) do
+		if not known[GetResearchKey(v)] then
+			player:AddNotification({ techId = v.techId, entityId = v.entityId, source = kResearchNotificationSource.CatchUpSync })
+		end
+	end
+
+end
+
 -- Mirrors the catch-up half of GUIEvent:Initialize.
 local function RebuildStack(self)
 
@@ -188,6 +223,7 @@ function GUIEvent:Update(deltaTime, newNotification, ...)
 	local completed = UpdateWatchedResearch(self, techTree)
 
 	UpdateSilenced(self, deltaTime, newNotification, ...)
+	RequeueDroppedResearch(self, techTree)
 
 	if completed then
 		local player = Client.GetLocalPlayer()

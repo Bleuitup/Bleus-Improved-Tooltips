@@ -71,8 +71,16 @@ local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "Res
 --   timer   BottomTextPos (20, -15) from the bottom, centered vertically; here also centered under the
 --           circle (x 37) and 1 higher, since the smaller text would otherwise sit left of center
 local kNotificationsTexture = "ui/research_notifications.dds"
-local kFrameCoords = { 6, 6, 72, 94 }
-local kFrameArtSize = Vector(66, 88, 0)
+-- The frame is drawn in two pieces so the dark backing under the countdown can be shortened to
+-- suit the smaller countdown: the circle down to y 72 (frame y 66), where the circle ends, and the
+-- backing's lower 22 pixels squashed to kTimerBoxHeight. Its width is left as it is: its top 8
+-- pixels sit inside the circle piece, behind the rim, so a narrower lower part would step.
+local kFrameCoords = { 6, 6, 72, 72 }
+local kFrameArtSize = Vector(66, 66, 0)
+local kTimerBoxCoords = { 6, 72, 72, 94 }
+local kTimerBoxArtPos = Vector(0, 66, 0)
+local kTimerBoxArtWidth = 66
+local kTimerBoxHeight = 14
 local kSocketCoords = { 240, 6, 268, 52 }
 local kSocketArtSize = Vector(28, 46, 0)
 local kSocketArtPos = Vector(-4, 11, 0)
@@ -297,6 +305,11 @@ local function CreateResearchSlots(slot)
 		entry.frame:SetSize(kFrameArtSize * scale)
 		entry.frame:SetTexturePixelCoordinates(GUIUnpackCoords(kFrameCoords))
 
+		entry.timerBox = NewGraphic(kNotificationsTexture)
+		entry.timerBox:SetPosition(origin + kTimerBoxArtPos * scale)
+		entry.timerBox:SetSize(Vector(kTimerBoxArtWidth, kTimerBoxHeight, 0) * scale)
+		entry.timerBox:SetTexturePixelCoordinates(GUIUnpackCoords(kTimerBoxCoords))
+
 		entry.socket = NewGraphic(kNotificationsTexture)
 		entry.socket:SetPosition(origin + kSocketArtPos * scale)
 		entry.socket:SetSize(kSocketArtSize * scale)
@@ -413,6 +426,7 @@ end
 
 local function HideSlot(entry)
 	entry.frame:SetIsVisible(false)
+	entry.timerBox:SetIsVisible(false)
 	entry.socket:SetIsVisible(false)
 	entry.bar:SetIsVisible(false)
 	entry.icon:SetIsVisible(false)
@@ -442,6 +456,7 @@ local function UpdateResearchSlots(slot, state, visible)
 		if visible and research then
 			SetSlotResearch(entry, research.techId)
 			entry.frame:SetIsVisible(true)
+			entry.timerBox:SetIsVisible(true)
 			entry.socket:SetIsVisible(true)
 			entry.icon:SetIsVisible(true)
 			SetSlotProgress(entry, research.progress, true)
@@ -514,6 +529,7 @@ function GUIHiveStatus:UninitializeStatusSlot(slotIdx)
 			for i = 1, #slot.itResearchSlots do
 				local entry = slot.itResearchSlots[i]
 				GUI.DestroyItem(entry.frame)
+				GUI.DestroyItem(entry.timerBox)
 				GUI.DestroyItem(entry.socket)
 				GUI.DestroyItem(entry.bar)
 				GUI.DestroyItem(entry.icon)
