@@ -3,26 +3,33 @@
 --
 -- Post-hook on lua/Hud/GUIEvent.lua, the research notification stack on the left. Client only.
 --
--- ImprovedTooltips_ResearchNotifications.lua keeps hive research out of this stack in HIVE PANEL
--- ONLY, at the moment a notification is queued. Two things follow from filtering there, and this
--- file handles both.
+-- Two jobs.
 --
--- SWITCHING MODE MID-ROUND. The filter only sees notifications as they arrive, so on its own a mode
--- change left the stack as it was: research already shown stayed after switching to HIVE PANEL
--- ONLY, and research already hidden did not come back after switching away. So whenever the
--- filter's answer changes - the HIVE RESEARCH DISPLAY setting, the hive status panel option, or
--- anything else it checks - the stack is rebuilt the way GUIEvent:Initialize builds it: cleared,
--- then every research in progress queued again, this time through the current filter.
+-- SWITCHING MODE MID-ROUND. ImprovedTooltips_ResearchNotifications.lua keeps hive research out of
+-- this stack in HIVE PANEL ONLY, but only sees notifications as they are queued, so on its own a mode
+-- change left the stack as it was. So whenever the filter's answer changes - the HIVE RESEARCH
+-- DISPLAY setting, the hive status panel option, or anything else it checks - the stack is rebuilt
+-- the way GUIEvent:Initialize builds it: cleared, then every research in progress queued again, this
+-- time through the current filter.
 --
--- THE "TRAIT AVAILABLE" SOUND. GUIEvent plays it itself when a notification it shows turns
--- complete, with Client.GetLocalPlayer():TriggerEffects("upgrade_complete") (GUIEvent.lua:348), so
--- hiding the notification silenced it. The sound is played here for hidden research instead, with
--- GUIEvent's rules:
+-- THE "TRAIT AVAILABLE" SOUND, for the alien stack. GUIEvent plays it itself
+-- (TriggerEffects("upgrade_complete"), GUIEvent.lua:348), but only for a notification it is showing
+-- when the research completes, and aliens are shown three. That loses sounds in two ways:
 --
---   - checked from GUIEvent:Update, so it only happens while the alien HUD is running, as before;
---   - complete means the tech node's progress for that entity is exactly 1;
---   - a research neither complete nor still in progress was cancelled, and makes no sound;
---   - the list starts clean whenever the stack does.
+--   - Research hidden by HIVE PANEL ONLY is never shown, so it never sounds.
+--   - With more than three researches running, one that completes while waiting below the three is
+--     never marked complete. For a per-hive research (the hive type upgrades) it is worse: GUIEvent
+--     clears the per-hive progress of a completed notification it has in its list, visible or not,
+--     so when the waiting one moves up it reads as cancelled - no sound, and a red notification.
+--     Seen in testing with three hive type upgrades and three abilities at once.
+--
+-- So the alien stack's sound is taken over here. Every research in progress is watched directly
+-- (TechTree:GetResearchInProgressTable, which GUIEvent itself uses), and when one stops being in
+-- progress the sound plays if it completed: its progress is exactly 1, GUIEvent's own test, read
+-- before GUIEvent's update can clear it. A research that stopped short of 1 was cancelled and makes
+-- no sound. Several completing in the same frame play it once. GUIEvent's own call is silenced while
+-- it updates, so nothing plays twice. It still only runs while the alien HUD does, as before. The
+-- marine stack is left entirely alone.
 
 if not Client then
 	return
@@ -32,53 +39,85 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 local IT = ImprovedTooltips
 
-IT.hiddenResearchNotifications = IT.hiddenResearchNotifications or { }
+local kCompleteEffect = "upgrade_complete"
+
+-- GUIEvent.Update as it was before this file wrapped it.
+local originalUpdate = GUIEvent.Update
 
 local function GetIsPanelOnlyActive()
 	return IT.GetIsHivePanelOnlyActiveFor ~= nil and IT.GetIsHivePanelOnlyActiveFor(Client.GetLocalPlayer())
 end
 
-local function UpdateHiddenResearch()
+local function GetResearchKey(research)
+	return tostring(research.techId) .. ":" .. tostring(research.entityId)
+end
 
-	local hidden = IT.hiddenResearchNotifications
-	if not next(hidden) then
-		return
+local function GetResearchInProgress(techTree)
+
+	local list = { }
+	techTree:GetResearchInProgressTable(list)
+
+	local set = { }
+	for i = 1, #list do
+		set[GetResearchKey(list[i])] = { techId = list[i].techId, entityId = list[i].entityId }
 	end
+	return set
 
-	local techTree = GetTechTree and GetTechTree()
-	if not techTree then
-		return
-	end
+end
 
-	for key, research in pairs(hidden) do
+-- Returns true when a research watched last frame has completed since.
+local function UpdateWatchedResearch(self, techTree)
 
-		local techNode = techTree:GetTechNode(research.techId)
-		if not techNode then
+	local current = GetResearchInProgress(techTree)
+	local completed = false
 
-			hidden[key] = nil
+	if self.itWatchedResearch then
 
-		else
+		for key, research in pairs(self.itWatchedResearch) do
 
-			-- GUIEvent falls back to the item's lastProgress, which is never moved off 0.
-			local progress = techNode:GetResearchProgress(research.entityId) or 0
+			if not current[key] then
 
-			if progress == 1 then
-
-				hidden[key] = nil
-
-				local player = Client.GetLocalPlayer()
-				if player and player.TriggerEffects then
-					player:TriggerEffects("upgrade_complete")
+				local techNode = techTree:GetTechNode(research.techId)
+				if techNode and techNode:GetResearchProgress(research.entityId) == 1 then
+					completed = true
 				end
-
-			elseif not techTree:GetResearchInProgress(research.techId, research.entityId) then
-
-				hidden[key] = nil
 
 			end
 
 		end
 
+	end
+
+	self.itWatchedResearch = current
+	return completed
+
+end
+
+-- Runs the original update with its completion sound swallowed. The override is set on the player
+-- itself, shadowing the class method, and removed again even if the update throws.
+local function UpdateSilenced(self, ...)
+
+	local player = Client.GetLocalPlayer()
+	if not player or not player.TriggerEffects then
+		return originalUpdate(self, ...)
+	end
+
+	local previous = rawget(player, "TriggerEffects")
+	local classTriggerEffects = player.TriggerEffects
+
+	player.TriggerEffects = function(target, effectName, ...)
+		if effectName == kCompleteEffect then
+			return
+		end
+		return classTriggerEffects(target, effectName, ...)
+	end
+
+	local ok, err = pcall(originalUpdate, self, ...)
+
+	player.TriggerEffects = previous
+
+	if not ok then
+		error(err, 0)
 	end
 
 end
@@ -87,7 +126,6 @@ end
 local function RebuildStack(self)
 
 	self:ClearNotifications()
-	IT.hiddenResearchNotifications = { }
 
 	local player = Client.GetLocalPlayer()
 	if not player or not HasMixin(player, "GUINotification") then
@@ -114,15 +152,14 @@ end
 local originalInitialize = GUIEvent.Initialize
 function GUIEvent:Initialize(...)
 
-	-- Before the original, which re-adds the research still in progress.
-	IT.hiddenResearchNotifications = { }
 	local result = originalInitialize(self, ...)
 	self.itPanelOnlyActive = GetIsPanelOnlyActive()
+	-- Start from what is already running, so joining mid-round plays nothing.
+	self.itWatchedResearch = nil
 	return result
 
 end
 
-local originalUpdate = GUIEvent.Update
 function GUIEvent:Update(deltaTime, newNotification, ...)
 
 	local panelOnly = GetIsPanelOnlyActive()
@@ -138,7 +175,21 @@ function GUIEvent:Update(deltaTime, newNotification, ...)
 
 	self.itPanelOnlyActive = panelOnly
 
-	originalUpdate(self, deltaTime, newNotification, ...)
-	UpdateHiddenResearch()
+	local techTree = GetTechTree and GetTechTree()
+	if self.useMarineStyle or not techTree then
+		return originalUpdate(self, deltaTime, newNotification, ...)
+	end
+
+	-- Before the original update, which may clear a completed hive upgrade's progress.
+	local completed = UpdateWatchedResearch(self, techTree)
+
+	UpdateSilenced(self, deltaTime, newNotification, ...)
+
+	if completed then
+		local player = Client.GetLocalPlayer()
+		if player and player.TriggerEffects then
+			player:TriggerEffects(kCompleteEffect)
+		end
+	end
 
 end

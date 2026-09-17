@@ -68,7 +68,8 @@ local kBiomassResearchNames = { "ResearchBioMassOne", "ResearchBioMassTwo", "Res
 --   socket  ProgressBarBackgroundCoords {240, 6, 268, 52} at (-4, 11), tinted ProgressBarBackgroundColor
 --   bar     kAlienBarCoordinates {240, 1, 273, 56} at (-4, 6), with a 5px glow top and bottom
 --   icon    kAlienIconSize 40 at IconPos (18, 19), corrected per tech as below
---   timer   BottomTextPos (20, -15) from the bottom, left aligned, centered vertically
+--   timer   BottomTextPos (20, -15) from the bottom, centered vertically; here also centered under the
+--           circle (x 37) and 1 higher, since the smaller text would otherwise sit left of center
 local kNotificationsTexture = "ui/research_notifications.dds"
 local kFrameCoords = { 6, 6, 72, 94 }
 local kFrameArtSize = Vector(66, 88, 0)
@@ -82,7 +83,7 @@ local kBarArtPos = Vector(-4, 6, 0)
 local kBarGlow = 5
 local kIconArtSize = 40
 local kIconArtPos = Vector(18, 19, 0)
-local kTimerArtPos = Vector(20, 88 - 15, 0)
+local kTimerArtPos = Vector(37, 88 - 16, 0)
 
 -- GUINotificationItem's per-tech icon corrections, which make each icon fill its circle evenly:
 -- { size offset, position offset x, position offset y }, in 80px icon cell pixels, applied at half
@@ -107,16 +108,25 @@ local kVanillaIconCorrections =
 	UpgradeToShadeHive = { 23, -8, -1 },
 	UpgradeToShiftHive = { 20, -4, -1 },
 }
+-- The mod's own additions. Biomass One's art, three small spheres, fills less of its cell than any
+-- other icon here, and at the slot's 0.85 scale it read smaller than the notification's. +16 makes its
+-- icon 48 instead of 40, so on screen it is drawn at the notification's own size.
+local kSlotIconCorrections =
+{
+	ResearchBioMassOne = { 16, 0, 0 },
+}
 local kIconCorrections = nil
 
 local function GetIconCorrection(techId)
 
 	if not kIconCorrections then
 		local corrections = { }
-		for name, correction in pairs(kVanillaIconCorrections) do
-			local id = IT.GetTechIdByName(name)
-			if id then
-				corrections[id] = correction
+		for _, source in ipairs({ kVanillaIconCorrections, kSlotIconCorrections }) do
+			for name, correction in pairs(source) do
+				local id = IT.GetTechIdByName(name)
+				if id then
+					corrections[id] = correction
+				end
 			end
 		end
 		kIconCorrections = corrections
@@ -305,7 +315,7 @@ local function CreateResearchSlots(slot)
 		if GUIMakeFontScale then
 			GUIMakeFontScale(entry.timer)
 		end
-		entry.timer:SetTextAlignmentX(GUIItem.Align_Min)
+		entry.timer:SetTextAlignmentX(GUIItem.Align_Center)
 		entry.timer:SetTextAlignmentY(GUIItem.Align_Center)
 		entry.timer:SetColor(kTimerColor)
 		entry.timer:SetPosition(origin + kTimerArtPos * scale)

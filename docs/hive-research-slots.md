@@ -133,3 +133,20 @@ Icon sizing now copies GUINotificationItem's own per-tech corrections (its size 
 tables are file-local, so the alien entries are copied, keyed by tech name), replacing the measured
 shape table. A tech it does not list - every biomass research, and modded abilities - is drawn plain,
 exactly as the notification draws it. Mockup: scratchpad `hive/row_mock.png`.
+
+## Fourth in-game test (2026-09-17)
+
+- **Order swapped:** hive research (biomass, hive type) in the left slot, abilities in the right.
+- **Biomass One enlarged** (+16 cell pixels, icon 48 instead of 40): its three-sphere art reads
+  smaller than the notification's at the slot's 0.85 scale. The only mod-specific icon correction.
+- **Timer 20% smaller** (`kHiveResearchSlotTimerScale` 0.8 to 0.64), centered under the circle and
+  one art pixel higher: it touched the next row's biomass icons.
+- **The "trait available" sound is now the mod's for the whole alien stack.** Tested with three hive
+  type upgrades and three abilities at once: the first three completions sounded, the next three did
+  not. GUIEvent only sounds for a notification it is showing (three for aliens), and it clears the
+  per-hive progress of any completed notification in its list, visible or not, so a hive type upgrade
+  that completes while waiting below the three later reads as cancelled. `ResearchStack.lua` now
+  watches research in progress directly and plays the sound once per completion whether or not it is
+  shown, silencing GUIEvent's own call while GUIEvent updates. This replaced the hidden-research list.
+  The marine stack is untouched. Note this changes BOTH mode too: completions that vanilla would not
+  have sounded now do.

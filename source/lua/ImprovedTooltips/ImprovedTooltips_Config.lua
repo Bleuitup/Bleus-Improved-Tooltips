@@ -150,7 +150,7 @@ IT.kHiveResearchSlotPositions = { Vector(139, 5, 0), Vector(203, 5, 0) }
 IT.kHiveResearchSlotScale = 0.85
 -- Time left under each slot's icon, as the notification shows it. Set false to drop the timers.
 IT.kShowHiveResearchSlotTimers = true
-IT.kHiveResearchSlotTimerScale = 0.8
+IT.kHiveResearchSlotTimerScale = 0.64
 -- The color of every biomass icon the mod draws or reaches: the hive HUD row, the biomass icon on
 -- the commander tooltip, and the spectator top bar counter.
 --
