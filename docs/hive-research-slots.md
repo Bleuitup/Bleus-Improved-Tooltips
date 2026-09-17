@@ -163,3 +163,11 @@ exactly as the notification draws it. Mockup: scratchpad `hive/row_mock.png`.
   destruction, and once destroyed it is left out of the list carried to the next update - nothing
   queues it again. `ResearchStack.lua` now re-queues, after each update, any research in progress
   that is neither in GUIEvent's list nor in the player's queue. Alien stack only.
+
+## Parked: the same vanilla bugs in the marine stack
+
+Both GUIEvent bugs fixed above for aliens - a notification pushed below the shown ones is dropped and
+never returns, and the completion sound only plays for shown notifications - also affect marines,
+who are shown five (three with the NS1 HUD bars). Left alone on 2026-09-17 at the user's call. To
+revisit: remove the `useMarineStyle` gate in `ImprovedTooltips_ResearchStack.lua` (TriggerEffects
+already picks the marine sound), or report it upstream as an issue on the ns2-game repository.
