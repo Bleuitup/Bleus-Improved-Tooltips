@@ -93,28 +93,32 @@ local function UpdateWatchedResearch(self, techTree)
 
 end
 
--- Runs the original update with its completion sound swallowed. The override is set on the player
--- itself, shadowing the class method, and removed again even if the update throws.
+-- Runs the original update with its completion sound swallowed. Entities are userdata, so the
+-- method cannot be shadowed on the player itself (rawget on one raises, found in testing); it is
+-- swapped on the player's class table instead, where every call on an instance looks it up, for
+-- exactly the duration of the update, and put back even if the update throws. If the class table
+-- cannot be found the update runs unsilenced - at worst a sound plays twice, never an error.
 local function UpdateSilenced(self, ...)
 
 	local player = Client.GetLocalPlayer()
-	if not player or not player.TriggerEffects then
+	local classTable = player and player.GetClassName and _G[player:GetClassName()]
+	if type(classTable) ~= "table" or not player.TriggerEffects then
 		return originalUpdate(self, ...)
 	end
 
-	local previous = rawget(player, "TriggerEffects")
-	local classTriggerEffects = player.TriggerEffects
+	local previous = rawget(classTable, "TriggerEffects")
+	local triggerEffects = player.TriggerEffects
 
-	player.TriggerEffects = function(target, effectName, ...)
+	rawset(classTable, "TriggerEffects", function(target, effectName, ...)
 		if effectName == kCompleteEffect then
 			return
 		end
-		return classTriggerEffects(target, effectName, ...)
-	end
+		return triggerEffects(target, effectName, ...)
+	end)
 
 	local ok, err = pcall(originalUpdate, self, ...)
 
-	player.TriggerEffects = previous
+	rawset(classTable, "TriggerEffects", previous)
 
 	if not ok then
 		error(err, 0)
