@@ -55,8 +55,8 @@ local function GetNone()
 	return kTechId and kTechId.None or 1
 end
 
--- Builds a normalized state table. Everything optional, so old callers passing only biomass and
--- researching still get a complete table.
+-- Builds a normalized state table. Every argument is optional; a missing one reads as nothing
+-- researching and no biomass, so MakeHiveState() is the empty state.
 function IT.MakeHiveState(biomass, researching, hiveResearchId, hiveProgress, evoResearchId, evoProgress)
 
 	local none = GetNone()

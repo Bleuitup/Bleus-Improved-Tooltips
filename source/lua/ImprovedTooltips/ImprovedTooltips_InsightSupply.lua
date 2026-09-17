@@ -57,11 +57,13 @@ local kFallbackSupplyCoords =
 
 local function GetSupplyIcon(teamType)
 
+	-- The texture is shared, at theme.icon; each team entry carries only its pxCoords
+	-- (GUIHudSupply.lua:22-35).
 	local theme = GUIHudSupply and GUIHudSupply.kThemeData
 	local entry = theme and theme[teamType]
 
-	if entry and entry.texture and entry.coords then
-		return entry.texture, entry.coords
+	if theme and theme.icon and entry and entry.pxCoords then
+		return theme.icon, entry.pxCoords
 	end
 
 	return kFallbackSupplyTexture, kFallbackSupplyCoords[teamType]

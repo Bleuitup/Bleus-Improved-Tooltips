@@ -26,8 +26,9 @@ local IT = ImprovedTooltips
 --
 --   speed (alien)  - the Celerity icon in ui/buildmenu.dds, index 64 -> cell (4,5), used straight
 --                    from vanilla. Points right already; CBM uses the same index for SpurPassive.
---   everything else - ui/bleu_tooltip_icons.dds, the mod's own 320x64 sheet, all white and tinted
---                    at runtime. Health and armor there are vanilla's own glyphs, resampled.
+--   everything else - ui/bleu_tooltip_icons.dds, the mod's own 448x64 sheet of seven cells, all
+--                    white and tinted at runtime. Health and armor there are vanilla's own glyphs,
+--                    resampled.
 --                    See tools/build_icons.ps1; keep the cell order in step with it.
 local kOwnIconTexture = "ui/bleu_tooltip_icons.dds"
 

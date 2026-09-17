@@ -236,6 +236,8 @@ IT.kShowLostArmsLabUpgrades = true
 -- Vanilla's own alert red, from GUIMarineHUD:Update. Kept as a setting only so it can be toned
 -- down; the default is deliberately the shade the game already chose for this state.
 IT.kArmsLabLostColor = Color(1, 0, 0, 1)
+
+------------------------------------------------------------------------------------------------
 -- The twelve-bead biomass overlay
 ------------------------------------------------------------------------------------------------
 --

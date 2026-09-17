@@ -424,11 +424,14 @@ end
 --
 -- Vanilla already treats that button as describing the Drifter it produces: its TechData carries
 -- kDrifterHealth and kDrifterArmor, not the egg's. Speed follows the same reading.
-if kTechId.DrifterEgg then
-	IT.RegisterResolver("speed", kTechId.DrifterEgg, function()
-		return IT.GetClassMoveSpeed(kTechId.Drifter)
-	end)
-end
+--
+-- Every tech named in this section is looked up through IT.GetTechIdByName. Indexing kTechId with
+-- a name a mod has removed raises rather than answering nil, which would stop this file loading
+-- part way and take everything after it along. RegisterResolver declines a nil techId.
+IT.RegisterResolver("speed", IT.GetTechIdByName("DrifterEgg"), function()
+	local drifter = IT.GetTechIdByName("Drifter")
+	return drifter and IT.GetClassMoveSpeed(drifter) or 0
+end)
 
 -- An ARC is a different unit depending on its stance, and vanilla stores both sets:
 -- kARCArmor = 400 undeployed against kARCDeployedArmor = 0 (BalanceHealth.lua:100-101), and it
@@ -441,29 +444,31 @@ end
 -- The constants are read inside the resolvers, not captured here: this file is loaded from a
 -- post-hook and there is no guarantee ARC.lua or BalanceHealth.lua have run yet at registration
 -- time. Resolvers only run while a tooltip is on screen, by which point everything is loaded.
-local function RegisterArcStance(techId, getArmor, getSpeed)
+local function RegisterArcStance(techName, getArmor, getSpeed)
+
+	local techId = IT.GetTechIdByName(techName)
+	if not techId then
+		return
+	end
 
 	IT.RegisterResolver("armor", techId, getArmor)
 	IT.RegisterResolver("speed", techId, getSpeed)
 	IT.RegisterResolver("health", techId, function()
-		return LookupTechData(kTechId.ARC, kTechDataMaxHealth, 0)
+		local arc = IT.GetTechIdByName("ARC")
+		return arc and LookupTechData(arc, kTechDataMaxHealth, 0) or 0
 	end)
 
 end
 
-if kTechId.ARCDeploy then
-	RegisterArcStance(kTechId.ARCDeploy,
-		function() return kARCDeployedArmor or 0 end,
-		function() return 0 end)
-end
+RegisterArcStance("ARCDeploy",
+	function() return kARCDeployedArmor or 0 end,
+	function() return 0 end)
 
-if kTechId.ARCUndeploy then
-	RegisterArcStance(kTechId.ARCUndeploy,
-		function() return kARCArmor or 0 end,
-		function() return ARC and ARC.kMoveSpeed or 0 end)
-end
+RegisterArcStance("ARCUndeploy",
+	function() return kARCArmor or 0 end,
+	function() return ARC and ARC.kMoveSpeed or 0 end)
 
-IT.RegisterResolver("health", kTechId.BoneWall, function(techId)
+IT.RegisterResolver("health", IT.GetTechIdByName("BoneWall"), function(techId)
 
 	local base = LookupTechData(techId, kTechDataMaxHealth, 0)
 	local perBioMass = kBoneWallHealthPerBioMass or 0
