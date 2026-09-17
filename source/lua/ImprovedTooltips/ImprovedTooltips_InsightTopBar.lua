@@ -11,10 +11,8 @@
 -- built inside a local CreateIconTextItem which returns only the text item, so even the value the
 -- file keeps is the wrong half of the pair.
 --
--- So the items are caught as they are made: GUIManager.CreateGraphicItem is wrapped for exactly the
--- duration of Initialize, the items created during it are collected, and the wrapper is put back.
--- Lua is single threaded and Initialize is synchronous, so nothing else can be creating items in
--- that window, and the original method is restored on the error path too.
+-- So the items are caught as they are made, with IT.CaptureCreatedGraphicItems (see
+-- ImprovedTooltips_Common.lua for how that stays safe).
 --
 -- Identifying the right item is exact rather than positional: "ui/buildmenu.dds" is used precisely
 -- once in that file, for the biomass icon. Everything else on the bar comes from the marine or
@@ -24,8 +22,6 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 local IT = ImprovedTooltips
 
-local kBuildMenuTexture = "ui/buildmenu.dds"
-
 local originalInitialize = GUIInsight_TopBar.Initialize
 
 function GUIInsight_TopBar:Initialize()
@@ -34,39 +30,12 @@ function GUIInsight_TopBar:Initialize()
 		return originalInitialize(self)
 	end
 
-	local manager = GUIManager
-	local originalCreateGraphicItem = manager and manager.CreateGraphicItem
-
-	if type(originalCreateGraphicItem) ~= "function" then
-		return originalInitialize(self)
-	end
-
-	local created = { }
-
-	manager.CreateGraphicItem = function(...)
-		local item = originalCreateGraphicItem(...)
-		created[#created + 1] = item
-		return item
-	end
-
-	local ok, err = pcall(originalInitialize, self)
-
-	-- Restored before anything else, including before re-raising.
-	manager.CreateGraphicItem = originalCreateGraphicItem
-
-	if not ok then
-		error(err)
-	end
+	local created = IT.CaptureCreatedGraphicItems(originalInitialize, self)
 
 	for i = 1, #created do
-
-		local item = created[i]
-		local ready = item and type(item.GetTexture) == "function" and type(item.SetColor) == "function"
-
-		if ready and item:GetTexture() == kBuildMenuTexture then
-			item:SetColor(IT.kBiomassIconColor)
+		if IT.GetItemTexture(created[i]) == IT.kBuildMenuTexture then
+			created[i]:SetColor(IT.kBiomassIconColor)
 		end
-
 	end
 
 end

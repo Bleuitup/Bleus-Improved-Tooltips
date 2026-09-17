@@ -116,7 +116,7 @@ local globalWrites = { }   -- [name] = true
 
 for _, path in ipairs(files) do
 
-	local command = Quote(luac) .. " -l -l " .. Quote(path) .. " 2>&1"
+	local command = Quote(luac) .. " -p -l -l " .. Quote(path) .. " 2>&1"
 	if package.config:sub(1, 1) == "\\" then
 		-- cmd.exe strips the first and last quote of a command line that starts with one, which
 		-- would break the quoted luac path. One more pair around the whole line is the usual cure.

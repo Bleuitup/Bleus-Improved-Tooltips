@@ -26,7 +26,7 @@
 -- did not personally cast - a commander who took the chair mid-cooldown, one who has just left it,
 -- and every field player.
 --
--- The join-time resync lives in ImprovedTooltips_CooldownJoin.lua; the helpers both use are in
+-- The join-time resync lives in ImprovedTooltips_TeamJoin.lua; the helpers both use are in
 -- ImprovedTooltips_CooldownState.lua, which depends on no class and so is safe to load from either
 -- hook regardless of the order the game loads Commander.lua and NS2Gamerules.lua in.
 --

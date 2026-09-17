@@ -68,30 +68,26 @@ end
 -- NetworkMessages.lua loads in all of them.
 ModLoader.SetupFileHook("lua/NetworkMessages.lua", "lua/ImprovedTooltips/ImprovedTooltips_NetworkMessages.lua", "post")
 
--- Five server hooks rather than one, because each wraps a method on a different class and no
+-- Four server hooks rather than one, because each wraps a method on a different class and no
 -- file can assume another's class has loaded yet:
 --
 --   Commander.lua    - Commander:SetTechCooldown, to broadcast a new cooldown to the team.
 --                      Hooked here and not on Commander_Server.lua, which Commander.lua loads at
 --                      its line 69, long before the method is defined further down.
---   NS2Gamerules.lua - NS2Gamerules:JoinTeam, twice: cooldowns and hive state for a joiner.
+--   NS2Gamerules.lua - NS2Gamerules:JoinTeam: cooldowns and hive state for a joiner.
 --   AlienTeam.lua    - AlienTeam:UpdateBioMassLevel, to show every biomass level in progress.
 --   AlienTeamInfo.lua- AlienTeamInfo:UpdateAllLocationsSlotData, to publish per-hive biomass and
 --                      research for the top-left hive panel.
 --
--- Two post-hooks on NS2Gamerules.lua chain cleanly: ModLoader appends them in order and each wraps
--- whatever the previous left, so one file per feature costs nothing. Shared helpers live in
--- ImprovedTooltips_CooldownState.lua and ImprovedTooltips_HiveState.lua, neither of which depends
--- on a class. Each hook file guards on Server itself.
+-- Shared helpers live in ImprovedTooltips_CooldownState.lua and ImprovedTooltips_HiveState.lua,
+-- neither of which depends on a class. Each hook file guards on Server itself.
 if Server then
 	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownSync.lua", "post")
-	ModLoader.SetupFileHook("lua/NS2Gamerules.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownJoin.lua", "post")
+	ModLoader.SetupFileHook("lua/NS2Gamerules.lua", "lua/ImprovedTooltips/ImprovedTooltips_TeamJoin.lua", "post")
 	-- AlienTeam.lua is loaded by Server.lua alone, so the class only exists in this VM. Spreads
 	-- in-progress biomass across every level being worked on instead of only the next one.
 	ModLoader.SetupFileHook("lua/AlienTeam.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassProgress.lua", "post")
-	-- AlienTeamInfo.lua feeds the top-left hive panel. Adds per-hive biomass and a researching
-	-- flag, which vanilla gathers for nobody. NS2Gamerules.lua again, to hand that state to a
-	-- player joining mid-round.
+	-- AlienTeamInfo.lua feeds the top-left hive panel. Adds per-hive biomass and research, which
+	-- vanilla gathers for nobody.
 	ModLoader.SetupFileHook("lua/AlienTeamInfo.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveSync.lua", "post")
-	ModLoader.SetupFileHook("lua/NS2Gamerules.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveJoin.lua", "post")
 end

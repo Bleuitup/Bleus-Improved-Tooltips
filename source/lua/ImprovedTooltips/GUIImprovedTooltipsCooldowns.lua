@@ -165,7 +165,7 @@ function GUIImprovedTooltipsCooldowns:GetEntry(index)
 	local icon = GUIManager:CreateGraphicItem()
 	icon:SetAnchor(GUIItem.Left, GUIItem.Top)
 	icon:SetSize(Vector(kIconSize, kIconSize, 0))
-	icon:SetTexture("ui/buildmenu.dds")
+	icon:SetTexture(IT.kBuildMenuTexture)
 	plate:AddChild(icon)
 
 	local dial = GUIDial()

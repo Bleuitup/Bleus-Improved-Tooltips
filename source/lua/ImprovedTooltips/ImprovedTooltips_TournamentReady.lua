@@ -73,14 +73,15 @@ if not Client then
 end
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Common.lua")
 
 local IT = ImprovedTooltips
 
-local kTexture = "ui/bleu_tooltip_icons.dds"
+local kTexture = IT.kOwnIconTexture
 
--- Cells 5 and 6 of the mod's own 448x64 sheet, seven cells of 64. See tools/build_icons.ps1.
-local kReadyCoords    = { 5 * 64, 0, 6 * 64, 64 }
-local kNotReadyCoords = { 6 * 64, 0, 7 * 64, 64 }
+-- The tick and cross cells of the mod's own sheet.
+local kReadyCoords    = IT.GetOwnIconCoords("ready")
+local kNotReadyCoords = IT.GetOwnIconCoords("notReady")
 
 -- Keyed by team number, so it lines up with Shine's Team field directly.
 local readyStates = { }

@@ -28,26 +28,25 @@ local IT = ImprovedTooltips
 --                    from vanilla. Points right already; CBM uses the same index for SpurPassive.
 --   everything else - ui/bleu_tooltip_icons.dds, the mod's own 448x64 sheet of seven cells, all
 --                    white and tinted at runtime. Health and armor there are vanilla's own glyphs,
---                    resampled.
---                    See tools/build_icons.ps1; keep the cell order in step with it.
-local kOwnIconTexture = "ui/bleu_tooltip_icons.dds"
+--                    resampled. The cells are listed in ImprovedTooltips_Common.lua.
+local kOwnIconTexture = IT.kOwnIconTexture
 
 local kOwnIconCoords = {
-	research     = { 0,   0, 64,  64 },
-	cooldown     = { 64,  0, 128, 64 },
-	speedMarine  = { 128, 0, 192, 64 },
+	research     = IT.GetOwnIconCoords("research"),
+	cooldown     = IT.GetOwnIconCoords("cooldown"),
+	speedMarine  = IT.GetOwnIconCoords("speedMarine"),
 	-- Health and armor sample a centered 48px window of their 64px cell rather than the whole cell.
 	-- The glyphs are baked at vanilla's proportion (39px, ~61% of the cell) so that vanilla's own
 	-- selection panel renders them at its usual size; sampling a smaller window here magnifies them
 	-- to 39/48 = 81%, matching the hourglass and stopwatch. Sampling inward is safe - it cannot
 	-- reach the neighboring cells.
-	health       = { 200, 8, 248, 56 },
-	armor        = { 264, 8, 312, 56 },
+	health       = IT.GetOwnIconCoords("health", 8),
+	armor        = IT.GetOwnIconCoords("armor", 8),
 }
 
 -- Celerity, index 64 in a 12-column sheet of 80px cells.
 local kCelerityCoords = { 4 * 80, 5 * 80, 5 * 80, 6 * 80 }
-local kBuildMenuTexture = "ui/buildmenu.dds"
+local kBuildMenuTexture = IT.kBuildMenuTexture
 
 -- Left-to-right order of the stat row.
 local kRowOrder = { "health", "armor", "speed", "research", "cooldown" }
@@ -208,28 +207,9 @@ end
 -- has both its create and its destroy call commented out, so that script is dead and the tooltip is
 -- the last place the worker icon still stands for supply.
 --
--- Read out of GUIHudSupply.kThemeData rather than copied, so a mod that re-themes the top bar
--- re-themes this with it. The literals are only a fallback for the theme table not being there.
-local kFallbackSupplyTexture = "ui/hud2/team_info_atlas.dds"
-local kFallbackSupplyCoords =
-{
-	[kMarineTeamType] = { 50, 100, 100, 150 },
-	[kAlienTeamType] = { 0, 100, 50, 150 },
-}
-
-local function GetTopBarSupplyIcon(teamType)
-
-	local theme = GUIHudSupply and GUIHudSupply.kThemeData
-	local teamTheme = theme and theme[teamType]
-
-	if theme and theme.icon and teamTheme and teamTheme.pxCoords then
-		return theme.icon, teamTheme.pxCoords
-	end
-
-	return kFallbackSupplyTexture, kFallbackSupplyCoords[teamType]
-
-end
-
+-- The top bar's icon comes from IT.GetTopBarSupplyIcon, which reads GUIHudSupply's own theme table
+-- so a mod that re-themes the top bar re-themes this with it.
+--
 -- Only the texture and the region change. Size, position and the supply text parented to the icon
 -- are all left alone, so nothing about the tooltip's layout moves.
 local function ApplyTopBarSupplyIcon(tooltip, teamType)
@@ -238,7 +218,7 @@ local function ApplyTopBarSupplyIcon(tooltip, teamType)
 		return
 	end
 
-	local texture, coords = GetTopBarSupplyIcon(teamType)
+	local texture, coords = IT.GetTopBarSupplyIcon(teamType)
 
 	if texture and coords then
 		tooltip.supplyIcon:SetTexture(texture)

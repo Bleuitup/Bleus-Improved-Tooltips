@@ -20,6 +20,8 @@
 -- which is the public extension point for other mods.
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
+-- IT.GetTechIdByName lives there, with the reason it is needed.
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Common.lua")
 
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
@@ -275,31 +277,6 @@ local kDefaultLookup = {
 	cooldown     = function(techId) return LookupTechData(techId, kTechDataCooldown, 0) end,
 	speed        = LookupClassMoveSpeed,
 }
-
--- Look a techId up by name without assuming the name exists.
---
--- kTechId is an ENGINE enum, not a plain table, and indexing it with a name it does not hold raises
---
---     Element 'DualMinigun' doesn't exist in the enum
---
--- rather than returning nil. That is easy to walk into: vanilla has UpgradeToDualMinigun but no
--- DualMinigun, so deriving a name and looking it up throws on a perfectly ordinary install.
---
--- The entries themselves live directly in the underlying table - pairs() walks them - so rawget
--- reads them without going through the metamethod that raises, and answers nil for a name that is
--- not there. Use this for ANY name that might not exist: tech from a mod that may not be loaded,
--- or a name derived from another name.
-function IT.GetTechIdByName(name)
-
-	if type(name) ~= "string" or type(kTechId) ~= "table" then
-		return nil
-	end
-
-	local techId = rawget(kTechId, name)
-
-	return type(techId) == "number" and techId or nil
-
-end
 
 function IT.GetValue(field, techId)
 

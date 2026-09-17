@@ -29,10 +29,10 @@ local IT = ImprovedTooltips
 -- The mod's tooltips sample a smaller centered window of the same cells to magnify them instead -
 -- see kOwnIconCoords in ImprovedTooltips_TooltipGUI.lua. Baking at the tooltip's proportion and
 -- drawing the full cell here is what made these oversized in 0.9.
-local kIconTexture = "ui/bleu_tooltip_icons.dds"
+local kIconTexture = IT.kOwnIconTexture
 local kIconCoords = {
-	health = { 192, 0, 256, 64 },
-	armor  = { 256, 0, 320, 64 },
+	health = IT.GetOwnIconCoords("health"),
+	armor  = IT.GetOwnIconCoords("armor"),
 }
 
 local function ApplyIcon(item, coords, color)

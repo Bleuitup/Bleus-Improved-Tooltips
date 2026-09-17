@@ -38,8 +38,14 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
--- Progress travels as a whole percentage. The bar it drives is 30 pixels tall.
+-- Progress travels as a whole percentage.
 IT.kHiveResearchProgressSteps = 100
+
+-- A 0..1 progress as the whole steps the message carries. The server also compares published
+-- progress in steps, so a change too small to send is not treated as a change.
+function IT.ToHiveProgressSteps(progress)
+	return math.floor(Clamp(progress or 0, 0, 1) * IT.kHiveResearchProgressSteps + 0.5)
+end
 
 -- [locationId] = state, where state is
 --   { biomass = 0..6, researching = boolean,
@@ -123,7 +129,7 @@ end
 --
 -- Split out here rather than living in the hook file for the same reason the cooldown helpers are:
 -- two different hooks need them (ImprovedTooltips_HiveSync.lua on AlienTeamInfo.lua and
--- ImprovedTooltips_HiveJoin.lua on NS2Gamerules.lua), and this file depends on no class, so either
+-- ImprovedTooltips_TeamJoin.lua on NS2Gamerules.lua), and this file depends on no class, so either
 -- can load it whatever order the game loads those two files in.
 
 if not Server then
@@ -134,23 +140,13 @@ end
 IT.kHiveResearchProgressSendInterval = 1
 
 function IT.SendHiveStateTo(player, locationId, state, clear)
-
-	-- Bots go through the same join path but have no client to message.
-	if not player or (player.GetIsVirtual and player:GetIsVirtual()) then
-		return
-	end
-
-	Server.SendNetworkMessage(player, "ImprovedTooltipsHiveState",
-		BuildImprovedTooltipsHiveStateMessage(locationId, state or IT.MakeHiveState(), clear), true)
-
+	IT.SendToPlayer(player, "ImprovedTooltipsHiveState",
+		BuildImprovedTooltipsHiveStateMessage(locationId, state or IT.MakeHiveState(), clear))
 end
 
 function IT.BroadcastHiveState(teamNumber, locationId, state)
-
-	for _, player in ipairs(GetEntitiesForTeam("Player", teamNumber)) do
-		IT.SendHiveStateTo(player, locationId, state, false)
-	end
-
+	IT.SendToTeam(teamNumber, "ImprovedTooltipsHiveState",
+		BuildImprovedTooltipsHiveStateMessage(locationId, state, false))
 end
 
 -- What the server last told the team about each location, so the sync only sends real changes.

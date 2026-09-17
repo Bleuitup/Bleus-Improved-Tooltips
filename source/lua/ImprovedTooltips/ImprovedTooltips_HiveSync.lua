@@ -95,10 +95,6 @@ local function GetEvolutionChamber(hive)
 	return nil
 end
 
-local function ToSteps(progress)
-	return math.floor(Clamp(progress or 0, 0, 1) * IT.kHiveResearchProgressSteps + 0.5)
-end
-
 -- Whether a new reading is worth sending, given what was last published for the location.
 local function GetShouldPublish(published, state, now)
 
@@ -111,6 +107,7 @@ local function GetShouldPublish(published, state, now)
 		return true
 	end
 
+	local ToSteps = IT.ToHiveProgressSteps
 	local progressMoved = ToSteps(published.hiveProgress) ~= ToSteps(state.hiveProgress)
 		or ToSteps(published.evoProgress) ~= ToSteps(state.evoProgress)
 

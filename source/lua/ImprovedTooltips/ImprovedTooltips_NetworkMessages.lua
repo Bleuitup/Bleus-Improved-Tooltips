@@ -96,10 +96,6 @@ local kHiveStateMessage =
 	clear = "boolean",
 }
 
-local function ToSteps(progress)
-	return math.floor(Clamp(progress or 0, 0, 1) * IT.kHiveResearchProgressSteps + 0.5)
-end
-
 function BuildImprovedTooltipsHiveStateMessage(locationId, state, clear)
 
 	return {
@@ -107,9 +103,9 @@ function BuildImprovedTooltipsHiveStateMessage(locationId, state, clear)
 		biomass = math.max(0, math.min(6, state.biomass or 0)),
 		researching = state.researching == true,
 		hiveResearchId = state.hiveResearchId or kTechId.None,
-		hiveProgress = ToSteps(state.hiveProgress),
+		hiveProgress = IT.ToHiveProgressSteps(state.hiveProgress),
 		evoResearchId = state.evoResearchId or kTechId.None,
-		evoProgress = ToSteps(state.evoProgress),
+		evoProgress = IT.ToHiveProgressSteps(state.evoProgress),
 		clear = clear == true,
 	}
 

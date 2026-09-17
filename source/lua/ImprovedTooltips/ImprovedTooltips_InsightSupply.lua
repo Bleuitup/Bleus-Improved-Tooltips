@@ -39,43 +39,19 @@ if not Client then
 end
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Common.lua")
 
 local IT = ImprovedTooltips
 
 local kBackgroundTexture = "ui/topbar.dds"
-local kBuildMenuTexture = "ui/buildmenu.dds"
-
--- Same source the commander tooltip uses for its supply icon, kept in step with the copy in
--- ImprovedTooltips_TooltipGUI.lua. Read from GUIHudSupply's own theme table so a mod that
--- re-themes the HUD top bar re-themes this too; the literals are only a fallback.
-local kFallbackSupplyTexture = "ui/hud2/team_info_atlas.dds"
-local kFallbackSupplyCoords =
-{
-	[kMarineTeamType] = { 50, 100, 100, 150 },
-	[kAlienTeamType]  = {  0, 100,  50, 150 },
-}
-
-local function GetSupplyIcon(teamType)
-
-	-- The texture is shared, at theme.icon; each team entry carries only its pxCoords
-	-- (GUIHudSupply.lua:22-35).
-	local theme = GUIHudSupply and GUIHudSupply.kThemeData
-	local entry = theme and theme[teamType]
-
-	if theme and theme.icon and entry and entry.pxCoords then
-		return theme.icon, entry.pxCoords
-	end
-
-	return kFallbackSupplyTexture, kFallbackSupplyCoords[teamType]
-
-end
 
 local supplyItems = { }
 
 local function CreateSupplyItem(background, teamNumber, teamType, offset)
 
 	local iconSize = GUIScale(Vector(32, 32, 0))
-	local texture, coords = GetSupplyIcon(teamType)
+	-- The same icon the commander tooltip uses, from the HUD top bar's own theme.
+	local texture, coords = IT.GetTopBarSupplyIcon(teamType)
 
 	-- Anchoring follows vanilla's own CreateIconTextItem: marines from the left edge, everyone else
 	-- from the right. Mixing the two is what makes the offsets read as mirrored.
@@ -124,29 +100,7 @@ function GUIInsight_TopBar:Initialize()
 		return originalInitialize(self)
 	end
 
-	local manager = GUIManager
-	local originalCreateGraphicItem = manager and manager.CreateGraphicItem
-
-	if type(originalCreateGraphicItem) ~= "function" then
-		return originalInitialize(self)
-	end
-
-	local created = { }
-
-	manager.CreateGraphicItem = function(...)
-		local item = originalCreateGraphicItem(...)
-		created[#created + 1] = item
-		return item
-	end
-
-	local ok, err = pcall(originalInitialize, self)
-
-	-- Restored before anything else, including before re-raising.
-	manager.CreateGraphicItem = originalCreateGraphicItem
-
-	if not ok then
-		error(err)
-	end
+	local created = IT.CaptureCreatedGraphicItems(originalInitialize, self)
 
 	local background
 	local biomassIcon
@@ -154,11 +108,11 @@ function GUIInsight_TopBar:Initialize()
 	for i = 1, #created do
 
 		local item = created[i]
-		local texture = item and type(item.GetTexture) == "function" and item:GetTexture()
+		local texture = IT.GetItemTexture(item)
 
 		if texture == kBackgroundTexture and not background then
 			background = item
-		elseif texture == kBuildMenuTexture and not biomassIcon then
+		elseif texture == IT.kBuildMenuTexture and not biomassIcon then
 			-- The build menu atlas appears exactly once on this bar, for the biomass icon.
 			biomassIcon = item
 		end
