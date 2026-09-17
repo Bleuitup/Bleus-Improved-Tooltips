@@ -117,7 +117,7 @@ end
 ------------------------------------------------------------------------------------------------
 --
 -- These live here rather than in a hook file because two different hooks need them
--- (ImprovedTooltips_CooldownSync.lua on Commander.lua, ImprovedTooltips_CooldownJoin.lua on
+-- (ImprovedTooltips_CooldownSync.lua on Commander.lua, ImprovedTooltips_TeamJoin.lua on
 -- NS2Gamerules.lua) and this file depends on no class, so it is safe to load from either whatever
 -- order the game happens to load Commander.lua and NS2Gamerules.lua in.
 
@@ -126,23 +126,11 @@ if not Server then
 end
 
 function IT.SendCooldownTo(player, techId, startTime, clear)
-
-	-- Bots go through the same cast and join paths but have no client to message.
-	if not player or (player.GetIsVirtual and player:GetIsVirtual()) then
-		return
-	end
-
-	Server.SendNetworkMessage(player, "ImprovedTooltipsCooldown",
-		BuildImprovedTooltipsCooldownMessage(techId, startTime, clear), true)
-
+	IT.SendToPlayer(player, "ImprovedTooltipsCooldown", BuildImprovedTooltipsCooldownMessage(techId, startTime, clear))
 end
 
 function IT.BroadcastCooldown(teamNumber, techId, startTime)
-
-	for _, player in ipairs(GetEntitiesForTeam("Player", teamNumber)) do
-		IT.SendCooldownTo(player, techId, startTime, false)
-	end
-
+	IT.SendToTeam(teamNumber, "ImprovedTooltipsCooldown", BuildImprovedTooltipsCooldownMessage(techId, startTime, false))
 end
 
 -- The full current picture, for a player who just joined a team mid-round. Reconstructed through

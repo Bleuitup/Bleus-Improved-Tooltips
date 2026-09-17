@@ -26,7 +26,7 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_HiveState.lua")
 
 local IT = ImprovedTooltips
 
-local kBuildMenuTexture = "ui/buildmenu.dds"
+local kBuildMenuTexture = IT.kBuildMenuTexture
 
 -- The spinning ring, lifted from where the player already sees it: GUIUnitStatus draws this exact
 -- region of the alien status sheet over a unit that is researching, rotating once every

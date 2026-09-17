@@ -35,6 +35,7 @@ if not Client then
 end
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Common.lua")
 
 local IT = ImprovedTooltips
 
@@ -66,24 +67,6 @@ local kBeadBounds =
 	{  904,  983 },
 	{ 1001, 1080 },
 	{ 1096, 1176 },
-}
-
--- Same list, and the same ordering, as ImprovedTooltips_BiomassProgress.lua writes to. The index IS
--- the team biomass level the node stands for, so this must stay positional - never close a gap.
-local kBioMassTechIds =
-{
-	kTechId.BioMassOne,
-	kTechId.BioMassTwo,
-	kTechId.BioMassThree,
-	kTechId.BioMassFour,
-	kTechId.BioMassFive,
-	kTechId.BioMassSix,
-	kTechId.BioMassSeven,
-	kTechId.BioMassEight,
-	kTechId.BioMassNine,
-	kTechId.BioMassTen,
-	kTechId.BioMassEleven,
-	kTechId.BioMassTwelve,
 }
 
 local function GetResearchFraction(techTree, techId)
@@ -154,7 +137,9 @@ local function UpdateBeadProgress(self)
 		local fraction = 0
 
 		if level > bioMass then
-			fraction = GetResearchFraction(techTree, kBioMassTechIds[level])
+			-- The same positional list ImprovedTooltips_BiomassProgress.lua writes to: the index IS
+			-- the team biomass level the node stands for.
+			fraction = GetResearchFraction(techTree, IT.GetBioMassTechIds()[level])
 		end
 
 		local item = GetBeadItem(self, level)

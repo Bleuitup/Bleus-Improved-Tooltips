@@ -134,11 +134,33 @@ local function UpdateSilenced(self, ...)
 
 end
 
+-- The local player, if it can hold research notifications.
+local function GetNotificationPlayer()
+	local player = Client.GetLocalPlayer()
+	return player and HasMixin(player, "GUINotification") and player or nil
+end
+
+-- Queues a notification for every research in progress except those whose keys are in skip, the
+-- way GUIEvent:Initialize's catch-up does. Each goes through the player's AddNotification, and so
+-- through the HIVE PANEL filter.
+local function QueueResearchInProgress(player, techTree, skip)
+
+	local inProgress = { }
+	techTree:GetResearchInProgressTable(inProgress)
+
+	for _, v in ipairs(inProgress) do
+		if not (skip and skip[GetResearchKey(v)]) then
+			player:AddNotification({ techId = v.techId, entityId = v.entityId, source = kResearchNotificationSource.CatchUpSync })
+		end
+	end
+
+end
+
 -- Queues again any research in progress that GUIEvent has lost track of. See the header.
 local function RequeueDroppedResearch(self, techTree)
 
-	local player = Client.GetLocalPlayer()
-	if not player or not HasMixin(player, "GUINotification") then
+	local player = GetNotificationPlayer()
+	if not player then
 		return
 	end
 
@@ -150,14 +172,7 @@ local function RequeueDroppedResearch(self, techTree)
 		known[GetResearchKey(queued)] = true
 	end
 
-	local inProgress = { }
-	techTree:GetResearchInProgressTable(inProgress)
-
-	for _, v in ipairs(inProgress) do
-		if not known[GetResearchKey(v)] then
-			player:AddNotification({ techId = v.techId, entityId = v.entityId, source = kResearchNotificationSource.CatchUpSync })
-		end
-	end
+	QueueResearchInProgress(player, techTree, known)
 
 end
 
@@ -166,25 +181,16 @@ local function RebuildStack(self)
 
 	self:ClearNotifications()
 
-	local player = Client.GetLocalPlayer()
-	if not player or not HasMixin(player, "GUINotification") then
+	local player = GetNotificationPlayer()
+	local techTree = GetTechTree and GetTechTree()
+	if not player or not techTree then
 		return
 	end
 
 	-- Anything still queued would otherwise be added twice.
 	player.notifications = { }
 
-	local techTree = GetTechTree and GetTechTree()
-	if not techTree then
-		return
-	end
-
-	local inProgress = { }
-	techTree:GetResearchInProgressTable(inProgress)
-
-	for _, v in ipairs(inProgress) do
-		player:AddNotification({ techId = v.techId, entityId = v.entityId, source = kResearchNotificationSource.CatchUpSync })
-	end
+	QueueResearchInProgress(player, techTree)
 
 end
 
