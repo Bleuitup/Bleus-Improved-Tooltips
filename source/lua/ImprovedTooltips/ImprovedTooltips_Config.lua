@@ -106,9 +106,10 @@ IT.kSpreadBiomassProgress = true
 -- its own button's art, in order, so the icons grow denser as the hive climbs.
 IT.kShowHiveBiomassIcons = true
 
--- Vanilla's rotating "working" ring plus the DNA glyph on any hive that is researching anything -
--- biomass, a lifeform ability, or a hive type upgrade.
-IT.kShowHiveResearchIcon = true
+-- Research on the hive rows at all, in whichever form HIVE RESEARCH DISPLAY picks: vanilla's
+-- rotating "working" ring plus the DNA glyph on any hive researching anything (NOTIFICATIONS), or
+-- the research slots (HIVE PANEL). False hides both, and HIVE PANEL then keeps nothing off the left.
+IT.kShowHiveResearch = true
 
 -- Placement, all pre-GUIScale and all relative to the top-left of a hive's row in the panel. The
 -- row is 228x50 with the location name plate running from x -6 to 135, so these sit in the space
