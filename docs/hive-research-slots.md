@@ -36,6 +36,13 @@ BOTH is the default so nothing vanilla is lost; players choose RING ONLY or HIVE
   the commander are unaffected, and the filter checks `isa("Alien")`.
 - **HIVE PANEL ONLY does nothing when the hive status panel is off**, so nothing is hidden without a
   replacement.
+- **HIVE PANEL ONLY hides the whole notification**: start, the green complete flash and the red
+  cancel state share one item in GUIEvent. **The "trait available" sound is kept.** GUIEvent plays
+  it itself (`TriggerEffects("upgrade_complete")`, GUIEvent.lua:348) when a notification it shows
+  completes, so hiding the notification silenced it. `ImprovedTooltips_ResearchSound.lua` remembers
+  each hidden research and plays the sound with GUIEvent's own rules: checked from
+  `GUIEvent:Update`, progress exactly 1 is complete, neither complete nor in progress is a silent
+  cancel. Vanilla only sounds for the 3 notifications on screen; hidden researches always sound.
 
 ## Why the data comes from the server
 
@@ -58,7 +65,8 @@ only reported while `GetIsResearching` is true, the same rule the ring always us
 | `ImprovedTooltips_HiveSync.lua` | Reads both entities' research and progress; throttled progress sends |
 | `ImprovedTooltips_HiveStatusGUI.lua` | Research slots, and the mode switch between ring and slots |
 | `ImprovedTooltips_ResearchNotifications.lua` | New. Post-hook on `lua/Hud/GUINotificationMixin.lua` for HIVE PANEL ONLY |
-| `ImprovedTooltips_FileHooks.lua` | Registers it |
+| `ImprovedTooltips_ResearchSound.lua` | New. Post-hook on `lua/Hud/GUIEvent.lua`: the completion sound for hidden research |
+| `ImprovedTooltips_FileHooks.lua` | Registers both |
 | `ImprovedTooltips_Config.lua` | `kHiveResearchDisplay` and slot geometry |
 | `ImprovedTooltips_ModsMenu.lua` | HIVE RESEARCH DISPLAY combobox, key `BIT_HiveResearchDisplay` |
 
@@ -77,6 +85,8 @@ Hive status panel on (Advanced Options > UI). Test in vanilla, then CBM.
 - **Completion and cancel:** the slot disappears when a research finishes or is cancelled.
 - **RING ONLY:** identical to 1.06 - ring and DNA glyph, no slots.
 - **HIVE PANEL ONLY:** a new hive research adds no notification on the left; the row shows it.
+- **HIVE PANEL ONLY sound:** the "trait available" sound plays once when that research finishes,
+  and not at all when it is cancelled.
 - **HIVE PANEL ONLY with CBM:** an Advanced Crag upgrade still appears on the left.
 - **HIVE PANEL ONLY with the hive status panel off:** notifications on the left as normal.
 - **Switching modes** in the Mods panel applies immediately.

@@ -28,7 +28,10 @@
 -- marine buildings - none of those are in a hive row, so their notifications stay.
 --
 -- Both the start of a hive research and its completion or cancellation share one notification in
--- GUIEvent, so filtering the notification removes all three for those researches.
+-- GUIEvent, so filtering the notification removes all three for those researches. It would also
+-- remove the "trait available" sound, which GUIEvent plays itself when a notification it shows
+-- completes. So each hidden research is remembered in IT.hiddenResearchNotifications, and
+-- ImprovedTooltips_ResearchSound.lua plays that sound for it the way GUIEvent would have.
 
 if not Client then
 	return
@@ -44,6 +47,16 @@ local kHiveResearchNames =
 	"ResearchBioMassOne", "ResearchBioMassTwo", "ResearchBioMassThree", "ResearchBioMassFour",
 	"UpgradeToCragHive", "UpgradeToShadeHive", "UpgradeToShiftHive",
 }
+
+-- Research notifications hidden from the stack, keyed "techId:entityId" so a catch-up sync adding
+-- the same research again does not queue its sound twice. Read and emptied by
+-- ImprovedTooltips_ResearchSound.lua.
+IT.hiddenResearchNotifications = IT.hiddenResearchNotifications or { }
+
+function IT.RememberHiddenResearch(techId, entityId)
+	IT.hiddenResearchNotifications[tostring(techId) .. ":" .. tostring(entityId)] =
+		{ techId = techId, entityId = entityId }
+end
 
 local hiveResearchSet = nil
 
@@ -111,6 +124,7 @@ if originalAddNotification then
 
 			local set = GetHiveResearchSet()
 			if (set and set[notification.techId]) or IT.GetIsResearchedInHive(notification.techId) then
+				IT.RememberHiddenResearch(notification.techId, notification.entityId)
 				return
 			end
 
