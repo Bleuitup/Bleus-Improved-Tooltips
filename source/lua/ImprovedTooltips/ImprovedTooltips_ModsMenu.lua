@@ -18,71 +18,26 @@
 -- It works in game as well as from the main menu: ModsMenuData branches on kInGame only to disable
 -- the mod MANAGEMENT screen, not to suppress custom categories.
 --
--- WIDGETS. OP_TT_Checkbox and OP_TT_Number are vanilla's own option wrappers (MenuDataUtils.lua:60,
--- :63). OP_TT_Number wraps GUIMenuSliderEntryWidget - a slider with an editable number beside it,
--- the same control mouse sensitivity uses (MenuData.lua:829-846). Typing in the box and dragging
--- the slider are two views of one value; nothing extra is needed for that.
+-- WIDGETS. OP_TT_Checkbox, OP_TT_Number and OP_TT_Choice are vanilla's own option wrappers
+-- (MenuDataUtils.lua:60, :63). OP_TT_Number wraps GUIMenuSliderEntryWidget - a slider with an
+-- editable number beside it, the same control mouse sensitivity uses (MenuData.lua:829-846). Typing
+-- in the box and dragging the slider are two views of one value; nothing extra is needed for that.
 --
--- The layout below mirrors AdvancedMenuData.lua:168-198, which builds the same shape for the
--- Advanced tab. Copy from there rather than inventing a config if this grows.
+-- The layout mirrors AdvancedMenuData.lua:168-198, which builds the same shape for the Advanced tab.
+--
+-- ONE ENTRY PER OPTION. Everything about an option is in kOptions below: its saved key, its default,
+-- the config field it drives, and its widget. The panel and ApplyStoredOptions are both built from
+-- that table, so adding an option is adding an entry.
+--
+-- Defaults are written here rather than read from ImprovedTooltips_Config.lua, because in the main
+-- menu VM the config is not loaded. tools/check_mod.lua checks each one against the config's value.
 
 -- Two VMs load this file. The main menu VM has no mod state to write to, and touching
 -- ImprovedTooltips there would either fail or write to a table nothing reads.
 local kMainVM = decoda_name == "Main"
 
--- Prefixed so we can never collide with NS2+'s CHUD_ keys or another mod's.
-local kOptionCooldownPanel   = "BIT_CooldownPanel"
-local kOptionCooldownMinTime = "BIT_CooldownMinTime"
--- BIT_WeaponBlips is the big map only from 1.04, and keeps its 1.03 key so a stored ON carries over.
-local kOptionWeaponBlips        = "BIT_WeaponBlips"
-local kOptionWeaponBlipsMinimap = "BIT_WeaponBlipsMinimap"
-local kOptionMinimapPGArrows    = "BIT_MinimapPhaseGateArrows"
-local kOptionExoWeaponBars      = "BIT_ExoWeaponBars"
-local kOptionHiveResearchDisplay = "BIT_HiveResearchDisplay"
-
--- Repeated here rather than read from the config, because in the main menu VM the config is not
--- loaded. Keep in step with ImprovedTooltips_Config.lua.
-local kDefaultCooldownPanel      = true
-local kDefaultCooldownMinTime    = 5
-local kDefaultWeaponBlips        = true
-local kDefaultWeaponBlipsMinimap = false
-local kDefaultMinimapPGArrows    = true
-local kDefaultExoWeaponBars      = true
--- 0 notifications, 1 hive panel. IT.kHiveResearchDisplay* in the config.
-local kDefaultHiveResearchDisplay = 0
-
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
-end
-
--- Push the stored values onto the live config. Both are read every frame by the panel
--- (GUIImprovedTooltipsCooldowns.lua:244 and :270), so this takes effect immediately with no
--- restart and no script reload.
-local function ApplyStoredOptions()
-
-	if kMainVM then
-		return
-	end
-
-	local IT = ImprovedTooltips
-	if not IT then
-		return
-	end
-
-	IT.kShowCooldownPanel = Client.GetOptionBoolean(kOptionCooldownPanel, kDefaultCooldownPanel)
-	IT.kColorMarineBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlips, kDefaultWeaponBlips)
-	IT.kColorMarineMinimapBlipsByWeapon = Client.GetOptionBoolean(kOptionWeaponBlipsMinimap, kDefaultWeaponBlipsMinimap)
-	IT.kCommanderMinimapPhaseGateArrows = Client.GetOptionBoolean(kOptionMinimapPGArrows, kDefaultMinimapPGArrows)
-	IT.kShowExoWeaponBars = Client.GetOptionBoolean(kOptionExoWeaponBars, kDefaultExoWeaponBars)
-	-- Read every update by the hive panel and every time a notification is queued, so switching it
-	-- applies at once. Clamped so a hand-edited options file cannot select a mode that does not exist.
-	IT.kHiveResearchDisplay = Clamp(Client.GetOptionInteger(kOptionHiveResearchDisplay, kDefaultHiveResearchDisplay), 0, 1)
-
-	-- The slider is a float because that is what GUIMenuSliderEntryWidget stores; the filter it
-	-- feeds compares against whole seconds, so round rather than truncate.
-	local minTime = Client.GetOptionFloat(kOptionCooldownMinTime, kDefaultCooldownMinTime)
-	IT.kCooldownPanelMinDuration = math.max(0, math.floor(minTime + 0.5))
-
 end
 
 -- CBM adds an SMG, which the map colors blue rather than the commander palette's orange (see
@@ -92,10 +47,6 @@ end
 local kCBMSmgNote = ""
 if not kMainVM and type(kPlayerStatus) == "table" and rawget(kPlayerStatus, "Submachinegun") ~= nil then
 	kCBMSmgNote = " SMGs are colored blue."
-end
-
-if not kMainVM and ImprovedTooltips then
-	ImprovedTooltips.ApplyStoredOptions = ApplyStoredOptions
 end
 
 -- CASING, matching vanilla. Option labels and category names are written in CAPITALS; the tooltip
@@ -109,153 +60,169 @@ end
 --
 -- So write labels upper and tooltips normally. Vanilla's tooltips also run one or two sentences;
 -- keep to that.
-local kContents =
+--
+-- Each entry:
+--
+--   key      the saved option name. Prefixed BIT_ so it cannot collide with NS2+'s CHUD_ keys or
+--            another mod's. NEVER rename one: it is what keeps a player's saved setting.
+--   field    the ImprovedTooltips config field the stored value is written to.
+--   type     "bool", "int" or "float", the option type the value is saved as.
+--   default  must match the config's own value for field.
+--   read     optional; turns the stored value into the field's value.
+--   widget   "checkbox", "number" (a slider with minValue, maxValue, decimalPlaces) or "choice"
+--            (with choices).
+local kOptions =
 {
 	{
-		name = "bitCooldownPanel",
-		class = OP_TT_Checkbox,
-		params =
-		{
-			useResetButton = true,
-			optionPath = kOptionCooldownPanel,
-			optionType = "bool",
-			default = kDefaultCooldownPanel,
-			-- The inner quotes are escaped, not smart quotes: this is a plain double-quoted Lua
-			-- string, so an unescaped " would close it early.
-			tooltip = "Show the \"In Cooldown\" panel listing the commander abilities your team currently has on cooldown. Cooldowns are shared by and to the whole team.",
-			immediateUpdate = ApplyStoredOptions,
-		},
-		properties =
-		{
-			{ "Label", "IN COOLDOWN PANEL" },
-		},
+		key = "BIT_CooldownPanel", field = "kShowCooldownPanel", type = "bool", default = true,
+		widget = "checkbox",
+		label = "IN COOLDOWN PANEL",
+		-- The inner quotes are escaped, not smart quotes: this is a plain double-quoted Lua string, so
+		-- an unescaped " would close it early.
+		tooltip = "Show the \"In Cooldown\" panel listing the commander abilities your team currently has on cooldown. Cooldowns are shared by and to the whole team.",
 	},
 
 	{
-		name = "bitCooldownMinTime",
-		class = OP_TT_Number,
-		params =
-		{
-			useResetButton = true,
-			optionPath = kOptionCooldownMinTime,
-			optionType = "float",
-			default = kDefaultCooldownMinTime,
-
-			minValue = 0,
-			maxValue = 30,
-			decimalPlaces = 0,
-
-			-- Deliberately names no abilities: any list here goes stale under a mod that retunes
-			-- cooldowns, and CBM retunes some.
-			tooltip = "Abilities with a cooldown shorter than this are left out. Default is 5. Set to 0 to list everything.",
-			immediateUpdate = ApplyStoredOptions,
-		},
-		properties =
-		{
-			{ "Label", "MINIMUM COOLDOWN SHOWN (SECONDS)" },
-		},
+		key = "BIT_CooldownMinTime", field = "kCooldownPanelMinDuration", type = "float", default = 5,
+		-- The slider stores a float; the filter it feeds compares against whole seconds, so round
+		-- rather than truncate.
+		read = function(value) return math.max(0, math.floor(value + 0.5)) end,
+		widget = "number", minValue = 0, maxValue = 30, decimalPlaces = 0,
+		label = "MINIMUM COOLDOWN SHOWN (SECONDS)",
+		-- Deliberately names no abilities: any list here goes stale under a mod that retunes
+		-- cooldowns, and CBM retunes some.
+		tooltip = "Abilities with a cooldown shorter than this are left out. Default is 5. Set to 0 to list everything.",
 	},
 
 	{
-		name = "bitWeaponBlips",
-		class = OP_TT_Checkbox,
-		params =
-		{
-			useResetButton = true,
-			optionPath = kOptionWeaponBlips,
-			optionType = "bool",
-			default = kDefaultWeaponBlips,
-			-- Says what it covers rather than listing exceptions. Exos are named because a player
-			-- WILL notice theirs staying the team color and wonder whether it is broken; the
-			-- rifle and the sidearms are not, because keeping the color you already chose reads
-			-- as normal rather than as an omission.
-			tooltip = "Colors marines on the map (the one on the map key) by their primary weapon. Weapon color matches the dropped weapon outline. Exosuits are ignored. Seen by marines and spectators only." .. kCBMSmgNote,
-			immediateUpdate = ApplyStoredOptions,
-		},
-		properties =
-		{
-			{ "Label", "COLOR MAP BLIPS BY WEAPON" },
-		},
+		-- The big map only from 1.04, and keeps its 1.03 key so a stored ON carries over.
+		key = "BIT_WeaponBlips", field = "kColorMarineBlipsByWeapon", type = "bool", default = true,
+		widget = "checkbox",
+		label = "COLOR MAP BLIPS BY WEAPON",
+		-- Says what it covers rather than listing exceptions. Exos are named because a player WILL
+		-- notice theirs staying the team color and wonder whether it is broken; the rifle and the
+		-- sidearms are not, because keeping the color you already chose reads as normal rather than
+		-- as an omission.
+		tooltip = "Colors marines on the map (the one on the map key) by their primary weapon. Weapon color matches the dropped weapon outline. Exosuits are ignored. Seen by marines and spectators only." .. kCBMSmgNote,
 	},
 
 	{
-		name = "bitWeaponBlipsMinimap",
-		class = OP_TT_Checkbox,
-		params =
-		{
-			useResetButton = true,
-			optionPath = kOptionWeaponBlipsMinimap,
-			optionType = "bool",
-			default = kDefaultWeaponBlipsMinimap,
-			tooltip = "The same weapon colors on the minimap: the one in the corner of the marine HUD, and the commander's and spectator's corner map. Set separately from the big map.",
-			immediateUpdate = ApplyStoredOptions,
-		},
-		properties =
-		{
-			{ "Label", "COLOR MINIMAP BLIPS BY WEAPON" },
-		},
+		key = "BIT_WeaponBlipsMinimap", field = "kColorMarineMinimapBlipsByWeapon", type = "bool", default = false,
+		widget = "checkbox",
+		label = "COLOR MINIMAP BLIPS BY WEAPON",
+		tooltip = "The same weapon colors on the minimap: the one in the corner of the marine HUD, and the commander's and spectator's corner map. Set separately from the big map.",
 	},
 
 	{
-		name = "bitMinimapPhaseGateArrows",
-		class = OP_TT_Checkbox,
-		params =
-		{
-			useResetButton = true,
-			optionPath = kOptionMinimapPGArrows,
-			optionType = "bool",
-			default = kDefaultMinimapPGArrows,
-			tooltip = "Shows phase gate arrows on the commander's and spectator's corner minimap, like the big map. Follows your phase gate lines setting under Advanced.",
-			immediateUpdate = ApplyStoredOptions,
-		},
-		properties =
-		{
-			{ "Label", "PHASE GATE ARROWS ON CORNER MINIMAP" },
-		},
+		key = "BIT_MinimapPhaseGateArrows", field = "kCommanderMinimapPhaseGateArrows", type = "bool", default = true,
+		widget = "checkbox",
+		label = "PHASE GATE ARROWS ON CORNER MINIMAP",
+		tooltip = "Shows phase gate arrows on the commander's and spectator's corner minimap, like the big map. Follows your phase gate lines setting under Advanced.",
 	},
 
 	{
-		name = "bitExoWeaponBars",
-		class = OP_TT_Checkbox,
-		params =
-		{
-			useResetButton = true,
-			optionPath = kOptionExoWeaponBars,
-			optionType = "bool",
-			default = kDefaultExoWeaponBars,
-			tooltip = "Shows heat and charge bars beside the crosshair for each exo arm, in place of the Centralized HUD bars' weapon bar. Only while the exo viewmodel is hidden.",
-			immediateUpdate = ApplyStoredOptions,
-		},
-		properties =
-		{
-			{ "Label", "EXO WEAPON BARS" },
-		},
+		key = "BIT_ExoWeaponBars", field = "kShowExoWeaponBars", type = "bool", default = true,
+		widget = "checkbox",
+		label = "EXO WEAPON BARS",
+		tooltip = "Shows heat and charge bars beside the crosshair for each exo arm, in place of the Centralized HUD bars' weapon bar. Only while the exo viewmodel is hidden.",
 	},
 
 	{
-		name = "bitHiveResearchDisplay",
-		class = OP_TT_Choice,
-		params =
+		-- 0 notifications, 1 hive panel: IT.kHiveResearchDisplay* in the config. Clamped so a
+		-- hand-edited options file cannot select a mode that does not exist.
+		key = "BIT_HiveResearchDisplay", field = "kHiveResearchDisplay", type = "int", default = 0,
+		read = function(value) return math.max(0, math.min(1, value)) end,
+		widget = "choice",
+		choices =
 		{
-			useResetButton = true,
-			optionPath = kOptionHiveResearchDisplay,
-			optionType = "int",
-			default = kDefaultHiveResearchDisplay,
-			tooltip = "Where research done in hives is shown. Notifications keeps it on the left, with a ring on the busy hive. Hive panel shows it in each hive's row instead, with progress and time left. Needs the hive status panel on.",
-			immediateUpdate = ApplyStoredOptions,
+			{ value = 0, displayString = "NOTIFICATIONS" },
+			{ value = 1, displayString = "HIVE PANEL" },
 		},
-		properties =
-		{
-			{ "Label", "HIVE RESEARCH DISPLAY" },
-			{ "Choices",
-				{
-					{ value = 0, displayString = "NOTIFICATIONS" },
-					{ value = 1, displayString = "HIVE PANEL" },
-				},
-			},
-		},
+		label = "HIVE RESEARCH DISPLAY",
+		tooltip = "Where research done in hives is shown. Notifications keeps it on the left, with a ring on the busy hive. Hive panel shows it in each hive's row instead, with progress and time left. Needs the hive status panel on.",
 	},
 }
+
+local kReadOption =
+{
+	bool = function(key, default) return Client.GetOptionBoolean(key, default) end,
+	int = function(key, default) return Client.GetOptionInteger(key, default) end,
+	float = function(key, default) return Client.GetOptionFloat(key, default) end,
+}
+
+-- Push the stored values onto the live config. Every field is read at use - every frame, or every
+-- time a notification is queued - so this takes effect immediately with no restart.
+local function ApplyStoredOptions()
+
+	local IT = not kMainVM and ImprovedTooltips
+	if not IT then
+		return
+	end
+
+	for i = 1, #kOptions do
+		local option = kOptions[i]
+		local value = kReadOption[option.type](option.key, option.default)
+		if option.read then
+			value = option.read(value)
+		end
+		IT[option.field] = value
+	end
+
+end
+
+if not kMainVM and ImprovedTooltips then
+	ImprovedTooltips.ApplyStoredOptions = ApplyStoredOptions
+	-- For tools/check_mod.lua, which compares the defaults against the config.
+	ImprovedTooltips.kModsMenuOptions = kOptions
+end
+
+local kWidgetClass =
+{
+	checkbox = OP_TT_Checkbox,
+	number = OP_TT_Number,
+	choice = OP_TT_Choice,
+}
+
+local function BuildContents()
+
+	local contents = { }
+
+	for i = 1, #kOptions do
+
+		local option = kOptions[i]
+
+		local params =
+		{
+			useResetButton = true,
+			optionPath = option.key,
+			optionType = option.type,
+			default = option.default,
+			tooltip = option.tooltip,
+			immediateUpdate = ApplyStoredOptions,
+			minValue = option.minValue,
+			maxValue = option.maxValue,
+			decimalPlaces = option.decimalPlaces,
+		}
+
+		local properties = { { "Label", option.label } }
+		if option.choices then
+			properties[#properties + 1] = { "Choices", option.choices }
+		end
+
+		contents[i] =
+		{
+			-- The widget names the panel used before it was built from this table.
+			name = "bit" .. option.key:gsub("^BIT_", ""),
+			class = kWidgetClass[option.widget],
+			params = params,
+			properties = properties,
+		}
+
+	end
+
+	return contents
+
+end
 
 table.insert(gModsCategories,
 {
@@ -279,7 +246,7 @@ table.insert(gModsCategories,
 	contentsConfig = ModsMenuUtils.CreateBasicModsMenuContents
 	{
 		layoutName = "bleusImprovedTooltipsOptions",
-		contents = kContents,
+		contents = BuildContents(),
 	},
 })
 

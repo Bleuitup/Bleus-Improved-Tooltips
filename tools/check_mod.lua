@@ -16,6 +16,7 @@
 --   6. Every file's top level runs without error against a stub game: any global the game would
 --      provide is a stand-in that accepts any use. This catches mistakes in code that runs at load,
 --      not inside functions.
+--   7. Every Mods panel default matches the config's value for the same field.
 --
 -- Lua 5.4, while NS2 runs 5.1, so a pass here is not proof of 5.1 compatibility.
 --
@@ -313,6 +314,7 @@ do
 	stubMeta.__tostring = function(self) return "stub:" .. tostring(rawget(self, "__label")) end
 
 	local loaded = { }
+	local configSnapshot = nil
 
 	-- Names that must read as nil until a mod file assigns them, as they do in game.
 	local kStartNil = { ImprovedTooltips = true }
@@ -345,6 +347,13 @@ do
 			if not ok then
 				Fail("%s fails at load against the stub game: %s", path, tostring(runErr))
 			end
+			-- The config's own values, before the Mods panel file writes stored options over them.
+			if target == "lua/ImprovedTooltips/ImprovedTooltips_Config.lua" and not configSnapshot then
+				configSnapshot = { }
+				for key, value in pairs(rawget(shared, "ImprovedTooltips") or { }) do
+					configSnapshot[key] = value
+				end
+			end
 		end
 	end }
 	shared.class = function(name)
@@ -365,6 +374,24 @@ do
 	for _, path in ipairs(files) do
 		if not loaded[path] then
 			shared.Script.Load(path:sub(#kSourceRoot + 1))
+		end
+	end
+
+	-- 7: every Mods panel default matches the config's value for the same field.
+	local IT = rawget(shared, "ImprovedTooltips")
+	local options = IT and rawget(IT, "kModsMenuOptions")
+	if not options or not configSnapshot then
+		Fail("could not compare Mods panel defaults with the config (kModsMenuOptions or the config missing)")
+	else
+		for _, option in ipairs(options) do
+			local expected = option.default
+			if option.read then
+				expected = option.read(expected)
+			end
+			if configSnapshot[option.field] ~= expected then
+				Fail("Mods panel default for %s is %s, but the config sets IT.%s to %s",
+					option.key, tostring(expected), option.field, tostring(configSnapshot[option.field]))
+			end
 		end
 	end
 end
