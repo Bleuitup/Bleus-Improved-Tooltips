@@ -48,8 +48,8 @@ local kDefaultWeaponBlips        = true
 local kDefaultWeaponBlipsMinimap = false
 local kDefaultMinimapPGArrows    = true
 local kDefaultExoWeaponBars      = true
--- 0 ring only, 1 both, 2 hive panel only. IT.kHiveResearchDisplay* in the config.
-local kDefaultHiveResearchDisplay = 1
+-- 0 notifications, 1 hive panel. IT.kHiveResearchDisplay* in the config.
+local kDefaultHiveResearchDisplay = 0
 
 if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
