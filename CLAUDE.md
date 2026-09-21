@@ -44,6 +44,25 @@ they were right.
   written; it cannot see inside functions or prove Lua 5.1 compatibility. The refactor plan and its
   phases are in `docs/refactor-plan.md`.
 
+## Code review handoff (2026-09-17)
+
+Read [mod-code-findings.md](docs/review-2026-09-17/mod-code-findings.md) before further refactoring.
+It records two source-probe-confirmed mod defects (Hive snapshot recipients and empty-seat
+cooldown joins), conditional reliability concerns, and unmeasured optimization candidates.
+Findings apply to commit `16f0788`; recheck before implementing. The full plan and evidence are
+linked there. This was a review of the mod and related vanilla/CBM paths, not all of NS2 Lua.
+
+The broader follow-up is [broader-vanilla-review.md](docs/review-2026-09-17/broader-vanilla-review.md):
+three additional upstream drafts (Power Surge/beacon, weapon-ammo pickup, timed mute expiry),
+source probes, branch comparisons, and explicit scope limits. Cooldown handover is already
+upstream #235; keep the mod regression test and do not create a duplicate report.
+
+The [Arms Lab selection investigation](docs/review-2026-09-17/arms-lab-selection-investigation.md)
+records a player-reported deselection near research completion. The isolated source probe did
+not reproduce it, including stationary world-click release before/after completion. A small drag
+can clear selection independently of research. The user confirmed a world-building click; exact
+release timing and an in-game reproduction remain outstanding. Do not label this confirmed.
+
 ## Verified facts about vanilla (checked against the install, do not re-derive)
 
 NS2 source for cross-checking: `D:\SteamLibrary\steamapps\common\Natural Selection 2\ns2\lua`.
