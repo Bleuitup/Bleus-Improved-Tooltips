@@ -1,8 +1,10 @@
 # Refactor plan
 
 Written 2026-09-17 after reading all 32 Lua files (6,526 lines, about a third of them comments) on
-`feature/hive-research-slots` at `ce1ae75`. **Status: all six phases done on `refactor/cleanup`
-(2026-09-17); both in-game test sessions still owed.** Decisions recorded at the end.
+`feature/hive-research-slots` at `ce1ae75`. **Status: all six phases done, and moved off the next
+release at the user's call on 2026-09-21 - 1.07 is the hive research slots and the bug fixes, and the
+refactor is 1.08, replayed on top of `release/1.07` as `refactor/1.08`. Both in-game test sessions
+are still owed.** Decisions recorded at the end.
 
 ## Done
 
