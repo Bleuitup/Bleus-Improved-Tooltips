@@ -195,6 +195,37 @@ half, only to the Shine plumbing above it.
 - Connecting mid-pregame while a team is already ready: expected to show not-ready until the next
   toggle. This is the known gap below, not a bug in the drawing.
 
+## Stale states across a round (fixed 2026-09-21)
+
+Shine never says "the ready states are cleared". It empties its own table inside `StartGame`
+(`extensions/tournamentmode/server.lua:197-213`, `TableEmpty( self.ReadyStates )`) and sends nothing,
+so the client has to work out for itself when what it heard stops being true.
+
+Until 1.07 that was done while drawing: `GetWaitingPlugin` watched for a started game ending and
+cleared the table then. **`GUIScoreboard` only calls `UpdateTeam` while the scoreboard is open**
+(`GUIScoreboard.lua:599`, `if vis then self:UpdateTeam(team) end`), so a client that did not hold the
+board open at the right moment never saw the round start at all. The user reported the result on
+2026-09-21: both commanders ready up, the round starts, an admin runs Shine's `!reset`
+(`basecommands/server.lua:1240-1248` → `Gamerules:ResetGame()` → `SetGameState(kGameState.NotStarted)`),
+and the scoreboard shows **`[Ready]` for both teams** in the new pre-game, when Shine has both at not
+ready and either commander must ready up again.
+
+The fix is `DropStatesOnceGameBegins`, on `Event.Hook("UpdateClient")` so that it runs whether or not
+anyone is looking at the scoreboard. It tests the state rather than a change of state, so there is no
+transition to miss: anything from `kGameState.Countdown` on means a game has begun, which means
+Shine's table was emptied, which means everything cached here predates it. That is safe because no
+ready message can arrive during a game — `ReadyUp` returns immediately on `GameStarted`
+(`server.lua:444`), which the plugin sets in `StartGame` and only clears once the state is back to
+`PreGame` or below (`CheckGameStart`, `server.lua:131`).
+
+`GetWaitingPlugin` now gates on the same test the plugin's own `CheckGameStart` uses,
+`state <= kGameState.PreGame`, instead of `GetGameStarted()`. The labels are therefore also hidden
+during the countdown, which is right: by then both teams have readied and nothing is waiting on them.
+
+`docs/tournament-ready-reset-probe.lua` runs the real file against stubs through that whole sequence,
+including a control showing the stale `[Ready]` when no frame is seen inside the round. Run it from
+the repo root with `lua docs/tournament-ready-reset-probe.lua`. **Not yet confirmed in a live game.**
+
 ## Known gap: no initial state
 
 All three messages fire only on a **change**. Shine sends nothing carrying the current state, so a

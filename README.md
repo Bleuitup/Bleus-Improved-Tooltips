@@ -630,6 +630,10 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - **Biomass is right on the tech map from the start of a round.** A vanilla typo meant a change in
   alien biomass never refreshed the tech tree, so a round could start showing biomass 0 until a
   structure was dropped or a research started. Already fixed on the game's beta branch.
+- **Tournament mode ready labels are right after a round is reset.** Both teams could still read
+  `[Ready]` in the new pre-game once a round had started and been reset, since Shine clears its
+  ready states silently when a game begins and the labels only noticed while the scoreboard was
+  open. They now notice either way.
 - **The spectator supply counter follows a re-themed top bar**, as the commander tooltip already did.
   It read the top bar's icon settings under the wrong names and always used its built-in copy.
 - **Code cleanup, no visible change.** Duplicated helpers merged into `ImprovedTooltips_Common.lua`,

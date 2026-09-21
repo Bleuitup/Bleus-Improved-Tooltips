@@ -79,6 +79,7 @@ kARCDeployedArmor
 kAlienTeamType
 kBoneWallHealthPerBioMass
 kCBMaddon
+kGameState
 kGUILayerCommanderHUD
 kGUILayerPlayerHUD
 kGUILayerPlayerHUDForeground4
@@ -96,6 +97,7 @@ kTechDataResearchTimeKey
 kTechId
 kTechType
 math
+next
 pairs
 pcall
 rawget
