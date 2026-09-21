@@ -58,6 +58,10 @@
 -- headers, the text is dropped and the glyph alone is kept - still at the front of the row, still
 -- unmissable, just quieter. Nothing is ever drawn over the columns.
 --
+-- Because all three fire on a change and nothing resends, this file also has to know when what it
+-- heard stops being true on its own. Shine empties its ready table the moment it starts the game,
+-- so every state cached here is dropped as soon as a countdown begins; see DropStatesOnceGameBegins.
+--
 -- KNOWN GAP, and it is Shine's rather than ours: all three messages fire on a CHANGE. There is no
 -- message carrying the current state, so a client connecting mid-pregame does not learn that a
 -- team is already ready until the next toggle. The default is "not ready", so the wrong answer is
@@ -82,7 +86,6 @@ local kNotReadyCoords = { 6 * 64, 0, 7 * 64, 64 }
 local readyStates = { }
 
 local hookedPlugin = nil
-local lastGameStarted = false
 
 local function GetTournamentPlugin()
 
@@ -319,21 +322,45 @@ local function LayOutPrefix(team, nameItem, nameY, rowStart, rightmost, limit, i
 
 end
 
--- The plugin, but only while a pre-game is actually waiting on it. Also does the bookkeeping for
--- leaving a started game, which is where last round's ready states have to be dropped: the plugin
--- empties its own table in StartGame (server.lua:213) and resends nothing.
+-- LAST ROUND'S READY STATES HAVE TO BE DROPPED, because Shine empties its own table when it starts
+-- the game (StartGame, server.lua:197-213) and resends nothing. This has to happen whether or not
+-- anyone is looking at the scoreboard, which is why it is a client update hook rather than part of
+-- the drawing below: GUIScoreboard only calls UpdateTeam while the board is visible
+-- (GUIScoreboard.lua:599). Until 1.07 this bookkeeping sat in GetWaitingPlugin and watched for a
+-- started game ending, so a round that began and was then reset - with Shine's !reset, say - while
+-- nobody held the scoreboard open left BOTH teams reading [Ready] into the next pre-game, when
+-- neither was. Reported by the user on 2026-09-21.
+--
+-- The test is the state itself rather than a change of state, so there is no transition to miss.
+-- That is sound because no ready message can arrive while a game is running: ReadyUp returns
+-- immediately on GameStarted (server.lua:444), which the plugin sets in StartGame and only clears
+-- once the state is back to PreGame or below (CheckGameStart, server.lua:131). So from Countdown
+-- onwards, anything held here predates the start and is stale.
+local function DropStatesOnceGameBegins()
+
+	if not next(readyStates) then
+		return
+	end
+
+	local gameInfo = GetGameInfoEntity()
+
+	if gameInfo ~= nil and gameInfo:GetState() >= kGameState.Countdown then
+		readyStates = { }
+	end
+
+end
+
+Event.Hook("UpdateClient", DropStatesOnceGameBegins)
+
+-- The plugin, but only while a pre-game is actually waiting on it. Countdown and everything after it
+-- are not waiting on anything: both teams have readied by then and Shine has already emptied its
+-- table. This is the same test the plugin's own CheckGameStart uses (server.lua:131).
 local function GetWaitingPlugin()
 
 	local gameInfo = GetGameInfoEntity()
 
-	if gameInfo ~= nil and gameInfo:GetGameStarted() then
-		lastGameStarted = true
+	if gameInfo == nil or gameInfo:GetState() > kGameState.PreGame then
 		return nil
-	end
-
-	if lastGameStarted then
-		lastGameStarted = false
-		readyStates = { }
 	end
 
 	local plugin = GetTournamentPlugin()
