@@ -52,6 +52,10 @@ Nano Shield 10s, Heal Wave 6s. Shorter ones — Rupture 4s, Hallucination Cloud 
 are excluded because they would flicker in and out constantly. As everywhere else in this mod the
 candidates come from `kTechDataCooldown`, so modded abilities qualify automatically.
 
+Entries wrap three to a row, with a short last row centered (1.08). Alien panels sit on the smoke
+the rest of the alien commander UI uses; marine panels on the commander selection panel's scanline
+plate.
+
 ### The vanilla bug it depends on
 
 Nobody but the commander who personally cast an ability ever saw its rotating dial - not a commander
@@ -563,6 +567,8 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 - `kCommanderMinimapPhaseGateArrows` — draw phase gate arrows on the commander's and spectator's
   corner minimap, following the player's own phase gate line setting. On by default, and exposed in
   the settings panel
+- `kCommanderMinimapPhaseGateArrowScale` — size of those arrows relative to vanilla's (default 0.42,
+  the marine HUD minimap's proportion at its default zoom). 1 draws them at vanilla's size
 - `kShowExoWeaponBars` — a bar and a percentage beside the crosshair for each exo arm, shown only
   while the exo viewmodel is hidden, whatever the marine HUD bars style. On by default, and exposed in
   the settings panel
@@ -617,6 +623,13 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased (1.08 candidate)**
+- **The In Cooldown panel wraps three to a row.** Past three abilities it used to run off the right
+  of the screen, and aliens reach four at the default cut-off. A short last row is centered, and the
+  alien smoke is refitted so it covers the whole panel rather than fading out under the bottom row.
+- **Marines get a backdrop behind the In Cooldown panel**: the commander selection panel's own
+  scanline plate and frame.
+- **Smaller phase gate arrows on the corner minimap.** They were drawn at the big map's size, about
+  three times too big for the small map; they now keep the marine HUD minimap's proportion.
 - **The spectator supply counter follows a re-themed top bar**, as the commander tooltip already did.
   It read the top bar's icon settings under the wrong names and always used its built-in copy.
 - **Code cleanup, no visible change.** Duplicated helpers merged into `ImprovedTooltips_Common.lua`,

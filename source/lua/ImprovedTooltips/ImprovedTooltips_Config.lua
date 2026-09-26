@@ -70,6 +70,8 @@ IT.kCooldownPanelShowSeconds = true
 -- hard-edged rectangle: obvious on the alien side, where the smoke mask fades to nothing at its
 -- edges and the box shows through underneath, and just as wrong on the marine side where there is
 -- no smoke to distract from it. Raise one only if text turns out unreadable over a bright map.
+-- Since 1.08 marines have their own backdrop too - the selection panel's framed scanline plate,
+-- drawn in GUIImprovedTooltipsCooldowns.lua - so a flat color there would sit under the plate.
 IT.kCooldownPanelAlienBackgroundAlpha = 0
 IT.kCooldownPanelMarineBackgroundAlpha = 0
 
@@ -427,6 +429,13 @@ IT.kMapBlipColorRefreshInterval = 0.25
 -- default, and exposed in the settings panel.
 
 IT.kCommanderMinimapPhaseGateArrows = true
+
+-- Size of those arrows on the corner minimap, relative to vanilla's. Vanilla draws the arrows the
+-- same size on every map - 10 tall, one every 64 - so on the 300 wide corner map they looked about
+-- three times bigger against the rooms than on the big map. 0.42 gives the proportion the marine
+-- HUD's minimap has at its default zoom (map scale 3 x 0.79, about 2.4 times the corner map's):
+-- about 4 tall, one every 27. Chosen by the user from rendered options on 2026-09-25.
+IT.kCommanderMinimapPhaseGateArrowScale = 0.42
 
 ------------------------------------------------------------------------------------------------
 -- Exo weapon bars
