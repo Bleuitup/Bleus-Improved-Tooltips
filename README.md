@@ -567,8 +567,8 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 - `kCommanderMinimapPhaseGateArrows` — draw phase gate arrows on the commander's and spectator's
   corner minimap, following the player's own phase gate line setting. On by default, and exposed in
   the settings panel
-- `kCommanderMinimapPhaseGateArrowScale` — size of those arrows relative to vanilla's (default 0.42,
-  the marine HUD minimap's proportion at its default zoom). 1 draws them at vanilla's size
+- `kCommanderMinimapPhaseGateArrowScale` — size of those arrows relative to vanilla's (default 0.6:
+  6 px tall, an arrow every 38 px). 1 draws them at vanilla's size
 - `kShowExoWeaponBars` — a bar and a percentage beside the crosshair for each exo arm, shown only
   while the exo viewmodel is hidden, whatever the marine HUD bars style. On by default, and exposed in
   the settings panel
@@ -629,7 +629,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 - **Marines get a backdrop behind the In Cooldown panel**: the commander selection panel's own
   scanline plate and frame.
 - **Smaller phase gate arrows on the corner minimap.** They were drawn at the big map's size, about
-  three times too big for the small map; they now keep the marine HUD minimap's proportion.
+  three times too big for the small map; they are now drawn at 0.6 of that size.
 - **The spectator supply counter follows a re-themed top bar**, as the commander tooltip already did.
   It read the top bar's icon settings under the wrong names and always used its built-in copy.
 - **Code cleanup, no visible change.** Duplicated helpers merged into `ImprovedTooltips_Common.lua`,

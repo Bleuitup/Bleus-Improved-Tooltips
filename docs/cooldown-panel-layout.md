@@ -41,3 +41,10 @@ To get many cooldowns at once, set the cut-off to 0 in the Mods panel and cast s
   bottom-left, frame edges crisp.
 - Marines with four or more (low cut-off): plate grows with the second row.
 - Resolution change and team switch: panel rebuilt with the right backdrop.
+
+## First in-game test (2026-09-26)
+
+Two marine abilities looked right. With ONE, the title overflowed the plate: a single entry is 48 px
+wide plus padding, narrower than "IN COOLDOWN", and the panel was sized to the entries alone. The
+panel is now never narrower than the title plus padding, with the grid centered inside it. Applied
+to aliens too at the user's request, for consistency, though the smoke hid the problem there.

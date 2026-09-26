@@ -87,18 +87,19 @@ the map's scale. The maps are not the same scale:
 So the marine HUD minimap's arrows are exactly vanilla's size too; they only look smaller because
 that map is zoomed in. Matching its look means scaling the arrows with the map.
 
-The user chose 0.42, the marine HUD minimap's proportion at default zoom, from rendered options
-(1.0, 0.6, 0.42, 0.33). After vanilla sets the line up, the hook stretches the texture span to
-`length / scale` and sets the height to `GUIScale(10) * scale`: about 4 px tall, an arrow every
-27 px. The animation phase is vanilla's, so the arrows still advance one arrow a second.
+The user first chose 0.42, the marine HUD minimap's proportion at default zoom, from rendered
+options (1.0, 0.6, 0.42, 0.33). In game on 2026-09-26 it was too small to make out, so it is now
+0.6, the next option up. After vanilla sets the line up, the hook stretches the texture span to
+`length / scale` and sets the height to `GUIScale(10) * scale`: 6 px tall, an arrow every 38 px,
+the same thickness vanilla uses for this map's lines. The animation phase is vanilla's, so the arrows still advance one arrow a second.
 `IT.kCommanderMinimapPhaseGateArrowScale`, config only; 1 (or anything outside 0-1) gives vanilla's
 size.
 
-Known from the render: at 0.42 the thin line between the arrowheads is under a pixel, so the line
-reads mostly as a row of small arrowheads. The user saw this in the render and chose it.
+At 0.42 the thin line between the arrowheads was under a pixel and read as a row of dots; at 0.6
+it stays a line.
 
-Not adjusted: `Setup` moves both end points up 4 px (`:58-59`) to center a 10 px line. A 4 px line
-may sit a pixel or two off the gate blips. Check in game; nudge only if it shows.
+Not adjusted: `Setup` moves both end points up 4 px (`:58-59`) to center a 10 px line. A 6 px line
+may sit a pixel off the gate blips. Check in game; nudge only if it shows.
 
 ### Test checklist (1.08)
 

@@ -21,7 +21,7 @@
 -- SIZE. Vanilla's arrows are the same size on every map, 10 tall with one every 64, whatever the
 -- map's scale. At that size (1.05 to 1.07) they looked about three times too big against the
 -- corner map's rooms. Since 1.08 the art is shrunk evenly by IT.kCommanderMinimapPhaseGateArrowScale
--- (0.42: the marine HUD minimap's proportion at default zoom) - repeated more often and drawn
+-- (0.6, the thickness vanilla gives this map's lines) - repeated more often and drawn
 -- thinner - rather than only thinned, which is what vanilla's 6 does and squashes the arrows.
 --
 -- Every other line - solid mode, alien tunnels, two gates or fewer - goes to vanilla untouched, so

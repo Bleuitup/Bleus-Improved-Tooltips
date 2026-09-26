@@ -381,7 +381,14 @@ function GUIImprovedTooltipsCooldowns:Update(deltaTime)
 	local rowHeight = kIconSize + (IT.kCooldownPanelShowSeconds and (kSecondsGap + kSecondsFontSize) or 0)
 	local columns = math.min(#active, kColumns)
 	local rows = math.ceil(#active / kColumns)
-	local width = kPadding * 2 + columns * kIconSize + (columns - 1) * kEntrySpacing
+	local gridWidth = columns * kIconSize + (columns - 1) * kEntrySpacing
+
+	-- Never narrower than the title. One entry is 48 wide and "IN COOLDOWN" is wider than that, so a
+	-- single-entry panel had its title sticking out of the marine plate's frame. The grid is centered
+	-- in whatever width is left over.
+	local titleWidth = self.title:GetTextWidth(kTitleText) * self.title:GetScale().x
+	local width = kPadding * 2 + math.max(gridWidth, titleWidth)
+	local gridLeft = (width - gridWidth) * 0.5
 	local height = kPadding * 1.5 + titleHeight + kTitleGap + rows * rowHeight + (rows - 1) * kRowSpacing
 
 	self.background:SetSize(Vector(width, height, 0))
@@ -408,7 +415,7 @@ function GUIImprovedTooltipsCooldowns:Update(deltaTime)
 		local row = math.floor((i - 1) / kColumns)
 		local column = (i - 1) % kColumns
 		local inRow = math.min(kColumns, #active - row * kColumns)
-		local x = kPadding + (columns - inRow) * (kIconSize + kEntrySpacing) * 0.5 + column * (kIconSize + kEntrySpacing)
+		local x = gridLeft + (columns - inRow) * (kIconSize + kEntrySpacing) * 0.5 + column * (kIconSize + kEntrySpacing)
 		local y = top + row * (rowHeight + kRowSpacing)
 
 		entry.plate:SetIsVisible(true)

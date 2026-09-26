@@ -432,10 +432,11 @@ IT.kCommanderMinimapPhaseGateArrows = true
 
 -- Size of those arrows on the corner minimap, relative to vanilla's. Vanilla draws the arrows the
 -- same size on every map - 10 tall, one every 64 - so on the 300 wide corner map they looked about
--- three times bigger against the rooms than on the big map. 0.42 gives the proportion the marine
--- HUD's minimap has at its default zoom (map scale 3 x 0.79, about 2.4 times the corner map's):
--- about 4 tall, one every 27. Chosen by the user from rendered options on 2026-09-25.
-IT.kCommanderMinimapPhaseGateArrowScale = 0.42
+-- three times bigger against the rooms than on the big map. 0.6: 6 tall, one every 38 - the same 6
+-- thickness vanilla gives lines on this map. The user first chose 0.42, the marine HUD minimap's
+-- proportion at default zoom (about 4 tall, one every 27), and found it too small to make out in
+-- game on 2026-09-26, so moved up to the next rendered option.
+IT.kCommanderMinimapPhaseGateArrowScale = 0.6
 
 ------------------------------------------------------------------------------------------------
 -- Exo weapon bars
