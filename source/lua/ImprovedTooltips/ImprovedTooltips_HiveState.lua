@@ -140,9 +140,17 @@ function IT.SendHiveStateTo(player, locationId, state, clear)
 		BuildImprovedTooltipsHiveStateMessage(locationId, state or IT.MakeHiveState(), clear))
 end
 
+-- Spectators get it too. Following an alien in first person makes that alien the spectator's local
+-- player, so ClientUI builds the alien HUD, GUIHiveStatus included, and the mod's additions to it -
+-- but the spectator is on the spectator team, so a team-only send never reached them: no biomass
+-- icons, no busy ring, and in HIVE PANEL mode hive research vanished altogether, filtered out of the
+-- notification list with nothing in the rows to replace it. Spectators already see both teams, so
+-- nothing here is privileged. A spectator joining mid-round gets the current picture through the
+-- same join resync as anyone else (ImprovedTooltips_TeamJoin.lua).
 function IT.BroadcastHiveState(teamNumber, locationId, state)
-	IT.SendToTeam(teamNumber, "ImprovedTooltipsHiveState",
-		BuildImprovedTooltipsHiveStateMessage(locationId, state, false))
+	local message = BuildImprovedTooltipsHiveStateMessage(locationId, state, false)
+	IT.SendToTeam(teamNumber, "ImprovedTooltipsHiveState", message)
+	IT.SendToTeam(kSpectatorIndex, "ImprovedTooltipsHiveState", message)
 end
 
 -- What the server last told the team about each location, so the sync only sends real changes.
