@@ -69,7 +69,7 @@ Per-bead progress uses [b]Shimizu[/b]'s approach, with his permission.
 [/list]
 
 [h1]Settings[/h1]
-Options, Mods, "Bleu's Improved Tooltips": switch each optional feature and set the shortest cooldown listed. Changes apply immediately.
+Options, Mods, "Bleu's Improved Tooltips": switch each optional feature, set the shortest cooldown listed and pick your own weapon colors for the map.
 
 [h1]Works with other mods[/h1]
 Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here.
