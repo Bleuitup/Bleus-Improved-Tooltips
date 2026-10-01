@@ -98,3 +98,25 @@ Weapon colors must be on for the map being checked (the two switches above the n
 - From the alien team: marine blips never take weapon colors, custom or not.
 - With CBM: the SMG row colors SMG marines. Without CBM the row does nothing.
 - From the main menu (not in a game): the panel opens, the rows fold and unfold, no script errors.
+
+## Simplified to OFF / ON (2026-10-01)
+
+After testing, the four-way choice (NONE / MAP ONLY / MINIMAP ONLY / MAP AND MINIMAP) was dropped
+at the user's request: game colors on one map and custom colors on the other is a confusing choice
+nobody needs. What replaced it:
+
+- **CUSTOM WEAPON COLORS is OFF (default) or ON.** ON applies the palette to every map whose
+  weapon-color checkbox is ticked. The two checkboxes alone decide which maps are colored.
+- **Same saved key**, `BIT_CustomWeaponColors`, still an int: 0 is OFF, anything above reads as ON.
+  The config field is now the boolean `kUseCustomWeaponColors`; `GetUsesCustomColors` is gone.
+- **The row folds away when both checkboxes are off**, since there is nothing for it to apply to,
+  and the six color rows fold with it. Vanilla never folds a row under two parents, so the fold
+  helper takes a list: the row shows while any parent holds a value outside `hideValues`.
+
+Test checklist, replacing the mode lines above:
+
+- OFF: color rows folded; maps use the game's colors.
+- ON, nothing picked: rows fold out; maps look the same.
+- ON, pick a shotgun color: it changes on every map whose checkbox is ticked, and on no other.
+- Untick both checkboxes: CUSTOM WEAPON COLORS and the color rows fold away. Tick either: the row
+  returns, and the color rows with it if it was ON.

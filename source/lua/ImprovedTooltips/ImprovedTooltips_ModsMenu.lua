@@ -74,7 +74,8 @@ end
 --            (with choices) or "color" (vanilla's color picker).
 --   parent, hideValues
 --            optional; the key of an earlier entry and the values of it for which this row folds
---            away.
+--            away. parent may be a list of keys: the row then shows while ANY of them holds a
+--            value outside hideValues, and folds only when none does.
 local kOptions =
 {
 	{
@@ -118,26 +119,29 @@ local kOptions =
 	},
 
 	{
-		-- 1.09. Which maps use the player's own palette instead of the game's. One palette, shared when
-		-- both do (user's call, docs/custom-weapon-blip-colors.md). Values are
-		-- IT.kCustomWeaponColorsMode in the config; clamped against a hand-edited options file.
-		key = "BIT_CustomWeaponColors", field = "kCustomWeaponColorsMode", type = "int", default = 0,
-		read = function(value) return math.max(0, math.min(3, value)) end,
+		-- 1.09. Off or on, nothing in between: when on, the player's own palette replaces the game's on
+		-- every map that colors by weapon (the two checkboxes above). No game colors on one map and
+		-- custom on the other (user's call, docs/custom-weapon-blip-colors.md). Saved as 0 or 1;
+		-- anything above 0 reads as on, which also covers a hand-edited options file.
+		--
+		-- With both checkboxes off there is nothing for it to apply to, so the row folds away, and the
+		-- palette under it with it.
+		key = "BIT_CustomWeaponColors", field = "kUseCustomWeaponColors", type = "int", default = 0,
+		read = function(value) return value >= 1 end,
 		widget = "choice",
 		choices =
 		{
-			{ value = 0, displayString = "NONE" },
-			{ value = 1, displayString = "MAP ONLY" },
-			{ value = 2, displayString = "MINIMAP ONLY" },
-			{ value = 3, displayString = "MAP AND MINIMAP" },
+			{ value = 0, displayString = "OFF" },
+			{ value = 1, displayString = "ON" },
 		},
+		parent = { "BIT_WeaponBlips", "BIT_WeaponBlipsMinimap" }, hideValues = { false },
 		label = "CUSTOM WEAPON COLORS",
-		tooltip = "Use your own weapon colors on the map, the minimap or both, in place of the game's. Only applies where weapon colors are switched on above.",
+		tooltip = "Use your own weapon colors in place of the game's, on every map where weapon colors are switched on above.",
 	},
 
-	-- The palette. Each row folds away while CUSTOM WEAPON COLORS is NONE (parent, hideValues), the
+	-- The palette. Each row folds away while CUSTOM WEAPON COLORS is OFF (parent, hideValues), the
 	-- way vanilla folds the building highlight color under its checkbox. Defaults are the colors the
-	-- map uses without this, so choosing a custom mode changes nothing until a color is picked.
+	-- map uses without this, so switching it on changes nothing until a color is picked.
 	{
 		key = "BIT_WeaponColorRifle", field = "kCustomWeaponColorRifle", type = "color", default = 0x00FFFF,
 		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
@@ -284,7 +288,14 @@ end
 -- Folds a row away while its parent holds one of hideValues, and follows the parent as it changes.
 -- What AdvancedMenuData.lua's CreateAdvancedOptionPostInit_HideValues does for the Advanced tab;
 -- that one is a file-local tied to the AdvancedOptions table, so it is restated here.
-local function CreateFoldUnderParentPostInit(parentKey, hideValues)
+--
+-- Vanilla only ever folds a row under one parent. parentKeys may name several: the row shows while
+-- any one of them is itself showing and holds a value outside hideValues.
+local function CreateFoldUnderParentPostInit(parentKeys, hideValues)
+
+	if type(parentKeys) ~= "table" then
+		parentKeys = { parentKeys }
+	end
 
 	local hidden = { }
 	for i = 1, #hideValues do
@@ -293,28 +304,48 @@ local function CreateFoldUnderParentPostInit(parentKey, hideValues)
 
 	return function(self)
 
-		local parentWidget = GetOptionsMenu():GetOptionWidget(GetWidgetName(parentKey))
-		if not parentWidget then
+		local parentWidgets = { }
+		for i = 1, #parentKeys do
+			local parentWidget = GetOptionsMenu():GetOptionWidget(GetWidgetName(parentKeys[i]))
+			if parentWidget then
+				parentWidgets[#parentWidgets + 1] = parentWidget
+			end
+		end
+
+		if #parentWidgets == 0 then
 			return
 		end
 
 		local function GetShouldExpand()
-			local parentExpanded = true
-			if parentWidget.GetExpanded then
-				parentExpanded = parentWidget:GetExpanded()
+
+			for i = 1, #parentWidgets do
+
+				local parentWidget = parentWidgets[i]
+				local parentExpanded = true
+				if parentWidget.GetExpanded then
+					parentExpanded = parentWidget:GetExpanded()
+				end
+
+				if parentExpanded and not hidden[parentWidget:GetValue()] then
+					return true
+				end
+
 			end
-			return parentExpanded and not hidden[parentWidget:GetValue()]
+
+			return false
+
+		end
+
+		local function Follow(child)
+			child:SetExpanded(GetShouldExpand())
 		end
 
 		self:SetExpanded(GetShouldExpand())
 
-		self:HookEvent(parentWidget, "OnValueChanged", function(child)
-			child:SetExpanded(GetShouldExpand())
-		end)
-
-		self:HookEvent(parentWidget, "OnExpandedChanged", function(child)
-			child:SetExpanded(GetShouldExpand())
-		end)
+		for i = 1, #parentWidgets do
+			self:HookEvent(parentWidgets[i], "OnValueChanged", Follow)
+			self:HookEvent(parentWidgets[i], "OnExpandedChanged", Follow)
+		end
 
 	end
 

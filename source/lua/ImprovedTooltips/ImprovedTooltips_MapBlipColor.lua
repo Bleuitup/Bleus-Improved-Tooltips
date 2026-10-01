@@ -274,8 +274,8 @@ local function GetIsViewerAllowed(minimap)
 
 end
 
--- THE PLAYER'S OWN PALETTE (1.09). CUSTOM WEAPON COLORS in the Mods panel picks which maps use it:
--- none, the big map, the minimaps, or both - one palette, shared. The colors are config fields named
+-- THE PLAYER'S OWN PALETTE (1.09). CUSTOM WEAPON COLORS in the Mods panel switches it on for every
+-- map that colors by weapon - one switch, one palette. The colors are config fields named
 -- for the kPlayerStatus name, "kCustomWeaponColor" .. name, holding 0xRRGGBB the way the game stores a
 -- color option. A weapon with no such field (anything a mod adds that the panel has no row for)
 -- keeps its usual color, so the custom palette can only ever replace, never blank out.
@@ -306,24 +306,7 @@ local function GetCustomColorForStatus(status)
 
 end
 
-local function GetUsesCustomColors(isBigMap)
-
-	local mode = IT.kCustomWeaponColorsMode
-
-	if mode == IT.kCustomWeaponColorsBoth then
-		return true
-	end
-
-	if isBigMap then
-		return mode == IT.kCustomWeaponColorsMap
-	end
-
-	return mode == IT.kCustomWeaponColorsMinimap
-
-end
-
 local function GetWeaponColor(blip, useCustom)
-
 
 	if not kColorableBlipTypes[blip.mapBlipType] then
 		return nil
@@ -379,7 +362,7 @@ local function ColorMapBlipByWeapon(self, minimap, item)
 		return originalGetMapBlipColor(self, minimap, item)
 	end
 
-	local color = GetWeaponColor(self, GetUsesCustomColors(isBigMap))
+	local color = GetWeaponColor(self, IT.kUseCustomWeaponColors)
 
 	if not color then
 		return originalGetMapBlipColor(self, minimap, item)

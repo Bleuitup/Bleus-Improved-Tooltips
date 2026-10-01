@@ -562,8 +562,8 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 - `kMapBlipColorOverrides` — per-weapon colors keyed by `kPlayerStatus` name that win over both the
   palette read and the fallback. Holds CBM's `Submachinegun` as blue (`#0000FF`) from 1.05, since the
   palette's orange read as an alien; the place per-weapon custom colors will plug in
-- `kCustomWeaponColorsMode` — which maps use the player's own weapon palette: 0 none (default),
-  1 the big map, 2 the minimaps, 3 both. Exposed in the settings panel
+- `kUseCustomWeaponColors` — whether the player's own weapon palette replaces the game's, on every
+  map that colors by weapon. Off by default. Exposed in the settings panel
 - `kCustomWeaponColorRifle` / `Shotgun` / `GrenadeLauncher` / `Flamethrower` / `HeavyMachineGun` /
   `Submachinegun` — that palette, as `0xRRGGBB`; one field per `kPlayerStatus` name. Defaults are the
   colors the map uses without it. Exposed in the settings panel
@@ -633,9 +633,9 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 ## Changelog
 
 **Unreleased (1.09 candidate)**
-- **Custom weapon colors for the map and minimap.** New setting CUSTOM WEAPON COLORS: NONE, MAP ONLY,
-  MINIMAP ONLY, or MAP AND MINIMAP, with a color picker per weapon folding out beneath it. One
-  palette, shared when both maps use it; a map left out keeps the game's colors. The pickers start
+- **Custom weapon colors for the map and minimap.** New setting CUSTOM WEAPON COLORS: OFF or ON,
+  with a color picker per weapon folding out beneath it. One palette, used on every map that has
+  weapon colors switched on; the setting folds away when neither map does. The pickers start
   at the colors the map already uses, so nothing changes until one is picked. See
   `docs/custom-weapon-blip-colors.md`.
 - **In Cooldown icons in the team color.** They were drawn in the build menu's raw gray, which read

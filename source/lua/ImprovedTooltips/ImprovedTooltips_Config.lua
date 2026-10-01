@@ -419,21 +419,17 @@ IT.kMapBlipReadCommanderPalette = true
 -- takes to notice a weapon change on a map.
 IT.kMapBlipColorRefreshInterval = 0.25
 
--- The player's own weapon colors (1.09), set in the Mods panel under CUSTOM WEAPON COLORS. Which maps
--- use them: none, the big map, the minimaps, or both. ONE palette, shared when both do - settled
--- with the user, docs/custom-weapon-blip-colors.md. A custom mode only matters where weapon colors
--- are switched on at all (the two switches above); everywhere else, and for any weapon not listed
--- here, the map keeps the colors described above.
-IT.kCustomWeaponColorsNone = 0
-IT.kCustomWeaponColorsMap = 1
-IT.kCustomWeaponColorsMinimap = 2
-IT.kCustomWeaponColorsBoth = 3
-IT.kCustomWeaponColorsMode = IT.kCustomWeaponColorsNone
+-- The player's own weapon colors (1.09), set in the Mods panel under CUSTOM WEAPON COLORS. One
+-- switch and ONE palette: when on, every map that colors by weapon (the two switches above) uses
+-- the player's colors. There is deliberately no way to have the game's colors on one map and the
+-- player's on the other - settled with the user, docs/custom-weapon-blip-colors.md. A weapon not
+-- listed here keeps the colors described above.
+IT.kUseCustomWeaponColors = false
 
 -- The palette, as 0xRRGGBB - how the game stores a color option and how the Mods panel writes
 -- these. One field per kPlayerStatus name, "kCustomWeaponColor" .. name, which is how
 -- ImprovedTooltips_MapBlipColor.lua finds them. The defaults are the colors the map uses without
--- this (the fallback palette, and blue for the SMG), so switching a map to custom changes nothing
+-- this (the fallback palette, and blue for the SMG), so switching custom colors on changes nothing
 -- until a color is picked.
 IT.kCustomWeaponColorRifle           = 0x00FFFF
 IT.kCustomWeaponColorShotgun         = 0x00FF00
