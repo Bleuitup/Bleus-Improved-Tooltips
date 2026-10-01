@@ -54,9 +54,11 @@ Numbers that change during a round are read live rather than printed from a tabl
 Movement speed is read off the unit's own class rather than from a table, so it is the vanilla unupgraded figure. Mods that compute speed live from game state rather than storing it will read low, or blank rather than guess.
 
 [h1]The biomass bar[/h1]
-The twelve bead bar in the top left, the one that appears with the map, the buy menu or the tech map open, only ever knew whole beads: a bead was empty until the research finished, then full.
+The twelve bead bar in the top left (shown with the map, the buy menu or the tech map) only ever knew whole beads: a bead was empty until its research finished, then full.
 
-Each bead being researched now fills as the work goes in, and more than one fills at a time when more than one hive is working. The ability icons along the bar light up and carry a progress bar while their research is under way, the same as they do on the tech map, instead of staying grayed out until the moment they finish.
+Each bead being researched now fills as the work goes in, and several fill at once when several hives are working. The ability icons along the bar light up and carry a progress bar while their research is under way, as they do on the tech map, instead of staying gray until they finish.
+
+Per-bead progress uses [b]Shimizu[/b]'s approach, with his permission.
 
 [h1]Map, spectating and tournament play[/h1]
 [list]
