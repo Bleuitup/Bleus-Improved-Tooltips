@@ -27,7 +27,7 @@ GUIMakeFontScale
 GUIManager
 GUIMarineHUD
 GUIMenuCategoryDisplayBoxEntry
-GUIMenuDividerWidget
+GUIMenuText
 GUIMinimapConnection
 GUIMinimapFrame
 GUINotificationMixin
@@ -52,7 +52,6 @@ HasMixin
 LookupTechData
 MapBlip
 MarineUI_GetHasArmsLab
-MenuStyle
 ModLoader
 ModsMenuUtils
 NS2Gamerules

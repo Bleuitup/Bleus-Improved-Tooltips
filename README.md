@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.09. Published to the Steam Workshop as
+Version 1.09a. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -632,7 +632,11 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
-**Unreleased (1.09 candidate)**
+**Unreleased (1.09a candidate)**
+- Settings panel: the MARINES and ALIENS headings are a tier smaller, so they read as parts of the
+  panel instead of matching its title bar.
+
+**1.09 (Workshop, 2026-10-01)**
 - **Custom weapon colors for the map and minimap.** New setting CUSTOM WEAPON COLORS: OFF or ON,
   with a color picker per weapon folding out beneath it. One palette, used on every map that has
   weapon colors switched on; the setting folds away when neither map does. The pickers start

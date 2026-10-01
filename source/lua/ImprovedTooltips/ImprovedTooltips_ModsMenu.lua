@@ -34,10 +34,6 @@
 
 -- Two VMs load this file. The main menu VM has no mod state to write to, and touching
 -- ImprovedTooltips there would either fail or write to a table nothing reads.
--- The section headings' widget. The Controls tab loads it; loaded here too so the panel does not
--- depend on that having happened first.
-Script.Load("lua/menu2/widgets/GUIMenuDividerWidget.lua")
-
 local kMainVM = decoda_name == "Main"
 
 if not kMainVM then
@@ -388,16 +384,17 @@ local function BuildContents()
 
 		local option = shown[i]
 
-		-- A heading wherever the section changes: vanilla's own divider, the one that heads FIELD
-		-- PLAYER BINDINGS in the Controls tab (MenuData.lua:660).
+		-- A heading wherever the section changes. Plain menu text at its default size, the same widget
+		-- and tier as the line that heads CBM's panel. The Controls tab's divider at its group heading
+		-- size (1.09) came out as large as the panel's own title bar, so the headings read as siblings
+		-- of the panel instead of parts of it.
 		if option.section ~= section then
 			section = option.section
 			contents[#contents + 1] =
 			{
 				name = "bitHeading" .. section:sub(1, 1) .. section:sub(2):lower(),
-				class = GUIMenuDividerWidget,
-				params = { font = MenuStyle.kOptionGroupHeadingFont },
-				properties = { { "Label", section } },
+				class = GUIMenuText,
+				params = { text = section },
 			}
 		end
 
