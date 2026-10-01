@@ -1,0 +1,21 @@
+Anyone able to confirm these three possible NS2 bugs in-game?
+
+They came up during a code review, but haven't been verified in a live game yet. Vanilla and CBM reports are both welcome.
+
+**1. Power Surge ending cancels a beacon despite normal power being restored**
+- Use Power Surge on an Observatory while its room's Power Node is destroyed.
+- Repair the node before the surge ends.
+- Start a beacon late enough that its countdown overlaps the end of the surge.
+Does the beacon cancel when the surge expires, even though the Observatory still has normal power? It should continue if the node remains operational.
+
+**2. Rifle ammo disappears without giving anyone ammo**
+- Keep your rifle's reserve ammo full.
+- Fire and reload your pistol so its reserves are below maximum.
+- Switch back to your rifle and walk over rifle-specific ammo left by another Marine's dropped rifle.
+Does the ammo pickup disappear while neither weapon gains ammo? Use weapon-specific dropped ammo, not a commander's general ammo pack. As a comparison, try with both weapons' reserves full: the pickup should remain.
+
+**3. Text/voice mutes may outlast their six-hour expiry**
+The code stores a six-hour expiration time for mutes, but they may remain active beyond it while the same game client session stays open.
+Has anyone noticed a player remaining text- or voice-muted more than six hours after muting them, without manually muting them again? This also needs clarification on whether the six-hour limit is intended to apply during a session or only when saved mutes are reloaded.
+
+If you can reproduce any of these, please mention the bug number, game build, vanilla/CBM version, and other relevant mods. Include what happened versus what you expected; a short clip would help for the first two. Failed attempts to reproduce are useful too!

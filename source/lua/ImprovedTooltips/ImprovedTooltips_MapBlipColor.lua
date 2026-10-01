@@ -399,132 +399,17 @@ if not ok then
 	kInstallResult = "FAILED - " .. tostring(err)
 end
 
+-- The diagnostic console commands, it_blipcolors and it_blipstate, live in
+-- ImprovedTooltips_MapBlipDiagnostics.lua. They reach this file's state only through this table.
+IT._mapBlipDebug =
+{
+	GetCommanderPalette = GetCommanderPalette,
+	GetColorForStatus = GetColorForStatus,
+	RefreshStatuses = RefreshStatuses,
+	GetStatusByOwner = function() return statusByOwner end,
+	colorableBlipTypes = kColorableBlipTypes,
+	GetInstallResult = function() return kInstallResult end,
+	hook = ColorMapBlipByWeapon,
+}
 
--- A console dump, because the risky half of this file cannot be seen on the map. Reading the
--- commander's palette out of a file-local either works or silently falls back to the written-down
--- copy, and the two look nearly identical in game - the only visible tell is a modded weapon such
--- as CBM's SMG coming out uncolored. "it_blipcolors" answers it directly, with no bots, no weapons
--- and no round in progress.
-Event.Hook("Console_it_blipcolors", function()
-
-	local palette = GetCommanderPalette()
-
-	Shared.Message(string.format("[Improved Tooltips] setting: big map %s, minimap %s",
-		IT.kColorMarineBlipsByWeapon and "ON" or "off",
-		IT.kColorMarineMinimapBlipsByWeapon and "ON" or "off"))
-
-	Shared.Message(string.format("[Improved Tooltips] palette: %s",
-		palette and "read from GUIUnitStatus at runtime" or "CONFIG FALLBACK - the runtime read failed"))
-
-	if not kPlayerStatus then
-		Shared.Message("[Improved Tooltips] kPlayerStatus is missing; nothing to resolve")
-		return
-	end
-
-	local found = 0
-
-	for name, status in pairs(kPlayerStatus) do
-
-		if type(name) == "string" and type(status) == "number" then
-
-			local color = GetColorForStatus(status)
-
-			if color then
-				found = found + 1
-				Shared.Message(string.format("[Improved Tooltips]   %-18s #%02X%02X%02X", name,
-					math.floor(color.r * 255 + 0.5),
-					math.floor(color.g * 255 + 0.5),
-					math.floor(color.b * 255 + 0.5)))
-			end
-
-		end
-
-	end
-
-	Shared.Message(string.format("[Improved Tooltips] %d weapon colors resolved. Anything not listed keeps the plain marine color.", found))
-
-end)
-
--- Live state, for when the colors resolve but nothing changes on the map. Every link in the chain
--- is checked separately so the answer is which one is broken, not that something is.
-Event.Hook("Console_it_blipstate", function()
-
-	local function Say(fmt, ...)
-		Shared.Message("[Improved Tooltips] " .. string.format(fmt, ...))
-	end
-
-	Say("setting kColorMarineBlipsByWeapon (big map) = %s, kColorMarineMinimapBlipsByWeapon = %s",
-		tostring(IT.kColorMarineBlipsByWeapon), tostring(IT.kColorMarineMinimapBlipsByWeapon))
-
-	-- 1. Is our wrapper actually the function the game will call?
-	Say("install: %s", kInstallResult)
-	Say("hook on MapBlip = %s, on PlayerMapBlip = %s",
-		tostring(MapBlip.GetMapBlipColor == ColorMapBlipByWeapon),
-		tostring(PlayerMapBlip ~= nil and PlayerMapBlip.GetMapBlipColor == ColorMapBlipByWeapon))
-
-	-- 2. Would we be allowed to color anything from where we are sitting?
-	local player = Client.GetLocalPlayer()
-	local team = player and player:GetTeamNumber()
-	Say("local player team = %s (marine is %s), allowed without spectating = %s",
-		tostring(team), tostring(kTeam1Index), tostring(team == kTeam1Index))
-
-	-- 3. Does the weapon table have anything in it?
-	RefreshStatuses()
-
-	local infoCount = 0
-
-	for _, info in ientitylist(Shared.GetEntitiesWithClassname("PlayerInfoEntity")) do
-		infoCount = infoCount + 1
-		local statusName = kPlayerStatus and kPlayerStatus[info.status]
-		Say("  PlayerInfoEntity: playerId=%s name=%s status=%s",
-			tostring(info.playerId), tostring(info.playerName), tostring(statusName))
-	end
-
-	Say("PlayerInfoEntity count = %d", infoCount)
-
-	-- 4. Do the blips join up to it? This is the join that has to work.
-	local blipCount, marineBlips, matched = 0, 0, 0
-
-	-- PlayerMapBlip, not MapBlip: players get the subclass (MapBlipMixin.lua:59-64).
-	for _, blip in ientitylist(Shared.GetEntitiesWithClassname("PlayerMapBlip")) do
-
-		blipCount = blipCount + 1
-
-		if kColorableBlipTypes[blip.mapBlipType] then
-
-			marineBlips = marineBlips + 1
-
-			local owner = blip:GetOwnerEntityId()
-			local status = statusByOwner[owner]
-			local color = status and GetColorForStatus(status)
-
-			if color then
-				matched = matched + 1
-			end
-
-			Say("  marine blip: owner=%s status=%s color=%s",
-				tostring(owner),
-				tostring(status and kPlayerStatus[status]),
-				color and string.format("#%02X%02X%02X",
-					math.floor(color.r * 255 + 0.5),
-					math.floor(color.g * 255 + 0.5),
-					math.floor(color.b * 255 + 0.5)) or "none")
-
-		end
-
-	end
-
-	Say("PlayerMapBlips: %d total, %d marine or jetpacker, %d resolved to a color", blipCount, marineBlips, matched)
-
-end)
-
-
--- Reporting kInstallResult rather than recomputing it, and the install above is wrapped in pcall so
--- it cannot throw and take these down with it. The previous version called Class_ReplaceMethod at
--- the top level, and an assert inside it would have aborted the file part way, killing the console
--- commands that exist to report exactly that fault.
---
--- Note which VM this is. The settings panel is hooked onto a menu data file and loads in the MAIN
--- MENU VM; this file is hooked onto lua/MapBlip.lua and only ever loads in the CLIENT VM, once a
--- map is running. Seeing the option in the menu says nothing about whether this file loaded, and
--- neither command exists at the main menu even when everything is correct.
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_MapBlipDiagnostics.lua")

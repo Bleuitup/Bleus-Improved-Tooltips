@@ -20,11 +20,13 @@
 -- which is the public extension point for other mods.
 
 Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
+-- IT.GetTechIdByName lives there, with the reason it is needed.
+Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Common.lua")
 
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
-IT.kVersion = "1.07"
+IT.kVersion = "1.08"
 
 -- The extra fields this mod can show. Used as keys throughout, including in the public API.
 IT.kFields = { "health", "armor", "researchTime", "cooldown", "speed" }
@@ -276,31 +278,6 @@ local kDefaultLookup = {
 	speed        = LookupClassMoveSpeed,
 }
 
--- Look a techId up by name without assuming the name exists.
---
--- kTechId is an ENGINE enum, not a plain table, and indexing it with a name it does not hold raises
---
---     Element 'DualMinigun' doesn't exist in the enum
---
--- rather than returning nil. That is easy to walk into: vanilla has UpgradeToDualMinigun but no
--- DualMinigun, so deriving a name and looking it up throws on a perfectly ordinary install.
---
--- The entries themselves live directly in the underlying table - pairs() walks them - so rawget
--- reads them without going through the metamethod that raises, and answers nil for a name that is
--- not there. Use this for ANY name that might not exist: tech from a mod that may not be loaded,
--- or a name derived from another name.
-function IT.GetTechIdByName(name)
-
-	if type(name) ~= "string" or type(kTechId) ~= "table" then
-		return nil
-	end
-
-	local techId = rawget(kTechId, name)
-
-	return type(techId) == "number" and techId or nil
-
-end
-
 function IT.GetValue(field, techId)
 
 	-- Compatibility modules attach themselves on first use rather than at load time; see above.
@@ -327,24 +304,19 @@ function IT.GetValues(techId)
 		return nil
 	end
 
-	local values = {
-		-- Carried so the renderer can ask HasResolver and tell a meaningful zero from an absent
-		-- one. Not a field in kFields, so it does not affect the "anything to show?" test below.
-		techId       = techId,
-		health       = IT.GetValue("health", techId),
-		armor        = IT.GetValue("armor", techId),
-		researchTime = IT.GetValue("researchTime", techId),
-		cooldown     = IT.GetValue("cooldown", techId),
-		speed        = IT.GetValue("speed", techId),
-	}
+	-- techId is carried so the renderer can ask HasResolver and tell a meaningful zero from an absent
+	-- one. It is not a field in kFields, so it does not count towards "anything to show".
+	local values = { techId = techId }
+	local anything = false
 
 	for i = 1, #IT.kFields do
-		if values[IT.kFields[i]] > 0 then
-			return values
-		end
+		local field = IT.kFields[i]
+		local value = IT.GetValue(field, techId)
+		values[field] = value
+		anything = anything or value > 0
 	end
 
-	return nil
+	return anything and values or nil
 
 end
 
@@ -359,6 +331,10 @@ end
 -- Built once on first use rather than at load time, because TechData is assembled during startup
 -- and mods post-hook it - asking too early would miss whatever had not been added yet.
 local cooldownTechIds = nil
+
+-- [minDuration] = the list filtered to it. The In Cooldown panel asks every frame, and cooldowns in
+-- TechData do not change once the game is running.
+local filteredByMinDuration = { }
 
 function IT.GetTechIdsWithCooldown(minDuration)
 
@@ -386,12 +362,17 @@ function IT.GetTechIdsWithCooldown(minDuration)
 		return cooldownTechIds
 	end
 
-	local filtered = { }
-	for i = 1, #cooldownTechIds do
-		local techId = cooldownTechIds[i]
-		if LookupTechData(techId, kTechDataCooldown, 0) >= minDuration then
-			table.insert(filtered, techId)
+	local filtered = filteredByMinDuration[minDuration]
+
+	if not filtered then
+		filtered = { }
+		for i = 1, #cooldownTechIds do
+			local techId = cooldownTechIds[i]
+			if LookupTechData(techId, kTechDataCooldown, 0) >= minDuration then
+				table.insert(filtered, techId)
+			end
 		end
+		filteredByMinDuration[minDuration] = filtered
 	end
 
 	return filtered
@@ -424,11 +405,14 @@ end
 --
 -- Vanilla already treats that button as describing the Drifter it produces: its TechData carries
 -- kDrifterHealth and kDrifterArmor, not the egg's. Speed follows the same reading.
-if kTechId.DrifterEgg then
-	IT.RegisterResolver("speed", kTechId.DrifterEgg, function()
-		return IT.GetClassMoveSpeed(kTechId.Drifter)
-	end)
-end
+--
+-- Every tech named in this section is looked up through IT.GetTechIdByName. Indexing kTechId with
+-- a name a mod has removed raises rather than answering nil, which would stop this file loading
+-- part way and take everything after it along. RegisterResolver declines a nil techId.
+IT.RegisterResolver("speed", IT.GetTechIdByName("DrifterEgg"), function()
+	local drifter = IT.GetTechIdByName("Drifter")
+	return drifter and IT.GetClassMoveSpeed(drifter) or 0
+end)
 
 -- An ARC is a different unit depending on its stance, and vanilla stores both sets:
 -- kARCArmor = 400 undeployed against kARCDeployedArmor = 0 (BalanceHealth.lua:100-101), and it
@@ -441,29 +425,31 @@ end
 -- The constants are read inside the resolvers, not captured here: this file is loaded from a
 -- post-hook and there is no guarantee ARC.lua or BalanceHealth.lua have run yet at registration
 -- time. Resolvers only run while a tooltip is on screen, by which point everything is loaded.
-local function RegisterArcStance(techId, getArmor, getSpeed)
+local function RegisterArcStance(techName, getArmor, getSpeed)
+
+	local techId = IT.GetTechIdByName(techName)
+	if not techId then
+		return
+	end
 
 	IT.RegisterResolver("armor", techId, getArmor)
 	IT.RegisterResolver("speed", techId, getSpeed)
 	IT.RegisterResolver("health", techId, function()
-		return LookupTechData(kTechId.ARC, kTechDataMaxHealth, 0)
+		local arc = IT.GetTechIdByName("ARC")
+		return arc and LookupTechData(arc, kTechDataMaxHealth, 0) or 0
 	end)
 
 end
 
-if kTechId.ARCDeploy then
-	RegisterArcStance(kTechId.ARCDeploy,
-		function() return kARCDeployedArmor or 0 end,
-		function() return 0 end)
-end
+RegisterArcStance("ARCDeploy",
+	function() return kARCDeployedArmor or 0 end,
+	function() return 0 end)
 
-if kTechId.ARCUndeploy then
-	RegisterArcStance(kTechId.ARCUndeploy,
-		function() return kARCArmor or 0 end,
-		function() return ARC and ARC.kMoveSpeed or 0 end)
-end
+RegisterArcStance("ARCUndeploy",
+	function() return kARCArmor or 0 end,
+	function() return ARC and ARC.kMoveSpeed or 0 end)
 
-IT.RegisterResolver("health", kTechId.BoneWall, function(techId)
+IT.RegisterResolver("health", IT.GetTechIdByName("BoneWall"), function(techId)
 
 	local base = LookupTechData(techId, kTechDataMaxHealth, 0)
 	local perBioMass = kBoneWallHealthPerBioMass or 0

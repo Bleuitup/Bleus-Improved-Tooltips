@@ -1,0 +1,9 @@
+installed vanilla: click / 100% progress / completion / re-click preserve selection; Cancel -> Recycle; stale selection resends true; explicit deselect control detected
+installed vanilla: stationary release before/after completion and 5-pixel motion preserve selection; 6-pixel empty marquee clears it on release, independently of completion
+installed CBM release: click / 100% progress / completion / re-click preserve selection; Cancel -> Recycle; stale selection resends true; explicit deselect control detected
+installed CBM release: stationary release before/after completion and 5-pixel motion preserve selection; 6-pixel empty marquee clears it on release, independently of completion
+local CBM dev: click / 100% progress / completion / re-click preserve selection; Cancel -> Recycle; stale selection resends true; explicit deselect control detected
+local CBM dev: stationary release before/after completion and 5-pixel motion preserve selection; 6-pixel empty marquee clears it on release, independently of completion
+upstream beta: click / 100% progress / completion / re-click preserve selection; Cancel -> Recycle; stale selection resends true; explicit deselect control detected
+upstream beta: stationary release before/after completion and 5-pixel motion preserve selection; 6-pixel empty marquee clears it on release, independently of completion
+Scope: actual source mouse callbacks, menu-setting and marquee functions with stubs; no engine ray tracing, actual packet ordering, rendering or full GUI lifecycle. The research-specific bug remains unconfirmed.

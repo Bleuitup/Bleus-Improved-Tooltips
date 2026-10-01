@@ -70,6 +70,8 @@ IT.kCooldownPanelShowSeconds = true
 -- hard-edged rectangle: obvious on the alien side, where the smoke mask fades to nothing at its
 -- edges and the box shows through underneath, and just as wrong on the marine side where there is
 -- no smoke to distract from it. Raise one only if text turns out unreadable over a bright map.
+-- Since 1.08 marines have their own backdrop too - the selection panel's framed scanline plate,
+-- drawn in GUIImprovedTooltipsCooldowns.lua - so a flat color there would sit under the plate.
 IT.kCooldownPanelAlienBackgroundAlpha = 0
 IT.kCooldownPanelMarineBackgroundAlpha = 0
 
@@ -106,9 +108,10 @@ IT.kSpreadBiomassProgress = true
 -- its own button's art, in order, so the icons grow denser as the hive climbs.
 IT.kShowHiveBiomassIcons = true
 
--- Vanilla's rotating "working" ring plus the DNA glyph on any hive that is researching anything -
--- biomass, a lifeform ability, or a hive type upgrade.
-IT.kShowHiveResearchIcon = true
+-- Research on the hive rows at all, in whichever form HIVE RESEARCH DISPLAY picks: vanilla's
+-- rotating "working" ring plus the DNA glyph on any hive researching anything (NOTIFICATIONS), or
+-- the research slots (HIVE PANEL). False hides both, and HIVE PANEL then keeps nothing off the left.
+IT.kShowHiveResearch = true
 
 -- Placement, all pre-GUIScale and all relative to the top-left of a hive's row in the panel. The
 -- row is 228x50 with the location name plate running from x -6 to 135, so these sit in the space
@@ -236,6 +239,8 @@ IT.kShowLostArmsLabUpgrades = true
 -- Vanilla's own alert red, from GUIMarineHUD:Update. Kept as a setting only so it can be toned
 -- down; the default is deliberately the shade the game already chose for this state.
 IT.kArmsLabLostColor = Color(1, 0, 0, 1)
+
+------------------------------------------------------------------------------------------------
 -- The twelve-bead biomass overlay
 ------------------------------------------------------------------------------------------------
 --
@@ -424,6 +429,14 @@ IT.kMapBlipColorRefreshInterval = 0.25
 -- default, and exposed in the settings panel.
 
 IT.kCommanderMinimapPhaseGateArrows = true
+
+-- Size of those arrows on the corner minimap, relative to vanilla's. Vanilla draws the arrows the
+-- same size on every map - 10 tall, one every 64 - so on the 300 wide corner map they looked about
+-- three times bigger against the rooms than on the big map. 0.6: 6 tall, one every 38 - the same 6
+-- thickness vanilla gives lines on this map. The user first chose 0.42, the marine HUD minimap's
+-- proportion at default zoom (about 4 tall, one every 27), and found it too small to make out in
+-- game on 2026-09-26, so moved up to the next rendered option.
+IT.kCommanderMinimapPhaseGateArrowScale = 0.6
 
 ------------------------------------------------------------------------------------------------
 -- Exo weapon bars

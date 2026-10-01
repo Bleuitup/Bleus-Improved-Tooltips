@@ -38,11 +38,17 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
--- Progress travels as a whole percentage. The bar it drives is 30 pixels tall.
+-- Progress travels as a whole percentage.
 IT.kHiveResearchProgressSteps = 100
 
+-- A 0..1 progress as the whole steps the message carries. The server also compares published
+-- progress in steps, so a change too small to send is not treated as a change.
+function IT.ToHiveProgressSteps(progress)
+	return math.floor(Clamp(progress or 0, 0, 1) * IT.kHiveResearchProgressSteps + 0.5)
+end
+
 -- [locationId] = state, where state is
---   { biomass = 0..6, researching = boolean,
+--   { biomass = 0..6,
 --     hiveResearchId = kTechId, hiveProgress = 0..1, evoResearchId = kTechId, evoProgress = 0..1 }
 -- Parked on the shared table so a Script.Load with reload does not drop live state.
 IT.hiveState = IT.hiveState or { }
@@ -51,31 +57,27 @@ function IT.ClearHiveState()
 	IT.hiveState = { }
 end
 
-local function GetNone()
-	return kTechId and kTechId.None or 1
-end
-
--- Builds a normalized state table. Everything optional, so old callers passing only biomass and
--- researching still get a complete table.
-function IT.MakeHiveState(biomass, researching, hiveResearchId, hiveProgress, evoResearchId, evoProgress)
-
-	local none = GetNone()
+-- Builds a normalized state table. Every argument is optional; a missing one reads as nothing
+-- researching and no biomass, so MakeHiveState() is the empty state.
+function IT.MakeHiveState(biomass, hiveResearchId, hiveProgress, evoResearchId, evoProgress)
 
 	return {
 		biomass = biomass or 0,
-		researching = researching == true,
-		hiveResearchId = hiveResearchId or none,
+		hiveResearchId = hiveResearchId or kTechId.None,
 		hiveProgress = Clamp(hiveProgress or 0, 0, 1),
-		evoResearchId = evoResearchId or none,
+		evoResearchId = evoResearchId or kTechId.None,
 		evoProgress = Clamp(evoProgress or 0, 0, 1),
 	}
 
 end
 
+-- Researching anything at all, in the hive or its evolution chamber: what the busy ring shows.
+function IT.GetHiveIsResearching(state)
+	return state.hiveResearchId ~= kTechId.None or state.evoResearchId ~= kTechId.None
+end
+
 function IT.GetHiveStateIsEmpty(state)
-	local none = GetNone()
-	return state.biomass <= 0 and not state.researching
-		and state.hiveResearchId == none and state.evoResearchId == none
+	return state.biomass <= 0 and not IT.GetHiveIsResearching(state)
 end
 
 function IT.SetHiveState(locationId, state)
@@ -123,7 +125,7 @@ end
 --
 -- Split out here rather than living in the hook file for the same reason the cooldown helpers are:
 -- two different hooks need them (ImprovedTooltips_HiveSync.lua on AlienTeamInfo.lua and
--- ImprovedTooltips_HiveJoin.lua on NS2Gamerules.lua), and this file depends on no class, so either
+-- ImprovedTooltips_TeamJoin.lua on NS2Gamerules.lua), and this file depends on no class, so either
 -- can load it whatever order the game loads those two files in.
 
 if not Server then
@@ -134,23 +136,13 @@ end
 IT.kHiveResearchProgressSendInterval = 1
 
 function IT.SendHiveStateTo(player, locationId, state, clear)
-
-	-- Bots go through the same join path but have no client to message.
-	if not player or (player.GetIsVirtual and player:GetIsVirtual()) then
-		return
-	end
-
-	Server.SendNetworkMessage(player, "ImprovedTooltipsHiveState",
-		BuildImprovedTooltipsHiveStateMessage(locationId, state or IT.MakeHiveState(), clear), true)
-
+	IT.SendToPlayer(player, "ImprovedTooltipsHiveState",
+		BuildImprovedTooltipsHiveStateMessage(locationId, state or IT.MakeHiveState(), clear))
 end
 
 function IT.BroadcastHiveState(teamNumber, locationId, state)
-
-	for _, player in ipairs(GetEntitiesForTeam("Player", teamNumber)) do
-		IT.SendHiveStateTo(player, locationId, state, false)
-	end
-
+	IT.SendToTeam(teamNumber, "ImprovedTooltipsHiveState",
+		BuildImprovedTooltipsHiveStateMessage(locationId, state, false))
 end
 
 -- What the server last told the team about each location, so the sync only sends real changes.

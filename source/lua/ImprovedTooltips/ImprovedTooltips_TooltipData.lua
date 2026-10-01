@@ -27,7 +27,6 @@ function PlayerUI_GetTooltipDataFromTechId(techId, hotkeyIndex)
 	local tooltipData = originalGetTooltipDataFromTechId(techId, hotkeyIndex)
 
 	if tooltipData then
-		tooltipData.improvedTooltipsTechId = techId
 		tooltipData.improvedTooltips = IT.GetValues(techId)
 		IT.lastValues = tooltipData.improvedTooltips
 	end

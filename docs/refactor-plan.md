@@ -1,8 +1,25 @@
 # Refactor plan
 
 Written 2026-09-17 after reading all 32 Lua files (6,526 lines, about a third of them comments) on
-`feature/hive-research-slots` at `ce1ae75`. **Status: proposed, waiting on the user's decisions at
-the end.** Nothing below has been changed yet.
+`feature/hive-research-slots` at `ce1ae75`. **Status: all six phases done, and moved off the next
+release at the user's call on 2026-09-21 - 1.07 is the hive research slots and the bug fixes, and the
+refactor is 1.08, replayed on top of `release/1.07` as `refactor/1.08`. Both in-game test sessions
+are still owed.** Decisions recorded at the end.
+
+## Done
+
+| Phase | Commit | Notes |
+| --- | --- | --- |
+| 0 | `cfc8fa5` | `tools/check_mod.lua` and its globals baseline. Proven against six deliberate mistakes. |
+| 1 | `d524c72` | A1, A2, A4. |
+| 2 | `49d8990` | `ImprovedTooltips_Common.lua`, `ImprovedTooltips_TeamJoin.lua`. |
+| - | `8ad50d5` | Not refactor: the HIVE RESEARCH DISPLAY default was still 1 (now HIVE PANEL) after BOTH was dropped, because a text substitution missed a CRLF file. Fixed on the hive branch and merged in. |
+| 3 | `e4749fb` | Mods panel from one table, verified identical to the old panel in both VMs; the check also compares panel defaults with the config. File hooks grouped. |
+| 4 | `3110fcd` | Hive state without `researching`, slots in `ImprovedTooltips_HiveResearchSlots.lua`, `kShowHiveResearch`. Verified by a simulation of the sync over fake hives (15 cases). |
+| 5 | `295461c` | C4, C5, C7; diagnostics in `ImprovedTooltips_MapBlipDiagnostics.lua`. |
+| 6 | this commit | README hooks, layout, config, check section; `CLAUDE.md` status rewritten and feature history moved to `docs/development-notes.md`. |
+
+Decision 3 was not acted on: the unused duration formats and the panel backing opacity remain.
 
 ## Ground rules
 
@@ -106,7 +123,12 @@ the end.** Nothing below has been changed yet.
 
 The code should shrink by a few hundred lines, most of it the menu and the duplicates.
 
-## Decisions for the user
+## Decisions (2026-09-17)
+
+Answered: 1 now, rebase the shield branch later; 2 keep, in a file of their own; 4 fix the status and
+move the history into `docs/`. Decision 3 was unclear to the user and is explained again; the
+settings stay unless they say otherwise.
+
 
 1. **Timing and the shield branch.** Recommended: refactor now on top of the hive research work, and
    when the alien shield bar resumes, I rebase `feature/centralized-bars-shields` onto the result. It

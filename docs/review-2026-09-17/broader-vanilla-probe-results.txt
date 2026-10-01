@@ -1,0 +1,17 @@
+installed vanilla: surge expiry CANCELS beacon while GetIsPowered() remains true
+CBM release: surge expiry CANCELS beacon while GetIsPowered() remains true
+CBM dev: surge expiry CANCELS beacon while GetIsPowered() remains true
+Ghoul beta: surge expiry CANCELS beacon while GetIsPowered() remains true
+public CBM main: surge expiry CANCELS beacon while GetIsPowered() remains true
+installed vanilla: rifle ammo pickup DESTROYED; rifle remains 200/200, pistol remains 9/40
+CBM release: rifle ammo pickup DESTROYED; rifle remains 200/200, pistol remains 9/40
+CBM dev: rifle ammo pickup DESTROYED; rifle remains 200/200, pistol remains 9/40
+installed vanilla (also inherited by local CBM): text mute remains ACTIVE after its six-hour expiry
+installed vanilla (also inherited by local CBM): voice mute remains ACTIVE after expiry; no unmute message is sent
+Ghoul beta: text mute remains ACTIVE after its six-hour expiry
+Ghoul beta: voice mute remains ACTIVE after expiry; no unmute message is sent
+Ghoul beta: rifle ammo pickup DESTROYED; rifle remains 200/200, pistol remains 9/40
+Ghoul master / hotfix-344 / bdt-344: surge expiry CANCELS beacon while GetIsPowered() remains true
+Ghoul CBM core-only: surge expiry CANCELS beacon while GetIsPowered() remains true
+public CBM fixes branch: rifle ammo pickup DESTROYED; rifle remains 200/200, pistol remains 9/40
+All source probes reproduced. No live game or visual tests were performed.

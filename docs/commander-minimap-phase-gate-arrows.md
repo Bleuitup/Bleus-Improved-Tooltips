@@ -70,3 +70,41 @@ autobuild 1
 - Big map and marine HUD minimap: unchanged.
 - Spectator overhead view: the corner map matches the commander's.
 - Changing the phase gate lines setting mid-round updates the corner map.
+
+## Arrow size (1.08)
+
+The user found the arrows too big on the corner map (2026-09-25). Vanilla draws them the same size on
+every map: `UpdateAnimation` maps 1 texel of the 64x16 arrow art to 1 pixel along the line
+(`x2Coord = x1Coord + self.length`, `:36`) and sets the height to `GUIScale(10)` (`:44`), whatever
+the map's scale. The maps are not the same scale:
+
+| Map | Map scale (`GUIMinimap:SetScale`) | Arrow size against the rooms |
+| --- | --- | --- |
+| Corner minimap, `kModeMini` | 1 (300 px at 1080p) | 1 |
+| Marine HUD minimap, `kModeZoom` | 3 x zoom; default zoom 0.79 (`GUIMarineHUD.lua:1097-1106`), so about 2.4 | about 0.42 |
+| Big map, `kModeBig` | 3 | 0.33 |
+
+So the marine HUD minimap's arrows are exactly vanilla's size too; they only look smaller because
+that map is zoomed in. Matching its look means scaling the arrows with the map.
+
+The user first chose 0.42, the marine HUD minimap's proportion at default zoom, from rendered
+options (1.0, 0.6, 0.42, 0.33). In game on 2026-09-26 it was too small to make out, so it is now
+0.6, the next option up. After vanilla sets the line up, the hook stretches the texture span to
+`length / scale` and sets the height to `GUIScale(10) * scale`: 6 px tall, an arrow every 38 px,
+the same thickness vanilla uses for this map's lines. The animation phase is vanilla's, so the arrows still advance one arrow a second.
+`IT.kCommanderMinimapPhaseGateArrowScale`, config only; 1 (or anything outside 0-1) gives vanilla's
+size.
+
+At 0.42 the thin line between the arrowheads was under a pixel and read as a row of dots; at 0.6
+it stays a line.
+
+Not adjusted: `Setup` moves both end points up 4 px (`:58-59`) to center a 10 px line. A 6 px line
+may sit a pixel off the gate blips. Check in game; nudge only if it shows.
+
+### Test checklist (1.08)
+
+- Three or more gates, animated arrows: small arrows on the corner map, moving.
+- Static arrows and animated lines: same size, lines dashed in the second case.
+- The line sits on the gate blips (see the note above).
+- Solid lines, two gates, alien tunnels, toggle off: exactly vanilla.
+- Big map and marine HUD minimap: unchanged.

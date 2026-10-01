@@ -1,0 +1,197 @@
+
+=== Alien, default HUD bars: four researches, the last one the quickest
+    alien stack, 3 shown
+  100.00  started     BileBomb
+  100.00  shown       BileBomb
+  102.03  started     MetabolizeEnergy
+  102.03  shown       MetabolizeEnergy
+  104.03  started     UpgradeToCragHive
+  104.03  shown       UpgradeToCragHive
+  106.03  started     UpgradeToShadeHive
+  106.03  shown       UpgradeToShadeHive
+  106.03  PUSHED OUT  MetabolizeEnergy
+  106.57  removed     MetabolizeEnergy
+  124.00  complete    UpgradeToCragHive
+  124.00  SOUND
+  126.00  complete    UpgradeToShadeHive
+  126.00  SOUND
+  127.07  removed     UpgradeToCragHive
+  129.07  removed     UpgradeToShadeHive
+  139.97  complete    BileBomb
+  139.97  SOUND
+  143.03  removed     BileBomb
+    sounds played: 3 of 4 researches
+
+=== Alien, default HUD bars: the same four, quickest started FIRST
+    alien stack, 3 shown
+  100.00  started     UpgradeToCragHive
+  100.00  shown       UpgradeToCragHive
+  102.03  started     UpgradeToShadeHive
+  102.03  shown       UpgradeToShadeHive
+  104.03  started     Leap
+  104.03  shown       Leap
+  106.03  started     BileBomb
+  119.97  complete    UpgradeToCragHive
+  119.97  SOUND
+  122.00  complete    UpgradeToShadeHive
+  122.00  SOUND
+  123.03  removed     UpgradeToCragHive
+  123.07  shown       BileBomb
+  125.07  removed     UpgradeToShadeHive
+  144.00  complete    Leap
+  144.00  SOUND
+  146.00  complete    BileBomb
+  146.00  SOUND
+  147.07  removed     Leap
+  149.07  removed     BileBomb
+    sounds played: 4 of 4 researches
+
+=== Alien, NS1 HUD bars (2 shown): three researches
+    alien stack, 2 shown
+  100.00  started     BileBomb
+  100.00  shown       BileBomb
+  102.03  started     UpgradeToCragHive
+  102.03  shown       UpgradeToCragHive
+  104.03  started     UpgradeToShadeHive
+  104.03  shown       UpgradeToShadeHive
+  104.03  PUSHED OUT  BileBomb
+  104.57  removed     BileBomb
+  122.00  complete    UpgradeToCragHive
+  122.00  SOUND
+  124.00  complete    UpgradeToShadeHive
+  124.00  SOUND
+  125.07  removed     UpgradeToCragHive
+  127.07  removed     UpgradeToShadeHive
+    sounds played: 2 of 3 researches
+
+=== Marine, default HUD bars (5 shown): six researches, the last one the quickest
+    marine stack, 5 shown
+  100.00  started     AdvancedArmoryUpgrade
+  100.00  shown       AdvancedArmoryUpgrade
+  102.03  started     Weapons1
+  102.03  shown       Weapons1
+  104.03  started     Armor1
+  104.03  shown       Armor1
+  106.03  started     AdvancedMarineSupport
+  106.03  shown       AdvancedMarineSupport
+  108.03  started     ShotgunTech
+  108.03  shown       ShotgunTech
+  110.03  started     MinesTech
+  110.03  shown       MinesTech
+  110.03  PUSHED OUT  AdvancedArmoryUpgrade
+  110.57  removed     AdvancedArmoryUpgrade
+  130.00  complete    MinesTech
+  130.00  SOUND
+  133.07  removed     MinesTech
+  138.03  complete    ShotgunTech
+  138.03  SOUND
+  141.10  removed     ShotgunTech
+  166.03  complete    AdvancedMarineSupport
+  166.03  SOUND
+  169.10  removed     AdvancedMarineSupport
+  177.00  complete    Weapons1
+  177.00  SOUND
+  179.00  complete    Armor1
+  179.00  SOUND
+  180.07  removed     Weapons1
+  182.07  removed     Armor1
+    sounds played: 5 of 6 researches
+
+=== Alien: a pushed out research is CANCELLED - is there a warning?
+    alien stack, 3 shown
+  100.00  started     BileBomb
+  100.00  shown       BileBomb
+  102.03  started     MetabolizeEnergy
+  102.03  shown       MetabolizeEnergy
+  104.03  started     UpgradeToCragHive
+  104.03  shown       UpgradeToCragHive
+  106.03  started     UpgradeToShadeHive
+  106.03  shown       UpgradeToShadeHive
+  106.03  PUSHED OUT  MetabolizeEnergy
+  106.57  removed     MetabolizeEnergy
+  115.03  cancelled   MetabolizeEnergy (by the commander)
+  124.00  complete    UpgradeToCragHive
+  124.00  SOUND
+  126.00  complete    UpgradeToShadeHive
+  126.00  SOUND
+  127.07  removed     UpgradeToCragHive
+  129.07  removed     UpgradeToShadeHive
+  139.97  complete    BileBomb
+  139.97  SOUND
+  143.03  removed     BileBomb
+    sounds played: 3 of 4 researches
+
+=== Alien: four researches, none lost, then the player dies and respawns
+    alien stack, 3 shown
+  100.00  started     UpgradeToCragHive
+  100.00  shown       UpgradeToCragHive
+  102.03  started     UpgradeToShadeHive
+  102.03  shown       UpgradeToShadeHive
+  104.03  started     Leap
+  104.03  shown       Leap
+  106.03  started     BileBomb
+  110.03  --- player died and respawned, HUD rebuilt ---
+  110.03  shown       Leap
+  110.07  shown       BileBomb
+  110.10  shown       UpgradeToCragHive
+  110.13  shown       UpgradeToShadeHive
+  110.13  PUSHED OUT  BileBomb
+  110.67  removed     BileBomb
+  119.97  complete    UpgradeToCragHive
+  119.97  SOUND
+  122.00  complete    UpgradeToShadeHive
+  122.00  SOUND
+  123.03  removed     UpgradeToCragHive
+  125.07  removed     UpgradeToShadeHive
+  144.00  complete    Leap
+  144.00  SOUND
+  147.07  removed     Leap
+    sounds played: 3 of 4 researches
+
+=== Marine, NS1 HUD bars (3 shown): four researches
+    marine stack, 3 shown
+  100.00  started     AdvancedArmoryUpgrade
+  100.00  shown       AdvancedArmoryUpgrade
+  102.03  started     Armor1
+  102.03  shown       Armor1
+  104.03  started     AdvancedMarineSupport
+  104.03  shown       AdvancedMarineSupport
+  106.03  started     MinesTech
+  106.03  shown       MinesTech
+  106.03  PUSHED OUT  AdvancedArmoryUpgrade
+  106.57  removed     AdvancedArmoryUpgrade
+  126.00  complete    MinesTech
+  126.00  SOUND
+  129.07  removed     MinesTech
+  164.03  complete    AdvancedMarineSupport
+  164.03  SOUND
+  167.10  removed     AdvancedMarineSupport
+  177.00  complete    Armor1
+  177.00  SOUND
+  180.07  removed     Armor1
+    sounds played: 3 of 4 researches
+
+=== Alien: the fourth research waits, and completes while still waiting
+    alien stack, 3 shown
+  100.00  started     BileBomb
+  100.00  shown       BileBomb
+  100.53  started     MetabolizeEnergy
+  100.53  shown       MetabolizeEnergy
+  101.03  started     Leap
+  101.03  shown       Leap
+  101.53  started     BoneShield
+  139.97  complete    BileBomb
+  139.97  SOUND
+  140.50  complete    MetabolizeEnergy
+  140.50  SOUND
+  141.00  complete    Leap
+  141.00  SOUND
+  141.50  shown       BoneShield
+  141.50  complete    BoneShield
+  141.50  SOUND
+  141.50  PUSHED OUT  Leap
+  142.03  removed     Leap
+  143.03  removed     BileBomb
+  143.57  removed     MetabolizeEnergy
+  144.57  removed     BoneShield
+    sounds played: 4 of 4 researches

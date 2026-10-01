@@ -45,24 +45,8 @@ Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Values.lua")
 
 local IT = ImprovedTooltips
 
--- Mirrors the file-local kBioMassTechIds in AlienTeam.lua, which we cannot reach. The index IS the
--- team biomass level the node stands for, so this list must stay positional: a missing entry is
--- skipped in place rather than closing the gap.
-local kBioMassTechIds =
-{
-	kTechId.BioMassOne,
-	kTechId.BioMassTwo,
-	kTechId.BioMassThree,
-	kTechId.BioMassFour,
-	kTechId.BioMassFive,
-	kTechId.BioMassSix,
-	kTechId.BioMassSeven,
-	kTechId.BioMassEight,
-	kTechId.BioMassNine,
-	kTechId.BioMassTen,
-	kTechId.BioMassEleven,
-	kTechId.BioMassTwelve,
-}
+-- The per-level biomass nodes come from IT.GetBioMassTechIds, a positional mirror of the file-local
+-- kBioMassTechIds in AlienTeam.lua that the biomass bar overlay reads too.
 
 -- One entry per hive that is on its way to adding a biomass level, holding both the fraction to
 -- display and an estimate of how long it has left.
@@ -192,16 +176,17 @@ function AlienTeam:UpdateBioMassLevel()
 	table.sort(pending, SortBySoonest)
 
 	local level = self.bioMassLevel or 0
+	local bioMassTechIds = IT.GetBioMassTechIds()
 
 	for i = 1, #pending do
 
 		local index = level + i
 
-		if index > #kBioMassTechIds then
+		if index > #bioMassTechIds then
 			break
 		end
 
-		local techId = kBioMassTechIds[index]
+		local techId = bioMassTechIds[index]
 		local techNode = techId and techTree:GetTechNode(techId)
 		local progress = pending[i].fraction
 
