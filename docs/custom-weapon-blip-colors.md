@@ -120,3 +120,10 @@ Test checklist, replacing the mode lines above:
 - ON, pick a shotgun color: it changes on every map whose checkbox is ticked, and on no other.
 - Untick both checkboxes: CUSTOM WEAPON COLORS and the color rows fold away. Tick either: the row
   returns, and the color rows with it if it was ON.
+
+## SMG row only under CBM (2026-10-01)
+
+The SMG color row was always listed, because the main menu cannot tell whether CBM will be loaded.
+The user's call: without CBM it should not show. It is now listed only in a game where
+`kPlayerStatus` has a `Submachinegun` entry, so it is also absent from the main menu's panel; a CBM
+player sets that color from the in-game menu. The saved value is read either way.

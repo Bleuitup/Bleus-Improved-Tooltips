@@ -638,6 +638,8 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   weapon colors switched on; the setting folds away when neither map does. The pickers start
   at the colors the map already uses, so nothing changes until one is picked. See
   `docs/custom-weapon-blip-colors.md`.
+- **Settings panel grouped by team.** Settings common to both teams come first, then MARINES and
+  ALIENS headings. The SMG color row only appears in a game running CBM.
 - **In Cooldown icons in the team color.** They were drawn in the build menu's raw gray, which read
   as disabled; they now take the same tint as the commander's own buttons.
 - **Hive panel additions for spectators.** Following an alien in first person shows the alien hive

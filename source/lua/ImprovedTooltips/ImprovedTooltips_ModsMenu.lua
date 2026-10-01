@@ -34,6 +34,10 @@
 
 -- Two VMs load this file. The main menu VM has no mod state to write to, and touching
 -- ImprovedTooltips there would either fail or write to a table nothing reads.
+-- The section headings' widget. The Controls tab loads it; loaded here too so the panel does not
+-- depend on that having happened first.
+Script.Load("lua/menu2/widgets/GUIMenuDividerWidget.lua")
+
 local kMainVM = decoda_name == "Main"
 
 if not kMainVM then
@@ -44,10 +48,8 @@ end
 -- IT.kMapBlipColorOverrides). The tooltip says so only when that weapon exists: kPlayerStatus gains a
 -- Submachinegun entry under CBM and has none in vanilla. Only knowable in game - the main menu VM
 -- loads no gameplay Lua, so from the main menu the tooltip reads as it does without CBM.
-local kCBMSmgNote = ""
-if not kMainVM and type(kPlayerStatus) == "table" and rawget(kPlayerStatus, "Submachinegun") ~= nil then
-	kCBMSmgNote = " SMGs are colored blue."
-end
+local kHasCBMSmg = not kMainVM and type(kPlayerStatus) == "table" and rawget(kPlayerStatus, "Submachinegun") ~= nil
+local kCBMSmgNote = kHasCBMSmg and " SMGs are colored blue." or ""
 
 -- CASING, matching vanilla. Option labels and category names are written in CAPITALS; the tooltip
 -- beneath them is ordinary sentence case with full stops. This is in the strings themselves, not a
@@ -76,6 +78,11 @@ end
 --            optional; the key of an earlier entry and the values of it for which this row folds
 --            away. parent may be a list of keys: the row then shows while ANY of them holds a
 --            value outside hideValues, and folds only when none does.
+--   section  optional; the heading the row sits under, "MARINES" or "ALIENS". Rows without one are
+--            common to both teams and come first, under no heading. Keep each section's rows
+--            together: a heading is drawn wherever the section changes.
+--   available
+--            optional; false leaves the row out of the panel. The saved value is still read.
 local kOptions =
 {
 	{
@@ -101,6 +108,7 @@ local kOptions =
 
 	{
 		-- The big map only from 1.04, and keeps its 1.03 key so a stored ON carries over.
+		section = "MARINES",
 		key = "BIT_WeaponBlips", field = "kColorMarineBlipsByWeapon", type = "bool", default = true,
 		widget = "checkbox",
 		label = "COLOR MAP BLIPS BY WEAPON",
@@ -112,6 +120,7 @@ local kOptions =
 	},
 
 	{
+		section = "MARINES",
 		key = "BIT_WeaponBlipsMinimap", field = "kColorMarineMinimapBlipsByWeapon", type = "bool", default = false,
 		widget = "checkbox",
 		label = "COLOR MINIMAP BLIPS BY WEAPON",
@@ -126,6 +135,7 @@ local kOptions =
 		--
 		-- With both checkboxes off there is nothing for it to apply to, so the row folds away, and the
 		-- palette under it with it.
+		section = "MARINES",
 		key = "BIT_CustomWeaponColors", field = "kUseCustomWeaponColors", type = "int", default = 0,
 		read = function(value) return value >= 1 end,
 		widget = "choice",
@@ -143,6 +153,7 @@ local kOptions =
 	-- way vanilla folds the building highlight color under its checkbox. Defaults are the colors the
 	-- map uses without this, so switching it on changes nothing until a color is picked.
 	{
+		section = "MARINES",
 		key = "BIT_WeaponColorRifle", field = "kCustomWeaponColorRifle", type = "color", default = 0x00FFFF,
 		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
 		label = "RIFLE COLOR",
@@ -150,6 +161,7 @@ local kOptions =
 	},
 
 	{
+		section = "MARINES",
 		key = "BIT_WeaponColorShotgun", field = "kCustomWeaponColorShotgun", type = "color", default = 0x00FF00,
 		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
 		label = "SHOTGUN COLOR",
@@ -157,6 +169,7 @@ local kOptions =
 	},
 
 	{
+		section = "MARINES",
 		key = "BIT_WeaponColorGrenadeLauncher", field = "kCustomWeaponColorGrenadeLauncher", type = "color", default = 0xFF00FF,
 		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
 		label = "GRENADE LAUNCHER COLOR",
@@ -164,6 +177,7 @@ local kOptions =
 	},
 
 	{
+		section = "MARINES",
 		key = "BIT_WeaponColorFlamethrower", field = "kCustomWeaponColorFlamethrower", type = "color", default = 0xFFFF00,
 		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
 		label = "FLAMETHROWER COLOR",
@@ -171,6 +185,7 @@ local kOptions =
 	},
 
 	{
+		section = "MARINES",
 		key = "BIT_WeaponColorHeavyMachineGun", field = "kCustomWeaponColorHeavyMachineGun", type = "color", default = 0xE60000,
 		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
 		label = "HEAVY MACHINE GUN COLOR",
@@ -178,8 +193,10 @@ local kOptions =
 	},
 
 	{
-		-- Always listed: the main menu cannot tell whether CBM is loaded. Without CBM no marine
-		-- ever carries one, so the row is simply never used.
+		-- Only listed in a game running CBM, the one place the weapon exists. The main menu cannot tell
+		-- whether CBM will be loaded, so the row is left out there too.
+		available = kHasCBMSmg,
+		section = "MARINES",
 		key = "BIT_WeaponColorSubmachinegun", field = "kCustomWeaponColorSubmachinegun", type = "color", default = 0x0000FF,
 		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
 		label = "SMG COLOR (CBM)",
@@ -187,6 +204,7 @@ local kOptions =
 	},
 
 	{
+		section = "MARINES",
 		key = "BIT_MinimapPhaseGateArrows", field = "kCommanderMinimapPhaseGateArrows", type = "bool", default = true,
 		widget = "checkbox",
 		label = "PHASE GATE ARROWS ON CORNER MINIMAP",
@@ -194,6 +212,7 @@ local kOptions =
 	},
 
 	{
+		section = "MARINES",
 		key = "BIT_ExoWeaponBars", field = "kShowExoWeaponBars", type = "bool", default = true,
 		widget = "checkbox",
 		label = "EXO WEAPON BARS",
@@ -203,6 +222,7 @@ local kOptions =
 	{
 		-- 0 notifications, 1 hive panel: IT.kHiveResearchDisplay* in the config. Clamped so a
 		-- hand-edited options file cannot select a mode that does not exist.
+		section = "ALIENS",
 		key = "BIT_HiveResearchDisplay", field = "kHiveResearchDisplay", type = "int", default = 0,
 		read = function(value) return math.max(0, math.min(1, value)) end,
 		widget = "choice",
@@ -355,9 +375,31 @@ local function BuildContents()
 
 	local contents = { }
 
+	local shown = { }
 	for i = 1, #kOptions do
+		if kOptions[i].available ~= false then
+			shown[#shown + 1] = kOptions[i]
+		end
+	end
 
-		local option = kOptions[i]
+	local section = nil
+
+	for i = 1, #shown do
+
+		local option = shown[i]
+
+		-- A heading wherever the section changes: vanilla's own divider, the one that heads FIELD
+		-- PLAYER BINDINGS in the Controls tab (MenuData.lua:660).
+		if option.section ~= section then
+			section = option.section
+			contents[#contents + 1] =
+			{
+				name = "bitHeading" .. section:sub(1, 1) .. section:sub(2):lower(),
+				class = GUIMenuDividerWidget,
+				params = { font = MenuStyle.kOptionGroupHeadingFont },
+				properties = { { "Label", section } },
+			}
+		end
 
 		local params =
 		{
@@ -393,7 +435,7 @@ local function BuildContents()
 			entry.postInit = CreateFoldUnderParentPostInit(option.parent, option.hideValues or { })
 		end
 
-		contents[i] = entry
+		contents[#contents + 1] = entry
 
 	end
 
