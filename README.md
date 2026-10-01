@@ -625,6 +625,11 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   mature values are constructor arguments in `AlienStructure.lua` subclasses rather than TechData,
   so there is no generic way to read them. Only the drop-time value is shown.
 
+## Credits
+
+- **Shimizu.** The biomass bar's per-bead progress uses his approach, with his permission: bead
+  positions measured from the art, and progress revealed by cropping.
+
 ## Changelog
 
 **Unreleased (1.09 candidate)**

@@ -107,6 +107,19 @@ wrong version looks plausible.
 draw over "Biomass Level: N / 12". Testing showed the text sits clear of the bead art, and vanilla's
 own full-width fill already passes under it at 12/12 without obscuring it. There is nothing to fix.
 
+## Where those two came from (restored 2026-10-01)
+
+Both are Shimizu's approach, used with his permission. On 2026-09-05 the user brought his mod in for
+comparison (it draws the same per-bead progress in its `GUIBioMassPartialProgress.lua`), and its two
+choices above were better than the first draft here and were adopted. The bead bounds in this mod
+were then measured again from the texture, as described, and agree with his to within a pixel. An
+earlier version of this note said so; it was rewritten the same day without naming the source, at
+the user's request to keep things simple, and the credit was never added anywhere. The user asked
+for it on 2026-10-01: it is in the README's Credits and belongs in the Workshop description.
+
+What this mod does differently: ability progress meters along the bar, and pending biomass ordered
+by time left rather than by fraction.
+
 ## Most likely to need adjusting in game
 
 - **Bead alpha.** 50% white over the filled-bar art is a guess; it may read as too faint or as a
