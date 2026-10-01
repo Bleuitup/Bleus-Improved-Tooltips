@@ -5,6 +5,8 @@ AlienTeamInfo
 Clamp
 Client
 Color
+ColorIntToColor
+ColorToColorInt
 Commander
 CommanderUI_IsAlienCommander
 Entity
@@ -40,6 +42,7 @@ GetGUIManager
 GetGameInfoEntity
 GetGamerules
 GetMaxSupplyForTeam
+GetOptionsMenu
 GetScaledVector
 GetTeamInfoEntity
 GetTechTree
@@ -53,6 +56,11 @@ ModsMenuUtils
 NS2Gamerules
 OP_TT_Checkbox
 OP_TT_Choice
+OP_TT_ColorPicker
+OP_TT_Expandable_Checkbox
+OP_TT_Expandable_Choice
+OP_TT_Expandable_ColorPicker
+OP_TT_Expandable_Number
 OP_TT_Number
 PROFILE
 PlayerMapBlip

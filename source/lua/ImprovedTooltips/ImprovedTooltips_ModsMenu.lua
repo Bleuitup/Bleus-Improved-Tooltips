@@ -66,11 +66,15 @@ end
 --   key      the saved option name. Prefixed BIT_ so it cannot collide with NS2+'s CHUD_ keys or
 --            another mod's. NEVER rename one: it is what keeps a player's saved setting.
 --   field    the ImprovedTooltips config field the stored value is written to.
---   type     "bool", "int" or "float", the option type the value is saved as.
+--   type     "bool", "int", "float" or "color", the option type the value is saved as. A color is
+--            0xRRGGBB, in the default, in the config field and as the game stores it.
 --   default  must match the config's own value for field.
 --   read     optional; turns the stored value into the field's value.
---   widget   "checkbox", "number" (a slider with minValue, maxValue, decimalPlaces) or "choice"
---            (with choices).
+--   widget   "checkbox", "number" (a slider with minValue, maxValue, decimalPlaces), "choice"
+--            (with choices) or "color" (vanilla's color picker).
+--   parent, hideValues
+--            optional; the key of an earlier entry and the values of it for which this row folds
+--            away.
 local kOptions =
 {
 	{
@@ -114,6 +118,71 @@ local kOptions =
 	},
 
 	{
+		-- 1.09. Which maps use the player's own palette instead of the game's. One palette, shared when
+		-- both do (user's call, docs/custom-weapon-blip-colors.md). Values are
+		-- IT.kCustomWeaponColorsMode in the config; clamped against a hand-edited options file.
+		key = "BIT_CustomWeaponColors", field = "kCustomWeaponColorsMode", type = "int", default = 0,
+		read = function(value) return math.max(0, math.min(3, value)) end,
+		widget = "choice",
+		choices =
+		{
+			{ value = 0, displayString = "NONE" },
+			{ value = 1, displayString = "MAP ONLY" },
+			{ value = 2, displayString = "MINIMAP ONLY" },
+			{ value = 3, displayString = "MAP AND MINIMAP" },
+		},
+		label = "CUSTOM WEAPON COLORS",
+		tooltip = "Use your own weapon colors on the map, the minimap or both, in place of the game's. Only applies where weapon colors are switched on above.",
+	},
+
+	-- The palette. Each row folds away while CUSTOM WEAPON COLORS is NONE (parent, hideValues), the
+	-- way vanilla folds the building highlight color under its checkbox. Defaults are the colors the
+	-- map uses without this, so choosing a custom mode changes nothing until a color is picked.
+	{
+		key = "BIT_WeaponColorRifle", field = "kCustomWeaponColorRifle", type = "color", default = 0x00FFFF,
+		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
+		label = "RIFLE COLOR",
+		tooltip = "Map color for marines carrying a rifle.",
+	},
+
+	{
+		key = "BIT_WeaponColorShotgun", field = "kCustomWeaponColorShotgun", type = "color", default = 0x00FF00,
+		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
+		label = "SHOTGUN COLOR",
+		tooltip = "Map color for marines carrying a shotgun.",
+	},
+
+	{
+		key = "BIT_WeaponColorGrenadeLauncher", field = "kCustomWeaponColorGrenadeLauncher", type = "color", default = 0xFF00FF,
+		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
+		label = "GRENADE LAUNCHER COLOR",
+		tooltip = "Map color for marines carrying a grenade launcher.",
+	},
+
+	{
+		key = "BIT_WeaponColorFlamethrower", field = "kCustomWeaponColorFlamethrower", type = "color", default = 0xFFFF00,
+		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
+		label = "FLAMETHROWER COLOR",
+		tooltip = "Map color for marines carrying a flamethrower.",
+	},
+
+	{
+		key = "BIT_WeaponColorHeavyMachineGun", field = "kCustomWeaponColorHeavyMachineGun", type = "color", default = 0xE60000,
+		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
+		label = "HEAVY MACHINE GUN COLOR",
+		tooltip = "Map color for marines carrying a heavy machine gun.",
+	},
+
+	{
+		-- Always listed: the main menu cannot tell whether CBM is loaded. Without CBM no marine
+		-- ever carries one, so the row is simply never used.
+		key = "BIT_WeaponColorSubmachinegun", field = "kCustomWeaponColorSubmachinegun", type = "color", default = 0x0000FF,
+		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
+		label = "SMG COLOR (CBM)",
+		tooltip = "Map color for marines carrying CBM's submachine gun.",
+	},
+
+	{
 		key = "BIT_MinimapPhaseGateArrows", field = "kCommanderMinimapPhaseGateArrows", type = "bool", default = true,
 		widget = "checkbox",
 		label = "PHASE GATE ARROWS ON CORNER MINIMAP",
@@ -148,6 +217,19 @@ local kReadOption =
 	bool = function(key, default) return Client.GetOptionBoolean(key, default) end,
 	int = function(key, default) return Client.GetOptionInteger(key, default) end,
 	float = function(key, default) return Client.GetOptionFloat(key, default) end,
+	-- The game hands a color option back as a Color (Client.GetOptionColor, what vanilla's own color
+	-- options read through). The config keeps colors as 0xRRGGBB, like the defaults above, so it is
+	-- turned back into that here.
+	color = function(key, default)
+		local color = Client.GetOptionColor(key, default)
+		if type(color) == "number" then
+			return color
+		end
+		if color ~= nil and type(color.r) == "number" and type(ColorToColorInt) == "function" then
+			return ColorToColorInt(color)
+		end
+		return default
+	end,
 }
 
 -- Push the stored values onto the live config. Every field is read at use - every frame, or every
@@ -181,7 +263,62 @@ local kWidgetClass =
 	checkbox = OP_TT_Checkbox,
 	number = OP_TT_Number,
 	choice = OP_TT_Choice,
+	color = OP_TT_ColorPicker,
 }
+
+-- The same widgets with vanilla's Expandable wrapper, for rows that fold under a parent
+-- (MenuDataUtils.lua:67-72). AdvancedMenuData.lua keeps the same pairing for the Advanced tab.
+local kExpandableWidgetClass =
+{
+	checkbox = OP_TT_Expandable_Checkbox,
+	number = OP_TT_Expandable_Number,
+	choice = OP_TT_Expandable_Choice,
+	color = OP_TT_Expandable_ColorPicker,
+}
+
+-- The widget name the panel gives an option.
+local function GetWidgetName(key)
+	return "bit" .. key:gsub("^BIT_", "")
+end
+
+-- Folds a row away while its parent holds one of hideValues, and follows the parent as it changes.
+-- What AdvancedMenuData.lua's CreateAdvancedOptionPostInit_HideValues does for the Advanced tab;
+-- that one is a file-local tied to the AdvancedOptions table, so it is restated here.
+local function CreateFoldUnderParentPostInit(parentKey, hideValues)
+
+	local hidden = { }
+	for i = 1, #hideValues do
+		hidden[hideValues[i]] = true
+	end
+
+	return function(self)
+
+		local parentWidget = GetOptionsMenu():GetOptionWidget(GetWidgetName(parentKey))
+		if not parentWidget then
+			return
+		end
+
+		local function GetShouldExpand()
+			local parentExpanded = true
+			if parentWidget.GetExpanded then
+				parentExpanded = parentWidget:GetExpanded()
+			end
+			return parentExpanded and not hidden[parentWidget:GetValue()]
+		end
+
+		self:SetExpanded(GetShouldExpand())
+
+		self:HookEvent(parentWidget, "OnValueChanged", function(child)
+			child:SetExpanded(GetShouldExpand())
+		end)
+
+		self:HookEvent(parentWidget, "OnExpandedChanged", function(child)
+			child:SetExpanded(GetShouldExpand())
+		end)
+
+	end
+
+end
 
 local function BuildContents()
 
@@ -209,14 +346,23 @@ local function BuildContents()
 			properties[#properties + 1] = { "Choices", option.choices }
 		end
 
-		contents[i] =
+		local entry =
 		{
 			-- The widget names the panel used before it was built from this table.
-			name = "bit" .. option.key:gsub("^BIT_", ""),
+			name = GetWidgetName(option.key),
 			class = kWidgetClass[option.widget],
 			params = params,
 			properties = properties,
 		}
+
+		if option.parent then
+			entry.class = kExpandableWidgetClass[option.widget]
+			-- Vanilla's own margin for a folding option row (AdvancedMenuData.lua).
+			params.expansionMargin = 4.0
+			entry.postInit = CreateFoldUnderParentPostInit(option.parent, option.hideValues or { })
+		end
+
+		contents[i] = entry
 
 	end
 

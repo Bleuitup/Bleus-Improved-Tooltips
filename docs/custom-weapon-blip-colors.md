@@ -1,6 +1,7 @@
 # Custom weapon blip colors
 
-Planned for 1.09. Design settled with the user on 2026-09-26; nothing built yet.
+Built for 1.09 on 2026-10-01 (`release/1.09`), to the design settled with the user on 2026-09-26.
+Awaiting the user's in-game test.
 
 ## The request
 
@@ -60,3 +61,40 @@ Rejected: A (a DEFAULT/CUSTOM row under each switch, shared palette block with t
 - The SMG row is always shown, labeled "(CBM)": the main menu VM cannot tell whether CBM is loaded.
 - Changes apply immediately; the Mods panel Reset covers the new rows.
 - Workshop description has 29 bytes free at 1.07; a sentence here means trimming another.
+
+## As built (2026-10-01)
+
+- **Options** (`kOptions`, `ImprovedTooltips_ModsMenu.lua`): `BIT_CustomWeaponColors` (int, 0 to 3,
+  field `kCustomWeaponColorsMode`) and six color rows, `BIT_WeaponColorRifle`, `Shotgun`,
+  `GrenadeLauncher`, `Flamethrower`, `HeavyMachineGun`, `Submachinegun` (fields
+  `kCustomWeaponColor<Name>`). The table gained a `color` type and widget, and `parent` /
+  `hideValues` for rows that fold.
+- **Colors are `0xRRGGBB` everywhere on the mod's side**: option default, config field and what
+  `tools/check_mod.lua` compares. The game hands a stored color back as a `Color`
+  (`Client.GetOptionColor`); the reader turns it back with `ColorToColorInt`.
+- **Folding** restates `CreateAdvancedOptionPostInit_HideValues` (`AdvancedMenuData.lua:24`), which
+  is a file-local tied to the `AdvancedOptions` table: the child looks its parent up with
+  `GetOptionsMenu():GetOptionWidget(name)` and follows its `OnValueChanged`. The list layout already
+  collapses the space of a folded row (`GUIListLayout`, which the Advanced tab uses through the same
+  `ModsMenuUtils.CreateBasicModsMenuContents`).
+- **Lookup** (`ImprovedTooltips_MapBlipColor.lua`): `GetUsesCustomColors(isBigMap)` decides per call,
+  and `GetCustomColorForStatus` reads `IT["kCustomWeaponColor" .. statusName]` live, so a pick shows
+  on the next map update. A weapon with no field keeps its usual color. Everything downstream is
+  unchanged: the color is still fed through `MapBlip.kCustomMarineColor` around the original call.
+
+## Test checklist
+
+Weapon colors must be on for the map being checked (the two switches above the new row).
+
+- NONE: the six color rows are folded away; maps look as in 1.08.
+- MAP ONLY, nothing picked: rows fold out; the big map looks the same as before (same starting colors).
+- Pick a new shotgun color: shotgunners change on the big map at once; the minimap keeps the old green.
+- MINIMAP ONLY: the reverse. MAP AND MINIMAP: both use the picked colors.
+- Back to NONE: both maps return to the game's colors and the rows fold away; the picks are kept for
+  next time.
+- Each row's reset button returns that color to its default.
+- Restart the game: mode and colors are remembered.
+- A Steam friend with a custom-colored weapon still shows at half strength.
+- From the alien team: marine blips never take weapon colors, custom or not.
+- With CBM: the SMG row colors SMG marines. Without CBM the row does nothing.
+- From the main menu (not in a game): the panel opens, the rows fold and unfold, no script errors.

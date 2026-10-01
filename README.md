@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.08. Published to the Steam Workshop as
+Version 1.09. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -562,6 +562,11 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 - `kMapBlipColorOverrides` — per-weapon colors keyed by `kPlayerStatus` name that win over both the
   palette read and the fallback. Holds CBM's `Submachinegun` as blue (`#0000FF`) from 1.05, since the
   palette's orange read as an alien; the place per-weapon custom colors will plug in
+- `kCustomWeaponColorsMode` — which maps use the player's own weapon palette: 0 none (default),
+  1 the big map, 2 the minimaps, 3 both. Exposed in the settings panel
+- `kCustomWeaponColorRifle` / `Shotgun` / `GrenadeLauncher` / `Flamethrower` / `HeavyMachineGun` /
+  `Submachinegun` — that palette, as `0xRRGGBB`; one field per `kPlayerStatus` name. Defaults are the
+  colors the map uses without it. Exposed in the settings panel
 - `kMapBlipColorRefreshInterval` — seconds between rebuilds of the blip-owner to weapon table.
   `GetMapBlipColor` runs once per blip per minimap update, so this cannot be per call
 - `kCommanderMinimapPhaseGateArrows` — draw phase gate arrows on the commander's and spectator's
@@ -622,17 +627,24 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
-**Unreleased (1.08 candidate)**
+**Unreleased (1.09 candidate)**
+- **Custom weapon colors for the map and minimap.** New setting CUSTOM WEAPON COLORS: NONE, MAP ONLY,
+  MINIMAP ONLY, or MAP AND MINIMAP, with a color picker per weapon folding out beneath it. One
+  palette, shared when both maps use it; a map left out keeps the game's colors. The pickers start
+  at the colors the map already uses, so nothing changes until one is picked. See
+  `docs/custom-weapon-blip-colors.md`.
+- **In Cooldown icons in the team color.** They were drawn in the build menu's raw gray, which read
+  as disabled; they now take the same tint as the commander's own buttons.
+- **Hive panel additions for spectators.** Following an alien in first person shows the alien hive
+  panel, but the mod's biomass icons, research ring and HIVE PANEL slots stayed empty because their
+  data only went to the alien team. Spectators now receive it too.
+
+**1.08** (Workshop, 2026-09-26)
 - **The In Cooldown panel wraps three to a row.** Past three abilities it used to run off the right
   of the screen, and aliens reach four at the default cut-off. A short last row is centered, and the
   alien smoke is refitted so it covers the whole panel rather than fading out under the bottom row.
 - **Marines get a backdrop behind the In Cooldown panel**: the commander selection panel's own
   scanline plate and frame.
-- **Hive panel additions for spectators.** Following an alien in first person shows the alien hive
-  panel, but the mod's biomass icons, research ring and HIVE PANEL slots stayed empty because their
-  data only went to the alien team. Spectators now receive it too.
-- **In Cooldown icons in the team color.** They were drawn in the build menu's raw gray, which read
-  as disabled; they now take the same tint as the commander's own buttons.
 - **Smaller phase gate arrows on the corner minimap.** They were drawn at the big map's size, about
   three times too big for the small map; they are now drawn at 0.6 of that size.
 - **The spectator supply counter follows a re-themed top bar**, as the commander tooltip already did.
@@ -642,7 +654,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   slots moved to their own file, and a static check added in `tools/check_mod.lua`. See
   `docs/refactor-plan.md`.
 
-**Unreleased (1.07 candidate)**
+**1.07** (Workshop, 2026-09-22)
 - **Hive research in the hive panel.** New setting HIVE RESEARCH DISPLAY. NOTIFICATIONS (default)
   keeps research on the left with the busy ring on the hive, as before. HIVE PANEL moves research
   done in hives into that hive's row instead: the hive's own research (biomass or a hive type upgrade)
