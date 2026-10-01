@@ -632,7 +632,7 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 ## Changelog
 
-**Unreleased (1.09a candidate)**
+**1.09a (Workshop, 2026-10-01)**
 - Settings panel: the MARINES and ALIENS headings are a tier smaller, so they read as parts of the
   panel instead of matching its title bar.
 
