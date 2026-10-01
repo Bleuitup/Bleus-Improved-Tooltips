@@ -249,6 +249,13 @@ function GUIImprovedTooltipsCooldowns:GetEntry(index)
 	icon:SetAnchor(GUIItem.Left, GUIItem.Top)
 	icon:SetSize(Vector(kIconSize, kIconSize, 0))
 	icon:SetTexture(IT.kBuildMenuTexture)
+	-- The build menu art is grayscale; vanilla's command buttons tint it with the team's icon color
+	-- (kIconColors, Globals.lua:467, applied in GUICommanderButtons for enabled buttons). Untinted,
+	-- the panel's icons read as grayed out, as if unavailable. Read at runtime so a mod that retints
+	-- the buttons retints these too; the mod's own team tints are only the fallback.
+	local teamColor = kIconColors and kIconColors[self.teamType]
+		or (self.teamType == kAlienTeamType and IT.kAlienIconColor or IT.kMarineIconColor)
+	icon:SetColor(teamColor)
 	plate:AddChild(icon)
 
 	local dial = GUIDial()

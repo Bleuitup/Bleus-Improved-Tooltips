@@ -48,3 +48,11 @@ Two marine abilities looked right. With ONE, the title overflowed the plate: a s
 wide plus padding, narrower than "IN COOLDOWN", and the panel was sized to the entries alone. The
 panel is now never narrower than the title plus padding, with the grid centered inside it. Applied
 to aliens too at the user's request, for consistency, though the smoke hid the problem there.
+
+## Icons in the team color (2026-09-28)
+
+User's note: the panel's ability icons looked grayed out. The build menu art is grayscale, and
+vanilla's command buttons tint it with `kIconColors[teamType]` (`Globals.lua:467`: marine
+`Color(0.8, 0.96, 1)`, alien `Color(1, 0.9, 0.4)`) when a button is enabled. The panel never set a
+color, so it showed the raw gray. Each icon now takes `kIconColors` for the panel's team, read at
+runtime, with the mod's own team tints as a fallback.

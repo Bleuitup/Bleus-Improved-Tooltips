@@ -79,15 +79,16 @@ kARCDeployedArmor
 kAlienTeamType
 kBoneWallHealthPerBioMass
 kCBMaddon
-kGameState
 kGUILayerCommanderHUD
 kGUILayerPlayerHUD
 kGUILayerPlayerHUDForeground4
+kGameState
 kIconColors
 kMarineTeamType
 kMinimapBlipType
 kPlayerStatus
 kResearchNotificationSource
+kSpectatorIndex
 kTeam1Index
 kTeam2Index
 kTechDataCooldown

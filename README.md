@@ -628,6 +628,11 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   alien smoke is refitted so it covers the whole panel rather than fading out under the bottom row.
 - **Marines get a backdrop behind the In Cooldown panel**: the commander selection panel's own
   scanline plate and frame.
+- **Hive panel additions for spectators.** Following an alien in first person shows the alien hive
+  panel, but the mod's biomass icons, research ring and HIVE PANEL slots stayed empty because their
+  data only went to the alien team. Spectators now receive it too.
+- **In Cooldown icons in the team color.** They were drawn in the build menu's raw gray, which read
+  as disabled; they now take the same tint as the commander's own buttons.
 - **Smaller phase gate arrows on the corner minimap.** They were drawn at the big map's size, about
   three times too big for the small map; they are now drawn at 0.6 of that size.
 - **The spectator supply counter follows a re-themed top bar**, as the commander tooltip already did.

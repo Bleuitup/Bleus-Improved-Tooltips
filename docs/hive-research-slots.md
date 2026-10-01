@@ -44,6 +44,13 @@ The default stays closest to vanilla.
   structure itself and the Infested Tunnel upgrade on the tunnel, so their notifications stay.
 - **Field aliens only.** The panel is shown to `kShowAsClass["Alien"]`; spectators, dead aliens and
   the commander are unaffected, and the filter checks `isa("Alien")`.
+  **Correction, 2026-09-28:** a spectator following an alien in first person IS that alien as far as
+  the client is concerned (`Client.GetLocalPlayer()` returns the followed player), so they get
+  GUIHiveStatus and this filter applies to them. The hive message was only sent to the alien team,
+  so those spectators had empty rows: no biomass icons, no busy ring, and in HIVE PANEL mode hive
+  research gone entirely. Since 1.08 the message also goes to the spectator team
+  (`IT.BroadcastHiveState`); the join resync already covered spectators. Reported by the user from a
+  spectated game; the Better Spectator mod's alien perspective is where they saw it.
 - **HIVE PANEL does nothing when the hive status panel is off**, so nothing is hidden without a
   replacement.
 - **Hiding a notification hides all of it**: its start, green complete state and red cancel state
