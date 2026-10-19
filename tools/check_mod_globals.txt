@@ -46,6 +46,7 @@ GetMaxSupplyForTeam
 GetOptionsMenu
 GetScaledVector
 GetTeamInfoEntity
+GetTechIdsFromBitMask
 GetTechTree
 GetTextureCoordinatesForIcon
 HasMixin

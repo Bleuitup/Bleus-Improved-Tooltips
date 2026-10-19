@@ -216,6 +216,15 @@ local kOptions =
 	},
 
 	{
+		-- 1.10.
+		section = "MARINES",
+		key = "BIT_WelderNameplateIcon", field = "kShowWelderNameplateIcon", type = "bool", default = true,
+		widget = "checkbox",
+		label = "WELDER ICON ON NAMEPLATES",
+		tooltip = "Shows a welder icon next to the name of every marine teammate carrying one. Seen by the marine commander and by marines in the field.",
+	},
+
+	{
 		-- 0 notifications, 1 hive panel: IT.kHiveResearchDisplay* in the config. Clamped so a
 		-- hand-edited options file cannot select a mode that does not exist.
 		section = "ALIENS",

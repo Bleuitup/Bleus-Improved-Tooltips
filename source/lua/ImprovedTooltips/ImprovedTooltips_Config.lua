@@ -494,3 +494,36 @@ IT.kExoBarChargeReadyColor = Color(1, 1, 1, 1)
 IT.kExoBarPoolNotReadyAlpha   = 0.6
 IT.kExoBarPoolReadyColor      = Color(1, 0.25, 1, 1)
 IT.kExoBarPoolMultiReadyColor = Color(0.25, 1, 1, 1)
+
+------------------------------------------------------------------------------------------------
+-- Welder icon on nameplates
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_WelderIcon.lua. A welder icon to the right of a marine teammate's name, so
+-- nobody has to ask who has one or hold the scoreboard open to find out. Seen by the marine
+-- commander and by marines in the field. On by default, and exposed in the settings panel.
+
+IT.kShowWelderNameplateIcon = true
+
+-- The commander build menu's welder (IT.kBuildMenuTexture), cropped to the drawing inside its 80px
+-- cell: left, top, right, bottom, in pixels. The user picked this art on 2026-10-18 from five
+-- existing welder icons.
+IT.kWelderIconCellInset = { 13, 14, 10, 14 }
+
+-- The build menu art is gray. Multiplied by this it takes the light blue of the kill feed and buy
+-- menu welders (205, 245, 255), which is what the user asked for. 80% opaque, from player feedback
+-- after the first test (2026-10-18); it was fully opaque before.
+IT.kWelderIconColor = Color(205 / 255, 245 / 255, 1, 0.8)
+
+-- Size and place, in units of the name's line height, so the icon keeps its size against the name
+-- with small or normal nameplates and at any resolution. The user first chose twice the capitals
+-- plus a pixel (1.2 lines, 26 px), then had it scaled by 0.8 after player feedback (2026-10-18):
+-- 0.96 lines, about 21 px at 1080p with small nameplates. The gap is 5 px and the center sits on the
+-- capitals, both measured on the small-nameplate font at 1080p, where a line is 21.6 px; the center
+-- stays put, so the smaller icon shrinks evenly above and below it.
+IT.kWelderIconHeight = 0.96
+IT.kWelderIconGap = 0.23
+IT.kWelderIconCenter = 0.43
+
+-- Seconds between rebuilds of who carries a welder, read from the scoreboard's data.
+IT.kWelderIconRefreshInterval = 0.25

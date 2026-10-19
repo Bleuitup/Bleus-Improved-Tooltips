@@ -54,6 +54,11 @@ if Client then
 	ModLoader.SetupFileHook("lua/MapBlip.lua", "lua/ImprovedTooltips/ImprovedTooltips_MapBlipColor.lua", "post")
 	ModLoader.SetupFileHook("lua/GUIMinimapConnection.lua", "lua/ImprovedTooltips/ImprovedTooltips_MinimapConnection.lua", "post")
 
+	-- NAMEPLATES: a welder icon right of a marine teammate's name, for the marine commander and
+	-- marines in the field. Wraps whichever GUIUnitStatus loaded; CBM and Devnull's AdvancedHud ship
+	-- their own.
+	ModLoader.SetupFileHook("lua/GUIUnitStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_WelderIcon.lua", "post")
+
 	-- SCOREBOARD: a glyph and a green or red label at the front of each team header while Shine's
 	-- tournament mode is waiting for both teams. Inert when that plugin is not running.
 	ModLoader.SetupFileHook("lua/GUIScoreboard.lua", "lua/ImprovedTooltips/ImprovedTooltips_TournamentReady.lua", "post")

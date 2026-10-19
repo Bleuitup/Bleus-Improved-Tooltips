@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.09a. Published to the Steam Workshop as
+Version 1.10. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -391,6 +391,7 @@ of functions.
 | `lua/GUIAdvancedHUDBars.lua` | `ImprovedTooltips_AdvancedHUDBars.lua` | **Client.** Hides the Centralized HUD bars' weapon bar while the exo weapon bars show |
 | `lua/MapBlip.lua` | `ImprovedTooltips_MapBlipColor.lua` | **Client.** Colors marine blips by weapon |
 | `lua/GUIMinimapConnection.lua` | `ImprovedTooltips_MinimapConnection.lua` | **Client.** Phase gate arrows on the commander's and spectator's corner minimap |
+| `lua/GUIUnitStatus.lua` | `ImprovedTooltips_WelderIcon.lua` | **Client.** Wraps `UpdateUnitStatusBlip` to put a welder icon right of a marine teammate's name |
 | `lua/GUIScoreboard.lua` | `ImprovedTooltips_TournamentReady.lua` | **Client.** Ready labels on the team headers under Shine's tournament mode |
 | `lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua` | `ImprovedTooltips_ModsMenu.lua` | **Client and main menu.** The settings panel under Options > Mods |
 | `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's cooldown and hive state messages in every VM |
@@ -452,6 +453,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_MapBlipColor.lua            hook on MapBlip.lua
     ImprovedTooltips_MapBlipDiagnostics.lua      it_blipcolors and it_blipstate console commands
     ImprovedTooltips_MinimapConnection.lua       hook on GUIMinimapConnection.lua
+    ImprovedTooltips_WelderIcon.lua              hook on GUIUnitStatus.lua, welder icon on nameplates
     ImprovedTooltips_TournamentReady.lua         hook on GUIScoreboard.lua
 
   every VM
@@ -584,6 +586,13 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
   `kExoBarHotColor`, `kExoBarChargeReadyColor`, `kExoBarPoolNotReadyAlpha`,
   `kExoBarPoolReadyColor` / `kExoBarPoolMultiReadyColor` — exo bar colors and thresholds for heat,
   charge and energy pool arms
+- `kShowWelderNameplateIcon` — a welder icon right of the name of every marine teammate carrying one,
+  for the marine commander and marines in the field. On by default, and exposed in the settings panel
+- `kWelderIconCellInset`, `kWelderIconColor` — the build menu welder, cropped from its cell, tinted
+  light blue and 80% opaque
+- `kWelderIconHeight` / `kWelderIconGap` / `kWelderIconCenter` — icon size, gap after the name and
+  vertical center, in units of the name's line height so they fit small and normal nameplates
+- `kWelderIconRefreshInterval` — seconds between rebuilds of who carries a welder
 
 ## Building the assets
 
@@ -631,6 +640,17 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   positions measured from the art, and progress revealed by cropping.
 
 ## Changelog
+
+**1.10 (Workshop, 2026-10-19)**
+- **Welder icon on nameplates.** A marine teammate carrying a welder gets a welder icon right of
+  their name, so nobody has to ask who has one or hold the scoreboard open. The marine commander
+  sees it on every plate whose name shows; marines in the field see it while their teammate's
+  nameplate shows, which in first person is while aiming at them. The art is the commander build
+  menu's welder, tinted light blue. New setting WELDER ICON ON NAMEPLATES under MARINES, on by
+  default. See `docs/welder-nameplate-icon.md`.
+- The weapon colored map reads the commander's palette even when another mod wraps the nameplate
+  code, as this release and Devnull Shine Extras both do. It used to fall back to its own copy of
+  the colors.
 
 **1.09a (Workshop, 2026-10-01)**
 - Settings panel: the MARINES and ALIENS headings are a tier smaller, so they read as parts of the

@@ -116,6 +116,55 @@ MapWeapon("Submachinegun",   IT.kMapBlipColorSubmachinegun)
 local commanderPalette = nil
 local paletteResolved = false
 
+-- The method may not be vanilla's own function any more: a mod that wraps it, as this one does for
+-- the welder nameplate icon (ImprovedTooltips_WelderIcon.lua) and Devnull Shine Extras does for its
+-- request icons, leaves a wrapper whose upvalues hold the function it wrapped, not the table. So the
+-- search follows function upvalues down a few levels until it reaches the one that closes over
+-- kAmmoBarColors.
+local kMaxUpvalueDepth = 4
+
+local function FindAmmoBarColors(fn, depth, seen)
+
+	if seen[fn] or depth > kMaxUpvalueDepth then
+		return nil
+	end
+
+	seen[fn] = true
+
+	local wrapped = { }
+	local index = 1
+
+	while true do
+
+		local name, value = debug.getupvalue(fn, index)
+
+		if name == nil then
+			break
+		end
+
+		if name == "kAmmoBarColors" and type(value) == "table" then
+			return value
+		end
+
+		if type(value) == "function" then
+			wrapped[#wrapped + 1] = value
+		end
+
+		index = index + 1
+
+	end
+
+	for i = 1, #wrapped do
+		local found = FindAmmoBarColors(wrapped[i], depth + 1, seen)
+		if found then
+			return found
+		end
+	end
+
+	return nil
+
+end
+
 local function GetCommanderPalette()
 
 	if paletteResolved then
@@ -139,24 +188,7 @@ local function GetCommanderPalette()
 		return nil
 	end
 
-	local index = 1
-
-	while true do
-
-		local name, value = debug.getupvalue(GUIUnitStatus.UpdateUnitStatusBlip, index)
-
-		if name == nil then
-			break
-		end
-
-		if name == "kAmmoBarColors" and type(value) == "table" then
-			commanderPalette = value
-			break
-		end
-
-		index = index + 1
-
-	end
+	commanderPalette = FindAmmoBarColors(GUIUnitStatus.UpdateUnitStatusBlip, 0, { })
 
 	return commanderPalette
 
