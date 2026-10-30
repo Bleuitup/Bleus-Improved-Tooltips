@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.10. Published to the Steam Workshop as
+Version 1.11. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -379,6 +379,7 @@ of functions.
 | `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the stat row, place it under the title, and shift the description down |
 | `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health and armor icons to match their figures |
+| `lua/GUICommanderButtons.lua` | `ImprovedTooltips_HotkeyLabels.lua` | **Client.** Wraps `SharedInitializeButtons` and `Update` to write each commander button's hotkey in its corner, when switched on |
 | `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, and the exo weapon bars for `Exo` |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client.** Replays synced cooldowns into vanilla's own table when the local player takes the chair, fixing vanilla's button dial |
 | `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client.** Adds biomass icons and the research ring or research slots to each hive row |
@@ -419,6 +420,7 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_TooltipData.lua             hook on Player_Client.lua
     ImprovedTooltips_TooltipGUI.lua              hook on GUICommanderTooltip.lua
     ImprovedTooltips_SelectionPanel.lua          hook on GUISelectionPanel.lua
+    ImprovedTooltips_HotkeyLabels.lua            hook on GUICommanderButtons.lua, hotkey labels
 
   In Cooldown panel
     GUIImprovedTooltipsCooldowns.lua             the panel
@@ -593,6 +595,10 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 - `kWelderIconHeight` / `kWelderIconGap` / `kWelderIconCenter` — icon size, gap after the name and
   vertical center, in units of the name's line height so they fit small and normal nameplates
 - `kWelderIconRefreshInterval` — seconds between rebuilds of who carries a welder
+- `kShowCommanderHotkeyLabels` — each commander tab and grid button's hotkey in its bottom-right
+  corner, from the player's own bindings. Off by default, and exposed in the settings panel
+- `kHotkeyLabelScale` / `kHotkeyLabelInset` / `kHotkeyLabelColor` — label size and corner inset, both
+  relative to the commander GUI's own scale, and its color (always bright)
 
 ## Building the assets
 
@@ -640,6 +646,15 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   positions measured from the art, and progress revealed by cropping.
 
 ## Changelog
+
+**1.11 (Workshop, 2026-10-22)**
+- **Hotkey labels on the commander buttons.** New setting HOTKEY LABELS ON COMMANDER BUTTONS, off
+  by default: each tab and grid button shows its hotkey small in its bottom-right corner, as Age of
+  Mythology does, following the player's own key bindings. Empty slots get none, Space reads SPC, and
+  a grid bound to a key the game ignores (a number, a mouse button) gets none. Both teams. See
+  `docs/commander-hotkey-labels.md`.
+- Workshop description: the 1.10 welder icon and the hotkey labels are described, and the CBM
+  paragraph no longer claims CBM is named in one place only (the SMG map color made that untrue).
 
 **1.10 (Workshop, 2026-10-19)**
 - **Welder icon on nameplates.** A marine teammate carrying a welder gets a welder icon right of

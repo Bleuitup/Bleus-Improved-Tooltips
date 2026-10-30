@@ -20,6 +20,10 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUICommanderTooltip.lua", "lua/ImprovedTooltips/ImprovedTooltips_TooltipGUI.lua", "post")
 	ModLoader.SetupFileHook("lua/GUISelectionPanel.lua", "lua/ImprovedTooltips/ImprovedTooltips_SelectionPanel.lua", "post")
 
+	-- COMMANDER BUTTONS: each tab and grid button's hotkey in its bottom-right corner, when switched
+	-- on. Both teams; the marine and alien button scripts are subclasses of this one.
+	ModLoader.SetupFileHook("lua/GUICommanderButtons.lua", "lua/ImprovedTooltips/ImprovedTooltips_HotkeyLabels.lua", "post")
+
 	-- IN COOLDOWN PANEL, and the exo weapon bars: both GUI scripts are registered with ClientUI.
 	-- Commander.lua, client side, replays synced cooldowns into vanilla's own table when the local
 	-- player takes the chair, so vanilla's button dial works too.

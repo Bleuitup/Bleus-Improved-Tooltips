@@ -103,6 +103,14 @@ local kOptions =
 	},
 
 	{
+		-- 1.11. Both teams, so no section. Off by default (user's call, 2026-10-22).
+		key = "BIT_CommanderHotkeyLabels", field = "kShowCommanderHotkeyLabels", type = "bool", default = false,
+		widget = "checkbox",
+		label = "HOTKEY LABELS ON COMMANDER BUTTONS",
+		tooltip = "Shows each commander button's hotkey in its bottom-right corner. Follows your own key bindings.",
+	},
+
+	{
 		-- The big map only from 1.04, and keeps its 1.03 key so a stored ON carries over.
 		section = "MARINES",
 		key = "BIT_WeaponBlips", field = "kColorMarineBlipsByWeapon", type = "bool", default = true,

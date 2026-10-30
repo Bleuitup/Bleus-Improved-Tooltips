@@ -17,9 +17,9 @@ mod id 3790290682
 
 All of it sits in one row under the tooltip title, above the description. The card grows to fit, and tooltips with nothing extra to show look exactly as they always did.
 
-Health and armor take the game's own selection-panel colors, so a number means the same thing in the tooltip as it does when you click a structure that already exists. Vanilla's selection panel is brought in line too, where it colored the two figures differently but drew both icons in one flat team color.
+Health and armor take the game's own selection-panel colors, and the selection panel's icons now match their numbers too.
 
-[b]ARC stances.[/b] The Deploy and Undeploy buttons describe the state they put the ARC into, so Deploy shows armor dropping to 0 and speed to 0 — the cost of deploying, visible while you are choosing it.
+[b]ARC stances.[/b] Deploy and Undeploy show the state they put the ARC into: Deploy shows armor and speed dropping to 0, the cost of deploying, before you choose it.
 
 [h1]The "In Cooldown" panel[/h1]
 Commander ability cooldowns in NS2 are [b]team-global[/b]: a Shade Ink puts every Shade on cooldown, so three Shades cannot alternate Ink to keep ARCs suppressed. This mod adds a panel on the right listing what your team has on cooldown, with the game's own dial and the seconds left, for [b]every player on the team[/b], not just the commander.
@@ -51,7 +51,7 @@ All three are visible to every player on the team, not just the commander.
 [h1]Live values[/h1]
 Numbers that change during a round are read live rather than printed from a table. Bone Wall's health scales with your biomass level, so at Biomass 9 the tooltip says 900, not 100.
 
-Movement speed is read off the unit's own class rather than from a table, so it is the vanilla unupgraded figure. Mods that compute speed live from game state rather than storing it will read low, or blank rather than guess.
+Movement speed is the unit's base, unupgraded figure. Where a mod works out speed live from game state, it can read low or show nothing rather than guess.
 
 [h1]The biomass bar[/h1]
 The twelve bead bar in the top left (shown with the map, the buy menu or the tech map) only ever knew whole beads: a bead was empty until its research finished, then full.
@@ -65,7 +65,13 @@ Per-bead progress uses [b]Shimizu[/b]'s approach, with his permission.
 [*] [b]Phase gate arrows on the commander minimap.[/b] As on the big map, per your phase gate lines setting.
 [*] [b]Marine blips colored by weapon.[/b] Each marine's blip takes their primary weapon's color, as on the commander's ammo bars, so a glance says where the shotguns are. With CBM, SMGs are blue. On by default for the big map only. Exosuits keep the marine color; only marines and spectators see it.
 [*] [b]Supply on the spectator bar.[/b] Both teams' supply now shows there, used against maximum.
-[*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header is marked ready in green or not ready in red, with a tick or a cross beside it. Both come off at round start, and nothing is drawn on a server without that plugin. Shine only announces readiness when it changes, so a client joining mid pre game may show a team as not ready until the next change.
+[*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header shows ready (green tick) or not ready (red cross) until the round starts. A player joining mid pre-game may see a team as not ready until its state next changes.
+[/list]
+
+[h1]Nameplates and commander buttons[/h1]
+[list]
+[*] [b]Welder icon on nameplates.[/b] A marine teammate carrying a welder gets a welder icon beside their name, so nobody has to ask who has one. Seen by the marine commander, and by marines whenever that teammate's nameplate shows.
+[*] [b]Hotkey labels.[/b] Optional, off by default: each commander button shows its hotkey in its corner, following your own key bindings.
 [/list]
 
 [h1]Settings[/h1]
@@ -74,7 +80,7 @@ Options, Mods, "Bleu's Improved Tooltips": switch each optional feature, set the
 [h1]Works with other mods[/h1]
 Nothing is hardcoded per tech. The mod reads the same tech data the game itself uses to make a tech function, so tech added by other mods gets improved tooltips automatically, with no patch needed here.
 
-[b]Community Balance Mod[/b] is the one mod named anywhere in the code, in a single place: its biomass 5 research is tinted on the hive panel in CBM's own color for advanced alien tech, matching the way CBM marks that hive out. Everything else about CBM tech, including its own icons for it, arrives through the same path as anything else.
+[b]Community Balance Mod[/b] gets two touches of its own: its biomass 5 research takes CBM's color on the hive panel, and its SMG gets a map color. Everything else about CBM tech arrives the same way as any other mod's.
 
 Modders can register their own value resolvers for anything they compute at runtime — see the README on GitHub.
 

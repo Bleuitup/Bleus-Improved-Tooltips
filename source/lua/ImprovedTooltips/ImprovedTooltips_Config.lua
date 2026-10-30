@@ -527,3 +527,26 @@ IT.kWelderIconCenter = 0.43
 
 -- Seconds between rebuilds of who carries a welder, read from the scoreboard's data.
 IT.kWelderIconRefreshInterval = 0.25
+
+------------------------------------------------------------------------------------------------
+-- Hotkey labels on the commander buttons
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_HotkeyLabels.lua. The key for each commander tab and grid button, small in
+-- its bottom-right corner, as Age of Mythology does. Both teams. OFF by default (the user's call,
+-- 2026-10-22), and exposed in the settings panel.
+
+IT.kShowCommanderHotkeyLabels = false
+
+-- Text size relative to the commander GUI's own scale (GUIScale(kCommanderGUIsGlobalScale), what the
+-- buttons are sized by), so the labels keep their size against the buttons at any resolution and UI
+-- scale. 0.75 gives capitals about 11 px tall on the 81 px buttons of the user's 1080p screenshot,
+-- the size approved in the mockup on 2026-10-22.
+IT.kHotkeyLabelScale = 0.75
+
+-- Distance of the text's bottom-right corner from the button's, in commander GUI units (scaled the
+-- same way). 12 puts it about 5 px inside the corner of the button's bracket frame, as mocked up.
+IT.kHotkeyLabelInset = 12
+
+-- Always bright, whether or not the button can be used right now (user's call, 2026-10-22).
+IT.kHotkeyLabelColor = Color(0.96, 0.96, 0.96, 1)

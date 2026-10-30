@@ -16,6 +16,7 @@ Fonts
 GUI
 GUIAdvancedHUDBars
 GUIBioMassDisplay
+GUICommanderButtons
 GUICommanderTooltip
 GUIDial
 GUIEvent
@@ -89,6 +90,7 @@ kARCDeployedArmor
 kAlienTeamType
 kBoneWallHealthPerBioMass
 kCBMaddon
+kCommanderGUIsGlobalScale
 kGUILayerCommanderHUD
 kGUILayerPlayerHUD
 kGUILayerPlayerHUDForeground4
