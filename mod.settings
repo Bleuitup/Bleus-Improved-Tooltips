@@ -54,7 +54,7 @@ Numbers that change during a round are read live rather than printed from a tabl
 Movement speed is the unit's base, unupgraded figure. Where a mod works out speed live from game state, it can read low or show nothing rather than guess.
 
 [h1]The biomass bar[/h1]
-The twelve bead bar in the top left (shown with the map, the buy menu or the tech map) only ever knew whole beads: a bead was empty until its research finished, then full.
+The twelve bead bar in the top left only ever knew whole beads: a bead was empty until its research finished, then full.
 
 Each bead being researched now fills as the work goes in, and several fill at once when several hives are working. The ability icons along the bar light up and carry a progress bar while their research is under way, as they do on the tech map, instead of staying gray until they finish.
 
@@ -65,6 +65,7 @@ Per-bead progress uses [b]Shimizu[/b]'s approach, with his permission.
 [*] [b]Phase gate arrows on the commander minimap.[/b] As on the big map, per your phase gate lines setting.
 [*] [b]Marine blips colored by weapon.[/b] Each marine's blip takes their primary weapon's color, as on the commander's ammo bars, so a glance says where the shotguns are. With CBM, SMGs are blue. On by default for the big map only. Exosuits keep the marine color; only marines and spectators see it.
 [*] [b]Supply on the spectator bar.[/b] Both teams' supply now shows there, used against maximum.
+[*] [b]Tech maps for spectators.[/b] Hold your tech map key and press 1 or 2 for the marine or alien map: the same controls as NSL Mod's, by Dragon.
 [*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header shows ready (green tick) or not ready (red cross) until the round starts. A player joining mid pre-game may see a team as not ready until its state next changes.
 [/list]
 
@@ -85,7 +86,7 @@ Nothing is hardcoded per tech. The mod reads the same tech data the game itself 
 Modders can register their own value resolvers for anything they compute at runtime — see the README on GitHub.
 
 [h1]Servers[/h1]
-The mod does not change gameplay. It reads values your client already has. The two things it does send are the team cooldown list the panel is built from, and each hive's biomass and research for the hive panel, neither of which a client can work out for itself.
+The mod does not change gameplay. Beyond what your client already has, the server sends the team cooldown list, each hive's biomass and research, and a team's tech tree to spectators who ask for it.
 
 It does have to be installed on the server. NS2's default consistency check restricts which mod entry files a client is allowed to load, so on a server running stock settings the server needs this mod too. If you want it on a server you play on, ask the admin to add it.
 

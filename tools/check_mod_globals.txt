@@ -1,7 +1,9 @@
 ARC
 AddClientUIScriptForClass
+AddClientUIScriptForTeam
 AlienTeam
 AlienTeamInfo
+BindingsUI_GetInputValue
 Clamp
 Client
 Color
@@ -22,6 +24,7 @@ GUIDial
 GUIEvent
 GUIHiveStatus
 GUIHudSupply
+GUIInsight_Overhead
 GUIInsight_TopBar
 GUIItem
 GUIMakeFontScale
@@ -36,6 +39,7 @@ GUIScale
 GUIScoreboard
 GUIScript
 GUISelectionPanel
+GUITechMap
 GUIUnitStatus
 GUIUnpackCoords
 GetAdvancedOption
@@ -43,6 +47,7 @@ GetEntitiesForTeam
 GetGUIManager
 GetGameInfoEntity
 GetGamerules
+GetIsBinding
 GetMaxSupplyForTeam
 GetOptionsMenu
 GetScaledVector
@@ -51,6 +56,7 @@ GetTechIdsFromBitMask
 GetTechTree
 GetTextureCoordinatesForIcon
 HasMixin
+InputKey
 LookupTechData
 MapBlip
 MarineUI_GetHasArmsLab
@@ -68,15 +74,16 @@ OP_TT_Number
 PROFILE
 PlayerMapBlip
 PlayerUI_GetArmorLevel
-PlayerUI_GetTeamType
 PlayerUI_GetWeaponLevel
 Print
 Script
 Server
 Shared
 Shine
+TechTree
 ToString
 Vector
+WordWrap
 _G
 class
 debug
@@ -98,6 +105,7 @@ kGameState
 kIconColors
 kMarineTeamType
 kMinimapBlipType
+kNSLPluginBuild
 kPlayerStatus
 kResearchNotificationSource
 kSpectatorIndex

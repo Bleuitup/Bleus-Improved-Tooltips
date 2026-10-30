@@ -24,3 +24,8 @@ AddClientUIScriptForClass("Player", "ImprovedTooltips/GUIImprovedTooltipsCooldow
 -- Exo weapon bars beside the crosshair. Registered for "Exo": ClientUI matches with isa, so this
 -- covers every exo variant without naming them, and the script only exists while in a suit.
 AddClientUIScriptForClass("Exo", "ImprovedTooltips/GUIImprovedTooltipsExoBars")
+
+-- The tech map for neutral spectators (1.12): hold the tech map key, 1 or 2 for marines or aliens.
+-- Registered for the spectator team, so a dead player watching their own team (a TeamSpectator on
+-- team 1 or 2) keeps vanilla's tech map of their own side and never gets this one.
+AddClientUIScriptForTeam(kSpectatorIndex, "ImprovedTooltips/GUIImprovedTooltipsSpectatorTechMap")

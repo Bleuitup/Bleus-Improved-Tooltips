@@ -47,6 +47,10 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
 	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightSupply.lua", "post")
 
+	-- SPECTATOR TECH MAPS: the key hint along the bottom of the overhead view. The map itself is a
+	-- ClientUI script (ImprovedTooltips_ClientUI.lua) fed by the server half below.
+	ModLoader.SetupFileHook("lua/GUIInsight_Overhead.lua", "lua/ImprovedTooltips/ImprovedTooltips_SpectatorTechMapHint.lua", "post")
+
 	-- MARINE HUD: researched-but-inactive weapon and armor icons stay on screen in alert red when the
 	-- arms lab is destroyed or unpowered. With Centralized HUD bars, vanilla's right-hand weapon bar
 	-- is hidden while the exo weapon bars show, so a pilot does not get two readouts.
@@ -96,5 +100,9 @@ if Server then
 	ModLoader.SetupFileHook("lua/NS2Gamerules.lua", "lua/ImprovedTooltips/ImprovedTooltips_TeamJoin.lua", "post")
 	ModLoader.SetupFileHook("lua/AlienTeam.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassProgress.lua", "post")
 	ModLoader.SetupFileHook("lua/AlienTeamInfo.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveSync.lua", "post")
+
+	-- TechTree_Server.lua, loaded by TechTree.lua in this VM only: SendTechTreeUpdates, to add the
+	-- neutral spectators who asked for that team's tech tree.
+	ModLoader.SetupFileHook("lua/TechTree_Server.lua", "lua/ImprovedTooltips/ImprovedTooltips_SpectatorTechTree.lua", "post")
 
 end

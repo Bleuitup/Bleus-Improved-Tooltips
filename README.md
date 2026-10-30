@@ -8,7 +8,7 @@ panel, which broadcasts team cooldowns that vanilla never sends to anyone but th
 cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
 this mod has to be installed server-side regardless; see [Servers](#servers).
 
-Version 1.11. Published to the Steam Workshop as
+Version 1.12. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it shows
@@ -380,7 +380,7 @@ of functions.
 | `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the stat row, place it under the title, and shift the description down |
 | `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health and armor icons to match their figures |
 | `lua/GUICommanderButtons.lua` | `ImprovedTooltips_HotkeyLabels.lua` | **Client.** Wraps `SharedInitializeButtons` and `Update` to write each commander button's hotkey in its corner, when switched on |
-| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, and the exo weapon bars for `Exo` |
+| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, the exo weapon bars for `Exo`, and the spectator tech map for the spectator team |
 | `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client.** Replays synced cooldowns into vanilla's own table when the local player takes the chair, fixing vanilla's button dial |
 | `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client.** Adds biomass icons and the research ring or research slots to each hive row |
 | `lua/Hud/GUINotificationMixin.lua` | `ImprovedTooltips_ResearchNotifications.lua` | **Client.** In HIVE PANEL, keeps research done in hives out of the notifications on the left |
@@ -388,6 +388,7 @@ of functions.
 | `lua/GUIBioMassDisplay.lua` | `ImprovedTooltips_BiomassOverlay.lua` | **Client.** Partial fills on the biomass beads being researched, and progress meters under the ability icons |
 | `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightTopBar.lua` | **Client.** Colors the spectator bar's biomass counter, catching the item as it is created since nothing in that file is reachable afterwards |
 | `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightSupply.lua` | **Client.** Adds a supply counter per team to the spectator bar |
+| `lua/GUIInsight_Overhead.lua` | `ImprovedTooltips_SpectatorTechMapHint.lua` | **Client.** Adds the spectator tech maps to the overhead view's key hints |
 | `lua/Hud/Marine/GUIMarineHUD.lua` | `ImprovedTooltips_ArmsLabAlert.lua` | **Client.** Keeps researched weapon and armor icons in alert red when the arms lab is lost |
 | `lua/GUIAdvancedHUDBars.lua` | `ImprovedTooltips_AdvancedHUDBars.lua` | **Client.** Hides the Centralized HUD bars' weapon bar while the exo weapon bars show |
 | `lua/MapBlip.lua` | `ImprovedTooltips_MapBlipColor.lua` | **Client.** Colors marine blips by weapon |
@@ -400,6 +401,7 @@ of functions.
 | `lua/NS2Gamerules.lua` | `ImprovedTooltips_TeamJoin.lua` | **Server.** Wraps `JoinTeam` to hand a joining player the team's cooldowns and hive state |
 | `lua/AlienTeam.lua` | `ImprovedTooltips_BiomassProgress.lua` | **Server.** Wraps `UpdateBioMassLevel` to spread in-progress biomass across every level being worked on |
 | `lua/AlienTeamInfo.lua` | `ImprovedTooltips_HiveSync.lua` | **Server.** Wraps `UpdateAllLocationsSlotData` to publish per-hive biomass and research to the team |
+| `lua/TechTree_Server.lua` | `ImprovedTooltips_SpectatorTechTree.lua` | **Server.** Wraps `SendTechTreeUpdates` to send a team's tech tree to the neutral spectators who asked for it |
 
 ## Layout
 
@@ -444,6 +446,9 @@ source/lua/ImprovedTooltips/
   spectator top bar
     ImprovedTooltips_InsightTopBar.lua           hook on GUIInsight_TopBar.lua
     ImprovedTooltips_InsightSupply.lua           hook on GUIInsight_TopBar.lua
+    GUIImprovedTooltipsSpectatorTechMap.lua      the spectator tech map
+    ImprovedTooltips_SpectatorTechMapHint.lua    hook on GUIInsight_Overhead.lua
+    ImprovedTooltips_SpectatorTechTree.lua       hook on TechTree_Server.lua     (server)
 
   marine HUD and exos
     ImprovedTooltips_ArmsLabAlert.lua            hook on GUIMarineHUD.lua
@@ -613,8 +618,9 @@ block artifacts are very visible on hard-edged white glyphs.
 
 ## Servers
 
-Most of the mod reads client-side state only. The exceptions are the team cooldown broadcast and the
-per-hive biomass and research the hive HUD needs, neither of which a client can read for itself. It
+Most of the mod reads client-side state only. The exceptions are the team cooldown broadcast, the
+per-hive biomass and research the hive HUD needs, and a playing team's tech tree sent to the neutral
+spectators who ask for it; no client can read any of these for itself. It
 has to be installed on the server regardless, because of NS2's consistency check rather than anything
 this mod does:
 
@@ -644,8 +650,17 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 
 - **Shimizu.** The biomass bar's per-bead progress uses his approach, with his permission: bead
   positions measured from the art, and progress revealed by cropping.
+- **NSL Mod (Dragon).** The spectator tech maps use the same controls and approach as NSL Mod's
+  (MIT licensed); the code is this mod's own.
 
 ## Changelog
+
+**1.12 (Workshop, 2026-10-30)**
+- **Tech maps for spectators.** A neutral spectator holds their tech map key (J by default) and
+  presses 1 or 2 for the marine or alien tech map, the same controls as NSL Mod's, with the hint
+  added to the overhead view's key hints. The server sends the chosen team's tech tree to that
+  spectator only; dead players watching their own team keep their own side's map. Stands down when
+  NSL Mod is loaded. See `docs/spectator-tech-maps.md`.
 
 **1.11 (Workshop, 2026-10-22)**
 - **Hotkey labels on the commander buttons.** New setting HOTKEY LABELS ON COMMANDER BUTTONS, off
