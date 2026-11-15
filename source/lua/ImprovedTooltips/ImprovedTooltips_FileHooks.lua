@@ -33,6 +33,12 @@ if Client then
 	ModLoader.SetupFileHook("lua/GUIUnitStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_MistBadge.lua", "post")
 	ModLoader.SetupFileHook("lua/Hud/GUIPlayerStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_MistStatus.lua", "post")
 
+	-- SHIELD BAR (1.21): with Centralized HUD bars, an alien's three shields as one segmented bar
+	-- outboard of the health bar, with their total underneath; vanilla's corner shield number is
+	-- hidden meanwhile. GUIAdvancedHUDBars.lua loads when the HUD bars are switched on.
+	ModLoader.SetupFileHook("lua/GUIAdvancedHUDBars.lua", "lua/ImprovedTooltips/ImprovedTooltips_ShieldBar.lua", "post")
+	ModLoader.SetupFileHook("lua/GUIAlienHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_AlienHUD.lua", "post")
+
 	-- SCOREBOARD: a glyph and a green or red label at the front of each team header while Shine's
 	-- tournament mode is waiting for both teams. Inert when that plugin is not running.
 	ModLoader.SetupFileHook("lua/GUIScoreboard.lua", "lua/ImprovedTooltips/ImprovedTooltips_TournamentReady.lua", "post")

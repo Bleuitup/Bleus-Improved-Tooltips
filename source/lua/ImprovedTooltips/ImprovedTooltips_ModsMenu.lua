@@ -94,6 +94,15 @@ local kOptions =
 		label = "WELDER ICON ON NAMEPLATES",
 		tooltip = "Shows a welder icon next to the name of every marine teammate carrying one. Seen by the marine commander and by marines in the field.",
 	},
+
+	{
+		-- 1.21. On by default (user's call, 2026-11-15).
+		section = "ALIENS",
+		key = "BIT_AlienShieldBar", field = "kShowAlienShieldBar", type = "bool", default = true,
+		widget = "checkbox",
+		label = "SHIELD BAR",
+		tooltip = "With Centralized HUD bars, shows your mucous, vampirism and babbler shields as a bar beside your health bar, with their total underneath.",
+	},
 }
 
 local kReadOption =

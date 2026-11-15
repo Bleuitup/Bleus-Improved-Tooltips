@@ -12,6 +12,7 @@ mod id 3790290682
 [*] [b]Welder icon on nameplates.[/b] A marine teammate carrying a welder gets a welder icon beside their name, so nobody has to ask who has one. Seen by the marine commander, and by marines whenever that teammate's nameplate shows.
 [*] [b]Commander hotkey labels.[/b] Optional, off by default: each commander button shows its hotkey in its corner, following your own key bindings. Useful for new commanders.
 [*] [b]Nutrient mist indicators.[/b] The alien commander sees a green badge over every lifeform egg and structure the mist is helping: eggs evolving faster, structures still growing, and disconnected cysts it keeps alive. Fully grown structures get no badge, since the mist does nothing for them. A player evolving in a misted egg gets a mist icon in the HUD's status row.
+[*] [b]Shield bar for aliens.[/b] With Centralized HUD bars, your mucous, vampirism and babbler shields show as one bar beside your health bar, with their total underneath. A full bar is all three shields at their maximum for your lifeform at biomass 1, so the same fill always means the same protection.
 [*] [b]Tech maps for spectators.[/b] Hold your tech map key and press 1 or 2 for the marine or alien map: the same controls as NSL Mod's, by Dragon.
 [*] [b]Ready state on the scoreboard.[/b] Under Shine's tournament mode each team's header shows ready (green tick) or not ready (red cross) until the round starts. A player joining mid pre-game may see a team as not ready until its state next changes.
 [/list]
@@ -31,7 +32,7 @@ Build 345 made these part of NS2 itself, so the mod no longer adds them. Most ar
 [/list]
 
 [h1]Settings[/h1]
-Options, Mods, "Bleu's Improved Tooltips": hotkey labels and the welder icon.
+Options, Mods, "Bleu's Improved Tooltips": hotkey labels, the welder icon and the shield bar.
 
 [h1]Servers[/h1]
 The mod does not change gameplay. The server's only part is sending a team's tech tree to spectators who ask for it.

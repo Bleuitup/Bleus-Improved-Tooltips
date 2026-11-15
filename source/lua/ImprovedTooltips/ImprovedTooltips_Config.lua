@@ -11,7 +11,7 @@
 ImprovedTooltips = ImprovedTooltips or { }
 local IT = ImprovedTooltips
 
-IT.kVersion = "1.2"
+IT.kVersion = "1.21"
 
 ------------------------------------------------------------------------------------------------
 -- Tournament mode ready labels
@@ -130,3 +130,37 @@ IT.kMistBadgeGap = 4
 -- The HUD status row entry: the same mist icon in the alien icon color (kIconColors' alien entry),
 -- on the row's own green tile with its up arrow, like Umbra and Energize (option F).
 IT.kMistStatusColor = Color(1, 0.9, 0.4, 1)
+
+------------------------------------------------------------------------------------------------
+-- Alien shield bar (1.21)
+------------------------------------------------------------------------------------------------
+--
+-- See ImprovedTooltips_ShieldBar.lua. With Centralized HUD bars, an alien's mucous, vampirism and
+-- babbler shields as one segmented bar outboard of the health bar, with their total in green
+-- underneath; vanilla's corner shield number is hidden meanwhile (ImprovedTooltips_AlienHUD.lua).
+-- Settled with the user 2026-11-15; mockups in "Improved Tooltips Images\Shield Bar 1.21".
+
+-- On by default, and exposed in the settings panel.
+IT.kShowAlienShieldBar = true
+
+-- How far the shield bar sits inward of a full bar width outboard of the health bar, as a fraction
+-- of the bar width. Vanilla's bar art leaves a gap of 46/64 of a bar width between two neighboring
+-- bars; the user chose half of that (23/64). One value for every bar texture, since which one is
+-- installed cannot be told from Lua: 13 px with vanilla's art, 16 px with ydy's, at 1080p and
+-- crosshair scale 1.1.
+IT.kShieldBarInward = 23 / 64
+
+-- Segment colors, bottom to top in the order damage eats them last to first: babblers absorb last,
+-- mucous first (DamageTypes.lua:303-318). Tinted onto the installed bar art like vanilla's own fills.
+IT.kShieldBarBabblerColor = Color(222 / 255, 184 / 255, 120 / 255, 1)   -- tan
+IT.kShieldBarVampirismColor = Color(70 / 255, 1, 90 / 255, 1)           -- green
+IT.kShieldBarMucousColor = Color(190 / 255, 160 / 255, 1, 1)            -- lavender
+
+-- The total underneath: vanilla's shield number green (GUIAlienHUD.lua kShieldTextColor), in the
+-- Centralized bars' font with the same black copy their health text has. Shown whenever there is any
+-- shield, and never fades.
+IT.kShieldNumberColor = Color(0, 1, 0.2, 1)
+
+-- Gap, in 1080p pixels, between the number's right edge and where vanilla's health text ("99 / 10")
+-- starts at its widest for the current lifeform, so the two never overlap.
+IT.kShieldNumberGap = 6

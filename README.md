@@ -1,8 +1,9 @@
 # Bleu's Improved Tooltips
 
 An NS2 mod of small additions that help commanders, players and spectators read the game: a welder
-icon on nameplates, commander hotkey labels, nutrient mist indicators, tech maps for spectators, and
-ready labels on the scoreboard under Shine's tournament mode.
+icon on nameplates, commander hotkey labels, nutrient mist indicators, an alien shield bar for the
+Centralized HUD bars, tech maps for spectators, and ready labels on the scoreboard under Shine's
+tournament mode.
 
 It started as research time, cooldowns, health and armor on the commander tooltips, and grew from
 there. **Build 345 made most of that part of NS2 itself** (see [Gone vanilla](#gone-vanilla)), and
@@ -12,7 +13,7 @@ Almost all of it runs on the client. The one server part is the spectator tech m
 team's tech tree sent to the spectators who ask for it. The mod has to be installed server-side
 regardless; see [Servers](#servers).
 
-Version 1.2, for build 345. Published to the Steam Workshop as
+Version 1.21, for build 345. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
 ## What it adds
@@ -23,6 +24,7 @@ Version 1.2, for build 345. Published to the Steam Workshop as
 | Each commander button's hotkey in its corner, from your own bindings | Both commanders | HOTKEY LABELS ON COMMANDER BUTTONS, off | `docs/commander-hotkey-labels.md` |
 | Nutrient mist badge over every alien entity the mist is helping (lifeform eggs, anything still growing, disconnected cysts) | Alien commander | none, always on | `docs/nutrient-mist-indicators.md` |
 | Nutrient mist entry in the HUD status row while evolving in a misted egg | The player in the egg | none, always on | `docs/nutrient-mist-indicators.md` |
+| Mucous, vampirism and babbler shields as one segmented bar beside the Centralized health bar, with their total underneath; full = the lifeform's most shield at biomass 1 | Aliens with Centralized HUD bars | SHIELD BAR, on | `docs/alien-shield-bar.md` |
 | Tech maps for neutral spectators: hold the tech map key, 1 or 2 for marines or aliens | Spectators | none; stands down under NSL Mod | `docs/spectator-tech-maps.md` |
 | Ready / Not Ready on each team's scoreboard header under Shine's tournament mode | Everyone | none; inert without the plugin | `docs/tournament-ready-label.md` |
 
@@ -69,6 +71,8 @@ loaded. `ImprovedTooltips_FileHooks.lua` lists them grouped by feature.
 | `lua/GUIUnitStatus.lua` | `ImprovedTooltips_WelderIcon.lua` | **Client.** Wraps `UpdateUnitStatusBlip` to put a welder icon right of a marine teammate's name |
 | `lua/GUIUnitStatus.lua` | `ImprovedTooltips_MistBadge.lua` | **Client.** Wraps `UpdateUnitStatusBlip` to badge, for the alien commander, every alien entity the nutrient mist is helping |
 | `lua/Hud/GUIPlayerStatus.lua` | `ImprovedTooltips_MistStatus.lua` | **Client.** Adds a nutrient mist entry to the alien HUD's status row, through the upvalues of `Initialize` |
+| `lua/GUIAdvancedHUDBars.lua` | `ImprovedTooltips_ShieldBar.lua` | **Client.** Wraps `Initialize`, `Uninitialize` and `Update` to add the alien shield bar and its number beside the Centralized bars |
+| `lua/GUIAlienHUD.lua` | `ImprovedTooltips_AlienHUD.lua` | **Client.** Wraps `Update` to hide vanilla's corner shield number while the shield bar stands in for it |
 | `lua/GUIScoreboard.lua` | `ImprovedTooltips_TournamentReady.lua` | **Client.** Ready labels on the team headers under Shine's tournament mode |
 | `lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua` | `ImprovedTooltips_ModsMenu.lua` | **Client and main menu.** The settings panel under Options > Mods |
 | `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the spectator tech tree request in every VM |
@@ -100,6 +104,10 @@ source/lua/ImprovedTooltips/
     ImprovedTooltips_WelderIcon.lua              hook on GUIUnitStatus.lua, welder icon on nameplates
     ImprovedTooltips_MistBadge.lua               hook on GUIUnitStatus.lua, nutrient mist badges
     ImprovedTooltips_MistStatus.lua              hook on Hud/GUIPlayerStatus.lua, mist status icon
+
+  Centralized HUD bars
+    ImprovedTooltips_ShieldBar.lua               hook on GUIAdvancedHUDBars.lua, alien shield bar
+    ImprovedTooltips_AlienHUD.lua                hook on GUIAlienHUD.lua, hides the corner shield number
 
   scoreboard
     ImprovedTooltips_TournamentReady.lua         hook on GUIScoreboard.lua
@@ -160,6 +168,14 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 - `kMistBadgeSize` / `kMistBadgeColor` / `kMistBadgeArrowFraction` / `kMistBadgeGap` — the commander
   badge: 48 px, green, arrow at 46%, 4 px above the plate
 - `kMistStatusColor` — the status row icon's tint, the alien icon color
+- `kShowAlienShieldBar` — the alien shield bar beside the Centralized HUD bars, and the corner shield
+  number hidden while it shows. On by default, and exposed in the settings panel
+- `kShieldBarInward` — how far the bar sits inward of one bar width outboard of the health bar, as a
+  fraction of the bar width: 23/64, half the gap vanilla's art leaves between two bars
+- `kShieldBarBabblerColor` / `kShieldBarVampirismColor` / `kShieldBarMucousColor` — the segments,
+  tan, green and lavender, bottom to top
+- `kShieldNumberColor` — the total's color, vanilla's shield number green
+- `kShieldNumberGap` — 1080p pixels between the total and the widest health text for the lifeform
 
 The settings removed in 1.2 leave their saved `BIT_*` values in players' options files, unread.
 
@@ -202,6 +218,18 @@ The Workshop item is tagged `Must be run on Server` for this reason.
   (MIT licensed); the code is this mod's own.
 
 ## Changelog
+
+**1.21 (Workshop, 2026-11-15)**
+- **Alien shield bar.** With Centralized HUD bars, an alien's mucous, vampirism and babbler shields
+  show as one bar beside the health bar: babblers tan at the bottom, vampirism green, mucous lavender
+  on top, in the order damage reaches them. A full bar is the most shield the lifeform can carry at
+  biomass 1, vampirism included, so the same fill always means the same amount of shield (vanilla's
+  ring is relative to whichever shields are active, so a full ring could mean very different
+  amounts). More than that is cut off at the top. The total is underneath in green, always shown
+  while there is any shield, and vanilla's corner number is hidden meanwhile. The bar uses the
+  installed bar texture, so ydy-style bars restyle it too. Setting SHIELD BAR, on by default. See
+  `docs/alien-shield-bar.md`. It replaces the 1.06-era attempt on `feature/centralized-bars-shields`,
+  whose scale and style options and bar opacity slider were dropped.
 
 **1.2 (Workshop, 2026-11-14; for build 345)**
 - **Build 345 made most of the mod part of NS2**, so 1.2 removes everything the game now does on

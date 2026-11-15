@@ -195,14 +195,13 @@ and cost time to rule out.
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- **Published: 1.2** (`v1.2`, 2026-11-14). Steam Workshop item `3790290682`. GitHub:
-  https://github.com/Bleuitup/Bleus-Improved-Tooltips. The build 345 cleanup plus the nutrient mist
-  indicators (built as 1.13, never published alone). Every earlier version is in the README changelog;
-  `v1.12` is the last code with the features that went vanilla.
-- **Next: 1.21**, the alien shield bar in the Centralized HUD bars, rebuilt on top of 1.2 on
-  `feature/1.21-shield-bar`. `feature/centralized-bars-shields` is the 1.06-era first attempt (with
-  the opacity slider and style options the user has since dropped); it is reference only.
-- **Parked branches.**
+- **Published: 1.21** (`v1.21`, 2026-11-15). Steam Workshop item `3790290682`. GitHub:
+  https://github.com/Bleuitup/Bleus-Improved-Tooltips. The alien shield bar for the Centralized HUD
+  bars (`docs/alien-shield-bar.md`), on top of 1.2 (`v1.2`, 2026-11-14: the build 345 cleanup plus the
+  nutrient mist indicators). Every earlier version is in the README changelog; `v1.12` is the last
+  code with the features that went vanilla.
+- **Parked branches.** `feature/centralized-bars-shields` is the 1.06-era first attempt at the shield
+  bar (with the opacity slider and style options the user dropped); superseded by 1.21.
   `feature/tooltip-text-audit` is planning only and was about the tooltips, now vanilla's.
   `feature/spectator` is design docs only.
 - `preview.jpg` was generated in an earlier conversation with Claude (the user corrected this on
