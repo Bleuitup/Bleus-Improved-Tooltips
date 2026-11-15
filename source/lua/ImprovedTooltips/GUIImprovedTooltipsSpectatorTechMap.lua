@@ -6,7 +6,7 @@
 -- controls as NSL Mod's spectator tech maps (by Dragon, MIT licensed); this is the mod's own code.
 -- Registered for the spectator team in ImprovedTooltips_ClientUI.lua.
 --
--- It is the game's own GUITechMap (CBM's, when CBM is loaded) drawn for a chosen team. GUITechMap
+-- It is the game's own GUITechMap drawn for a chosen team. GUITechMap
 -- picks its layout from PlayerUI_GetTeamType() in Initialize and checks it again in every Update,
 -- rebuilding itself if it changed; a spectator's own team type is neither side's. So for the length
 -- of those two calls only, PlayerUI_GetTeamType answers with the chosen team, and is put back even if

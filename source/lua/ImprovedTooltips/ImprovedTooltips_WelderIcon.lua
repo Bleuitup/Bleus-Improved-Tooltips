@@ -20,8 +20,8 @@
 -- when names show at all: in first person, only while you aim at the teammate. It sits the same distance right of the text whatever the name's
 -- length, and is sized from the name's line height, so small and normal nameplates both fit.
 --
--- EVERY VERSION OF THE NAMEPLATES HAS THE SAME SHAPE. CBM ships its own GUIUnitStatus.lua and
--- Devnull's AdvancedHud replaces it, and both keep statusBg, NameText and UpdateUnitStatusBlip as
+-- EVERY VERSION OF THE NAMEPLATES HAS THE SAME SHAPE. Devnull's AdvancedHud replaces
+-- GUIUnitStatus.lua, and keeps statusBg, NameText and UpdateUnitStatusBlip as
 -- vanilla has them. A post-hook wraps whichever loaded. If a future one does not, the icon is simply
 -- never made. Devnull Shine Extras puts its ammo and medpack request icons on the LEFT of the plate,
 -- so the two never meet.

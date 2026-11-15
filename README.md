@@ -1,406 +1,77 @@
 # Bleu's Improved Tooltips
 
-An NS2 mod that puts the numbers a commander actually needs into the commander tooltips: research
-times, ability cooldowns, and structure health and armor.
+An NS2 mod of small additions that help commanders, players and spectators read the game: a welder
+icon on nameplates, commander hotkey labels, nutrient mist indicators, tech maps for spectators, and
+ready labels on the scoreboard under Shine's tournament mode.
 
-The tooltip work is entirely client-side. Two things additionally need the server: the "In Cooldown"
-panel, which broadcasts team cooldowns that vanilla never sends to anyone but the commander who
-cast, and the biomass tech map fix, which corrects state that only exists in the server VM. Note
-this mod has to be installed server-side regardless; see [Servers](#servers).
+It started as research time, cooldowns, health and armor on the commander tooltips, and grew from
+there. **Build 345 made most of that part of NS2 itself** (see [Gone vanilla](#gone-vanilla)), and
+1.2 removed everything the game now does on its own. The name stayed.
 
-Version 1.12. Published to the Steam Workshop as
+Almost all of it runs on the client. The one server part is the spectator tech maps, which need a
+team's tech tree sent to the spectators who ask for it. The mod has to be installed server-side
+regardless; see [Servers](#servers).
+
+Version 1.2, for build 345. Published to the Steam Workshop as
 [item 3790290682](https://steamcommunity.com/sharedfiles/filedetails/?id=3790290682).
 
-## What it shows
+## What it adds
 
-| Value | Icon | Appears on |
-|---|---|---|
-| Research time | hourglass | Researches and upgrades — Armor 3, Stomp, Biomass, weapon upgrades |
-| Cooldown | stopwatch | Commander abilities — Bone Wall, Power Surge, Nutrient Mist, Rupture, Heal Wave, Cyst |
-| Health / Armor | cross / shield | Anything dropped, built or manufactured, both teams |
-| Speed | chevrons / celerity | Things that move — ARC, MAC, Drifter, Whip, Shade, Shift |
+| Feature | Who sees it | Setting | Design notes |
+|---|---|---|---|
+| Welder icon right of a marine teammate's name | Marine commander; marines while that nameplate shows | WELDER ICON ON NAMEPLATES, on | `docs/welder-nameplate-icon.md` |
+| Each commander button's hotkey in its corner, from your own bindings | Both commanders | HOTKEY LABELS ON COMMANDER BUTTONS, off | `docs/commander-hotkey-labels.md` |
+| Nutrient mist badge over every alien entity the mist is helping (lifeform eggs, anything still growing, disconnected cysts) | Alien commander | none, always on | `docs/nutrient-mist-indicators.md` |
+| Nutrient mist entry in the HUD status row while evolving in a misted egg | The player in the egg | none, always on | `docs/nutrient-mist-indicators.md` |
+| Tech maps for neutral spectators: hold the tech map key, 1 or 2 for marines or aliens | Spectators | none; stands down under NSL Mod | `docs/spectator-tech-maps.md` |
+| Ready / Not Ready on each team's scoreboard header under Shine's tournament mode | Everyone | none; inert without the plugin | `docs/tournament-ready-label.md` |
 
-All of it appears as a single row directly under the tooltip's title, above the description:
+Settings live under Options > Mods > Bleu's Improved Tooltips.
 
-```
-Armor #3 ( C )                    40 [res]
-[hourglass] 120
-Gives Marines 60 extra armor
-```
+## Gone vanilla
 
-The card grows to fit — vanilla already sizes the panel from its content every frame, so the row
-only has to declare its height. Vanilla's own top-right icon row (cost / supply / biomass) is left
-exactly as it is, so a tooltip with nothing extra to show is pixel-identical to vanilla.
+Ported into the base game in build 345 and removed from the mod in 1.2. Most are switches under
+Options > Advanced. The design notes under `docs/` are kept as the record of how each was worked out.
 
-No vanilla tech carries both a research time and a cooldown, so the row is at most three entries
-wide. Modded tech that somehow has both will simply show both.
-
-## "In Cooldown" panel
-
-Commander ability cooldowns in NS2 are **team-global**, not per-commander — `Commander.lua:22`
-keeps them in `local gTechIdCooldowns = {}` keyed by *team number*, and the server blocks a cast by
-checking that team table. Three Shades cannot alternate Ink to keep ARCs suppressed.
-
-Vanilla only surfaces that on the ability's own button, and only for the commander. This panel sits
-on the right of the screen for **every player on the team**, listing whatever is currently on
-cooldown, using vanilla's own `GUIDial` and per-team cooldown textures so it spins exactly like the
-button does, plus the seconds remaining. Shade Ink being down is as useful to a field alien deciding
-whether to push as it is to the commander.
-
-Abilities qualify at `kCooldownPanelMinDuration` seconds or more (default 5): Shade Ink 15s,
-Nano Shield 10s, Heal Wave 6s. Shorter ones — Rupture 4s, Hallucination Cloud 3s, Nutrient Mist 2s —
-are excluded because they would flicker in and out constantly. As everywhere else in this mod the
-candidates come from `kTechDataCooldown`, so modded abilities qualify automatically.
-
-Entries wrap three to a row, with a short last row centered (1.08). Alien panels sit on the smoke
-the rest of the alien commander UI uses; marine panels on the commander selection panel's scanline
-plate.
-
-### The vanilla bug it depends on
-
-Nobody but the commander who personally cast an ability ever saw its rotating dial - not a commander
-who took the chair mid-cooldown, not one who had just left it, and no field player at all.
-Enforcement was always correct; only the display was blind.
-
-`gTechIdCooldowns` exists separately in the server VM and in every client VM, and nothing syncs
-them. A client's copy is only ever written by the `AbilityResult` message, which the server sends
-to the casting commander alone. Vanilla marks the gap itself — `Commander:SetTechCooldown` ends:
-
-```lua
-if Server then
-    -- send message to commander to sync the cd
-end
-```
-
-an empty block.
-
-The mod fills it in by keeping **its own** cooldown table client-side, fed by its own message
-broadcast to the whole team — on each new cooldown (`SetTechCooldown`) and as a full resync when a
-player joins a team (`JoinTeam`). Because that state lives in the mod rather than on the player
-entity, it survives the entity being replaced on spawn, death, or leaving the chair, and works for
-every class.
-
-Vanilla's `AbilityResult` can't be reused for this: its client handler bails unless
-`Client.GetLocalPlayer():GetIsCommander()`, so it can never reach a field player — and it can't be
-hooked away either, since `Client.HookNetworkMessage` is handed the function by value at load, so
-redefining the global afterwards changes nothing.
-
-The resync recovers start times through the public `GetCooldownFraction` as
-`startTime = now - (1 - fraction) * duration`, since `gTechIdCooldowns` itself is file-local and
-unreachable. Duration is never sent — the client looks it up from TechData, as vanilla's own handler
-does.
-
-A team has at most one commander at a time no matter how many command structures it owns
-(`CommandStructure:GetIsPlayerValidForCommander` requires `not team:GetHasCommander()`), so there is
-no second-commander case to handle — only the rest of the team.
-
-### Vanilla's own button dial
-
-The mod's table drives the mod's panel. It does not drive vanilla's rotating dial on the commander
-button, which reads `gTechIdCooldowns` through `Commander:GetCooldownFraction` — so that dial stayed
-blank for a commander who took the chair mid-cooldown even once the panel was correct.
-
-No server involvement is needed to fix it. By the time you sit down, your client has already been
-receiving the team broadcast as a field player; the data just isn't anywhere vanilla looks. Becoming
-a commander is exactly the moment vanilla's table is empty and the mod's is not, so
-`Commander:OnInitialized` replays ours into vanilla's through the public `SetTechCooldown`. The
-network handler does the same for live updates while commanding, so the two views cannot drift.
-
-The broadcast and the join resync are server-side; everything else in the cooldown work, including
-this dial bridge, is client-side. It needs the server anyway (see [Servers](#servers)).
-
-## Biomass in the tech map
-
-Open the tech map with two hives both researching biomass and only one biomass level lights up. With
-two hives at biomass 1 each — team biomass 2, both researching — vanilla shows BioMassThree in
-progress and leaves BioMassFour dark, even though it is just as much on its way.
-
-The data is not missing, it is discarded one step before it would have been sent. Every hive tracks
-its own `biomassResearchFraction`; `AlienTeam:UpdateBioMassLevel` then collapses all of them into
-one scalar and writes it to exactly one node:
-
-```lua
-if bioMassAdd > progress then
-    progress = bioMassAdd            -- max across every hive
-end
-...
-local techNodeProgress = i == self.bioMassLevel + 1 and progress or 0   -- one node, rest zeroed
-```
-
-The mod post-hooks that function and re-spreads the fractions across consecutive nodes, so two hives
-researching light two icons and three light three.
-
-This is display only. Nothing gates on node research progress — availability runs off `GetHasTech` /
-`GetAvailable` / `GetResearched`, and the per-hive research is driven by `ResearchMixin` against the
-`ResearchBioMassN` nodes, which are untouched. Fixing it on the server rather than in the GUI means
-it travels out through vanilla's own `TechNodeUpdate` message, so the tech map, spectators and
-anything else reading the nodes all agree, with no GUI code involved.
-
-### Which level gets which bar
-
-Entries are sorted by **time remaining, not by fraction**. Biomass researches are not the same
-length — 25, 40, 60 and 80 seconds for levels one through four — so the hive that is furthest along
-is not necessarily the one that finishes first, and it is the first to finish that takes the team to
-the next level. A hive 20% into a 25 second research (20s left) reaches its level before one 50%
-into a 60 second research (30s left), so it takes the nearer icon.
-
-Ordering by time is also stable. Every remaining time counts down at one second per second, so two
-entries can never swap places; ordering by fraction, a short research overtakes a long one part way
-through and the bars trade icons underneath the cursor.
-
-The cost is that bars are no longer monotonic left to right: the nearer level can show a lower bar
-than the one past it. That is honest rather than tidy — it is what the underlying researches
-actually look like.
-
-A hive still under construction is ordered the same way, off its build time. A hive with no usable
-estimate sorts last, rather than having a number invented for it.
-
-With zero or one thing in flight the hook returns immediately, so the common case stays byte-for-byte
-vanilla.
-
-## Hive status HUD
-
-The alien hive panel in the top-left corner (Advanced Options → UI → hive status) already shows each
-hive's health, egg count and type. Two things are added to each row.
-
-**Biomass** — one icon per +1 biomass research that hive has completed, beside its location name. A
-fresh hive shows none, the same way it shows no hive type icon until it is upgraded to a Crag, Shade
-or Shift; each research then adds its own button's art. That the hive is worth 1 on its own is
-already legible from the biomass bar, the map's upgrade summary and the tech tree.
-
-**Researching** — in one of two forms, chosen with HIVE RESEARCH DISPLAY in the settings panel:
-
-- **NOTIFICATIONS** (default): vanilla's rotating "working" ring with the DNA glyph inside it, on any
-  hive that is researching anything: biomass, a lifeform ability off the DNA menu, or a hive type
-  upgrade. It is the same pair a player already sees in the world when they look at a busy hive, at
-  the same rotation speed, so the two read as one indicator rather than two. Research notifications
-  stay on the left as in vanilla.
-- **HIVE PANEL**: up to two research slots per row, the hive's own research and then its evolution
-  chamber's, each drawn as a small research notification with its progress bar and time left. That
-  research no longer appears on the left; research done anywhere else, like CBM's Advanced structure
-  upgrades, still does. See `docs/hive-research-slots.md`.
-
-Every image is vanilla's own, addressed through `GetTextureCoordinatesForIcon` rather than by pixel,
-so a mod that moves an icon in the atlas moves ours with it. Nothing new was drawn.
-
-Each icon is simply the art of the research it stands for, which needs no special cases: the
-researches are strictly sequential, and their buttons already get denser as they go, so the row
-reads as a progression on its own.
-
-Vanilla's naming is consistent once the scheme is clear: a research is named for how much it has
-added over the hive's base, not for the level it lands on. `ResearchBioMassOne` / `Two` / `Three` are
-the +1, +2 and +3, so `ResearchBioMassThree` is the one that takes a hive to 4 — and that is where
-the team cap of 12 comes from, three hives each fully upgraded. `ResearchBioMassFour` has no button
-in vanilla but its node and icon exist, so it is listed and simply never reached unless a mod adds
-the research.
-
-### "The hive" is two entities
-
-Asking a Hive whether it is researching misses more than half of what a hive researches. Biomass and
-hive type upgrades run on the Hive itself, but lifeform abilities — Leap, Metabolize, Umbra, Bone
-Shield and everything else off the DNA menu — do not. `Hive:OnInitialized` creates a separate
-`evolutionchamber` entity and hands it ownership (`Hive.lua:159`), and `EvolutionChamber` carries its
-own `ResearchMixin`; its own file comment says it "handles the life-form researches for the Hive".
-
-So the check asks the Hive and then its `GetEvolutionChamber()`. `Shared.GetEntity` returns nil for
-the `-1` that `evochamberid` is initialized to, so a hive that has not created one yet simply has
-none.
-
-### Why this needs the server
-
-Both numbers are already on the Hive and both are already network vars — `bioMassLevel` in
-`Hive.lua`, `researchingId` from `ResearchMixin`. They still cannot simply be read on the client.
-
-A Hive is only relevant to players within `kMaxRelevancyDistance`, 40 meters, plus the team's own
-commander (`Hive:SetIncludeRelevancyMask`, `Globals.lua:348`). This panel is shown to field aliens
-and its entire purpose is reporting on hives across the map — exactly the case where the client does
-not have the entity. That is why vanilla feeds it from `AlienTeamInfo`, a team-wide always-relevant
-entity, rather than from the hives.
-
-`AlienTeamInfo` carries eggs, health, built fraction and hive type per location, but not biomass and
-not research. Its `networkVars` are file-local and the class is linked by the time a post-hook could
-run, so extending them would mean re-linking the whole class — brittle, and it would fight any other
-mod doing the same. The mod sends its own message instead, the same approach the cooldown panel
-already uses.
-
-Nothing is sent per frame. `AlienTeamInfo:UpdateAllLocationsSlotData` already walks the team's hives
-every update; the hook walks the same hives in the same tick, diffs against what was last published,
-and sends only what moved. Biomass changes a handful of times a round and research starts and stops,
-so this is a few small messages per game. A hive still under construction is biomass 0 with nothing
-researching, which is deliberately never published — otherwise it would send the same "nothing" every
-tick for the whole build.
-
-Location ids are `Shared.GetStringIndex(locationName)` (`ScriptActor_Server.lua:180`), not entity ids.
-`AlienTeamInfo` declares its own as `"entityid"` and gets away with it; the mod's message calls it an
-integer, which is what it is.
-
-
-## Design
-
-**Nothing is registered per tech.** The values already live in `TechData.lua` under keys a tech
-cannot function without, so reading the key *is* the detection:
-
-| Value | TechData key | Vanilla entries |
-|---|---|---|
-| Research time | `kTechDataResearchTimeKey` | 77 |
-| Health | `kTechDataMaxHealth` | 81 |
-| Armor | `kTechDataMaxArmor` | — |
-| Cooldown | `kTechDataCooldown` | 19 |
-
-**Speed is the exception** - it has no TechData key at all. The class is derived the same way:
-`kTechId` is bidirectional, so `kTechId[techId]` yields the enum's own name (`"ARC"`, `"MAC"`,
-`"Crag"`), and NS2 classes are globals under exactly those names. A modded mover whose techId is
-named after its class is picked up with no registration.
-
-Getting the speed off that class is the awkward part, because vanilla is inconsistent: ARC and
-Drifter keep it in `kMoveSpeed` with no accessor; MAC and Whip expose `GetMoveSpeed`; Shift uses
-`GetMaxSpeed`; **Crag** keeps it under a different name entirely (`Crag.kMaxSpeed`); and **Shade**'s
-real speed is the global `kAlienStructureMoveSpeed` (1.73), with `Shade.kMoveSpeed = 2.5` sitting
-there vestigially, read by nothing. So the accessor is asked first, statically - they are one-line
-constant returns, and the one that needs a real instance (MAC) throws and falls back to the constant,
-which is its correct base value anyway.
-
-**Having a speed is not the same as being able to use it, and the mod no longer tries to say which.**
-A class defining `GetStructureMoveable` has conditional movement, and the condition differs between
-mods — B2TP's Spur requires a Shift Hive, CBM's only requires not being electrified, vanilla's Whip
-only requires not being mid-root. An earlier version asked the live structures on your team and
-dimmed the figure when none could confirm it. That dimmed far more than it should: a Whip can always
-move, and on its build button — before you own one — there was nothing to ask, so it faded. The plain
-class speed is stated instead. The cost is that B2TP's Spur shows a speed before its Shift Hive is
-in; the gain is that everything else is right and nothing is faded for a question that could not be
-answered.
-
-### Icons
-
-Only the hourglass and stopwatch are drawn from scratch. Everything else is vanilla art:
-
-| Icon | Source |
+| Was in the mod | In build 345 |
 |---|---|
-| Speed (alien) | Celerity, index 64 in `ui/buildmenu.dds`, used straight from vanilla — CBM assigns the same index to `SpurPassive` |
-| Health, armor | Vanilla's selection-panel cross and shield, **resampled** into `ui/bleu_tooltip_icons.dds` |
-| Marine speed | Drawn: flat double chevrons with a soft glow (1.06). Up to 1.05, `marine_buildmenu_insight.dds` row 2 col 4, mirrored and lifted off its button plate |
-| Hourglass, stopwatch | Drawn in `tools/build_icons.ps1`, then measured and fitted to the same 81% of the icon the vanilla glyphs fill |
-| Biomass | `kTechId.ResearchBioMassOne` / `Two` / `Three` in `ui/buildmenu.dds`, tinted the tech map's researched-alien color |
-| Researching ring | `ui/unitstatus_alien.dds` `{256, 68, 384, 196}`, the same region `GUIUnitStatus` spins on a busy hive |
-| DNA | `kTechId.LifeFormMenu` in `ui/buildmenu.dds` |
-| Supply | `ui/hud2/team_info_atlas.dds` via `GUIHudSupply.kThemeData`, replacing vanilla's MAC / Drifter |
+| Research time, cooldown, health, armor and speed on commander tooltips, Bone Wall's live health, ARC deployed stats | `GUICommanderTooltip`, with its own `ui/commander_stat_icons.dds`; RESEARCH TIME TOOLTIP |
+| Selection panel health and armor icons tinted to their figures | `GUISelectionPanel` |
+| Supply on tooltips marked with the top bar's icon | `GUICommanderTooltip` |
+| "In Cooldown" panel for the whole team, minimum duration setting | TEAM COOLDOWNS (`GUITeamCooldowns`, fixed 5 s minimum) |
+| Cooldown sync, the commander's button dial fix, cooldowns handed to joining players and spectators | `Commander:SetTechCooldown`, `SendTeamTechCooldowns` |
+| Biomass icons and research in each hive's row, HIVE RESEARCH DISPLAY | `GUIHiveStatus`, HIVE RESEARCH PROGRESS |
+| The busy-hive ring in NOTIFICATIONS mode | Not ported; dropped with the rest |
+| Every biomass level in progress lit on the tech map | `AlienTeam:UpdateBioMassLevel` |
+| Bead fills and ability progress meters on the biomass bar | `GUIBioMassDisplay` |
+| Hive research kept off the notification stack, and its completion sound | `GUIEvent` |
+| Spectator top bar supply, and its colored biomass counter | `GUIInsight_TopBar` |
+| Lost arms lab upgrades kept on the marine HUD in red | `GUIMarineHUD` |
+| Marine blips colored by weapon, custom weapon colors | COLOR MARINE BLIPS BY WEAPON, CUSTOM WEAPON COLORS |
+| Phase gate arrows on the commander and spectator corner minimap | `GUIMinimapConnection`, PHASE GATE LINES |
+| Exo weapon bars beside the crosshair | EXO WEAPON BARS (`GUIExoWeaponBars`) |
+| CBM compatibility (biomass 5 tint, SMG map color) | Moot: build 345 replaces CBM |
 
-Health and armor are resampled rather than drawn from the vanilla atlas at runtime for three
-reasons: the source glyphs fill only ~29px of a 48px cell, so at icon size they came out smaller
-than everything beside them; they top out at alpha 233, so they looked translucent next to the
-opaque ones; and being amber they could not be tinted onto a target color at all, since `SetColor`
-multiplies and can only darken. The baked copies are white and fully opaque, so the tint lands
-exactly. Vanilla's own selection panel is repointed at the same glyphs, keeping its own size.
-
-The figures are colored from `GUISelectionPanel.kHealthBarColors` / `kArmorBarColors`, read at
-runtime — marine health pale cyan, marine armor deep teal, alien health yellow, alien armor darker
-orange — and the icons take the same color, so a number means the same thing wherever you read it.
-
-### ARC stances
-
-An ARC is a different unit depending on its stance — `kARCArmor = 400` undeployed against
-`kARCDeployedArmor = 0`, and it cannot move once deployed. `kTechId.ARC` already carries the
-undeployed values, but the two stance buttons carry no TechData at all, which leaves them free to
-describe the state they put the ARC *into*. So the Deploy button reads `0` armor and no speed,
-making the cost of deploying visible while you are choosing it.
-
-A mod that adds tech has to populate these for the tech to work at all, so CBM's Advanced Shade,
-CompMod's Charge and B2TP's MedTech get improved tooltips without this mod knowing they exist.
-
-**Live values where they differ from the stored ones.** Bone Wall's real health is computed at
-spawn from the team's biomass level (`BoneWall:OnInitialized`), not stored in TechData — at
-Biomass 9 the stored value of 100 is off by 800. The tooltip mirrors that calculation and tracks
-biomass as the round goes on.
-
-### CBM compatibility
-
-`ImprovedTooltips_CBM.lua` is the one mod-specific file here, and a deliberate exception to the rule
-that nothing in this mod knows about any particular mod. Everything else works by asking TechData and
-the tech tree what they hold, which covers any mod adding tech the ordinary way. One thing cannot be
-reached that way, and CBM is common enough to be worth the exception.
-
-It is contained. Nothing outside that file mentions CBM, it detects CBM by the tech CBM adds rather
-than by a name or a version (`kTechId.FortressCrag` exists nowhere else), and when CBM is absent it
-registers nothing at all — vanilla and B2TP behave exactly as they did before it existed. Set
-`kEnableCBMCompat` false to remove it entirely.
-
-**Biomass 5.** CBM's fourth `+1` research needs no support of its own — the hive HUD already draws one
-icon per biomass research and reads its art through `GetTextureCoordinatesForIcon`, so CBM's own icon
-appears unaided. What the module adds is the color: CBM marks the biomass 5 hive out in purple, and
-the icon carries that so the HUD agrees with what the player sees standing in the room. Every other
-biomass icon keeps the shared color.
-
-The tint goes through `ImprovedTooltips.RegisterIconColor(techId, color)`, a public registry, rather
-than a branch inside the drawing code — so any mod can claim a color for its own tech without this
-mod knowing it exists.
-
-
-### Extending it from another mod
-
-Register a resolver for anything your mod computes at runtime rather than storing in TechData:
-
-```lua
--- health, armor, researchTime, cooldown
-ImprovedTooltips.RegisterResolver("health", kTechId.MyAbility, function(techId)
-    return kMyBaseHealth + GetSomeLiveMultiplier()
-end)
-
--- Or hide a field whose stored value would mislead a commander:
-ImprovedTooltips.SuppressField("cooldown", kTechId.MyPassiveThing)
-```
-
-Resolvers are called every frame the tooltip is visible, so keep them cheap. Return `0` or `nil`
-to hide the field. `ImprovedTooltips.GetTechCategory(techId)` returns `"tech"`, `"structure"`,
-`"cast"` or `"none"`, derived from the tech tree's own `techType` — useful for writing suppression
-rules without a hand-maintained list.
-
-Guard your registration so it does not run before this mod loads:
-
-```lua
-if ImprovedTooltips then
-    ImprovedTooltips.RegisterResolver(...)
-end
-```
+Tag `v1.12` is the last published code that holds all of these.
 
 ## How it hooks in
 
-Every hook is a post-hook, so the mod stacks with anything that ships its own copy of a file — CBM,
-for instance, replaces `Player_Client.lua` wholesale. Entry `Priority` is deliberately low (5);
-ModLoader sorts entries by *descending* priority and appends post-hooks in that order, so a low
-number means these hooks run last and wrap whatever else loaded. `ImprovedTooltips_FileHooks.lua`
-lists them grouped by feature.
-
-Two of them cover every commander tooltip in the game, because vanilla funnels all four consumers —
-`GUICommanderButtons`, `GUITechMap`, `GUIBioMassDisplay`, `GUICommanderHelpWidget` — through one pair
-of functions.
+Every hook is a post-hook, so the mod stacks with anything that ships its own copy of a file.
+Entry `Priority` is deliberately low (5); ModLoader sorts entries by *descending* priority and
+appends post-hooks in that order, so a low number means these hooks run last and wrap whatever else
+loaded. `ImprovedTooltips_FileHooks.lua` lists them grouped by feature.
 
 | Hook target | Our file | What it does |
 |---|---|---|
-| `lua/Player_Client.lua` | `ImprovedTooltips_TooltipData.lua` | Wraps `PlayerUI_GetTooltipDataFromTechId`, attaching the extra values |
-| `lua/GUICommanderTooltip.lua` | `ImprovedTooltips_TooltipGUI.lua` | Wraps `Initialize` / `UpdateData` / `CalculateTotalTextHeight` / `Update` to create the stat row, place it under the title, and shift the description down |
-| `lua/GUISelectionPanel.lua` | `ImprovedTooltips_SelectionPanel.lua` | Tints vanilla's own health and armor icons to match their figures |
 | `lua/GUICommanderButtons.lua` | `ImprovedTooltips_HotkeyLabels.lua` | **Client.** Wraps `SharedInitializeButtons` and `Update` to write each commander button's hotkey in its corner, when switched on |
-| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | Registers the "In Cooldown" panel for `Player`, the exo weapon bars for `Exo`, and the spectator tech map for the spectator team |
-| `lua/Commander.lua` | `ImprovedTooltips_CooldownDial.lua` | **Client.** Replays synced cooldowns into vanilla's own table when the local player takes the chair, fixing vanilla's button dial |
-| `lua/GUIHiveStatus.lua` | `ImprovedTooltips_HiveStatusGUI.lua` | **Client.** Adds biomass icons and the research ring or research slots to each hive row |
-| `lua/Hud/GUINotificationMixin.lua` | `ImprovedTooltips_ResearchNotifications.lua` | **Client.** In HIVE PANEL, keeps research done in hives out of the notifications on the left |
-| `lua/Hud/GUIEvent.lua` | `ImprovedTooltips_ResearchStack.lua` | **Client.** Rebuilds the notification stack on a mode change, plays the completion sound for every alien research, and queues again research the stack dropped |
-| `lua/GUIBioMassDisplay.lua` | `ImprovedTooltips_BiomassOverlay.lua` | **Client.** Partial fills on the biomass beads being researched, and progress meters under the ability icons |
-| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightTopBar.lua` | **Client.** Colors the spectator bar's biomass counter, catching the item as it is created since nothing in that file is reachable afterwards |
-| `lua/GUIInsight_TopBar.lua` | `ImprovedTooltips_InsightSupply.lua` | **Client.** Adds a supply counter per team to the spectator bar |
+| `lua/ClientUI.lua` | `ImprovedTooltips_ClientUI.lua` | **Client.** Registers the spectator tech map for the spectator team |
 | `lua/GUIInsight_Overhead.lua` | `ImprovedTooltips_SpectatorTechMapHint.lua` | **Client.** Adds the spectator tech maps to the overhead view's key hints |
-| `lua/Hud/Marine/GUIMarineHUD.lua` | `ImprovedTooltips_ArmsLabAlert.lua` | **Client.** Keeps researched weapon and armor icons in alert red when the arms lab is lost |
-| `lua/GUIAdvancedHUDBars.lua` | `ImprovedTooltips_AdvancedHUDBars.lua` | **Client.** Hides the Centralized HUD bars' weapon bar while the exo weapon bars show |
-| `lua/MapBlip.lua` | `ImprovedTooltips_MapBlipColor.lua` | **Client.** Colors marine blips by weapon |
-| `lua/GUIMinimapConnection.lua` | `ImprovedTooltips_MinimapConnection.lua` | **Client.** Phase gate arrows on the commander's and spectator's corner minimap |
 | `lua/GUIUnitStatus.lua` | `ImprovedTooltips_WelderIcon.lua` | **Client.** Wraps `UpdateUnitStatusBlip` to put a welder icon right of a marine teammate's name |
+| `lua/GUIUnitStatus.lua` | `ImprovedTooltips_MistBadge.lua` | **Client.** Wraps `UpdateUnitStatusBlip` to badge, for the alien commander, every alien entity the nutrient mist is helping |
+| `lua/Hud/GUIPlayerStatus.lua` | `ImprovedTooltips_MistStatus.lua` | **Client.** Adds a nutrient mist entry to the alien HUD's status row, through the upvalues of `Initialize` |
 | `lua/GUIScoreboard.lua` | `ImprovedTooltips_TournamentReady.lua` | **Client.** Ready labels on the team headers under Shine's tournament mode |
 | `lua/menu2/NavBar/Screens/Options/Mods/ModsMenuData.lua` | `ImprovedTooltips_ModsMenu.lua` | **Client and main menu.** The settings panel under Options > Mods |
-| `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the mod's cooldown and hive state messages in every VM |
-| `lua/Commander.lua` | `ImprovedTooltips_CooldownSync.lua` | **Server.** Wraps `SetTechCooldown` to broadcast a new cooldown to the team |
-| `lua/NS2Gamerules.lua` | `ImprovedTooltips_TeamJoin.lua` | **Server.** Wraps `JoinTeam` to hand a joining player the team's cooldowns and hive state |
-| `lua/AlienTeam.lua` | `ImprovedTooltips_BiomassProgress.lua` | **Server.** Wraps `UpdateBioMassLevel` to spread in-progress biomass across every level being worked on |
-| `lua/AlienTeamInfo.lua` | `ImprovedTooltips_HiveSync.lua` | **Server.** Wraps `UpdateAllLocationsSlotData` to publish per-hive biomass and research to the team |
+| `lua/NetworkMessages.lua` | `ImprovedTooltips_NetworkMessages.lua` | Registers the spectator tech tree request in every VM |
 | `lua/TechTree_Server.lua` | `ImprovedTooltips_SpectatorTechTree.lua` | **Server.** Wraps `SendTechTreeUpdates` to send a team's tech tree to the neutral spectators who asked for it |
 
 ## Layout
@@ -411,74 +82,38 @@ of functions.
 source/lua/entry/ImprovedTooltips.entry          mod entry, points at the FileHooks file
 source/lua/ImprovedTooltips/
     ImprovedTooltips_FileHooks.lua               registers every hook, grouped by feature
-    ImprovedTooltips_Config.lua                  display options
-    ImprovedTooltips_Common.lua                  shared helpers: textures and icon cells, supply icon,
-                                                 item capture, biomass tech ids, tech lookup, sending
-    ImprovedTooltips_Values.lua                  value resolution + the resolver and icon registries
-    ImprovedTooltips_CBM.lua                     CBM compatibility (inert without CBM)
+    ImprovedTooltips_Config.lua                  display options and the version
+    ImprovedTooltips_Common.lua                  shared helpers: textures and icon cells, tech lookup,
+                                                 whether the mist is helping an entity
     ImprovedTooltips_ModsMenu.lua                the settings panel, built from one table of options
 
-  commander tooltips
-    ImprovedTooltips_TooltipData.lua             hook on Player_Client.lua
-    ImprovedTooltips_TooltipGUI.lua              hook on GUICommanderTooltip.lua
-    ImprovedTooltips_SelectionPanel.lua          hook on GUISelectionPanel.lua
-    ImprovedTooltips_HotkeyLabels.lua            hook on GUICommanderButtons.lua, hotkey labels
+  commander buttons
+    ImprovedTooltips_HotkeyLabels.lua            hook on GUICommanderButtons.lua
 
-  In Cooldown panel
-    GUIImprovedTooltipsCooldowns.lua             the panel
+  spectator tech maps
     ImprovedTooltips_ClientUI.lua                hook on ClientUI.lua
-    ImprovedTooltips_CooldownState.lua           team cooldown table + server publish
-    ImprovedTooltips_CooldownDial.lua            hook on Commander.lua          (client)
-    ImprovedTooltips_CooldownSync.lua            hook on Commander.lua          (server)
-
-  hive status panel and research
-    ImprovedTooltips_HiveState.lua               per-hive biomass and research + server publish
-    ImprovedTooltips_HiveSync.lua                hook on AlienTeamInfo.lua      (server)
-    ImprovedTooltips_HiveStatusGUI.lua           hook on GUIHiveStatus.lua
-    ImprovedTooltips_HiveResearchSlots.lua       the HIVE PANEL research slots
-    ImprovedTooltips_ResearchNotifications.lua   hook on GUINotificationMixin.lua
-    ImprovedTooltips_ResearchStack.lua           hook on GUIEvent.lua
-
-  biomass
-    ImprovedTooltips_BiomassProgress.lua         hook on AlienTeam.lua          (server)
-    ImprovedTooltips_BiomassOverlay.lua          hook on GUIBioMassDisplay.lua
-
-  spectator top bar
-    ImprovedTooltips_InsightTopBar.lua           hook on GUIInsight_TopBar.lua
-    ImprovedTooltips_InsightSupply.lua           hook on GUIInsight_TopBar.lua
     GUIImprovedTooltipsSpectatorTechMap.lua      the spectator tech map
     ImprovedTooltips_SpectatorTechMapHint.lua    hook on GUIInsight_Overhead.lua
     ImprovedTooltips_SpectatorTechTree.lua       hook on TechTree_Server.lua     (server)
 
-  marine HUD and exos
-    ImprovedTooltips_ArmsLabAlert.lua            hook on GUIMarineHUD.lua
-    GUIImprovedTooltipsExoBars.lua               the exo weapon bars
-    ImprovedTooltips_ExoBarsState.lua            whether the exo bars are showing
-    ImprovedTooltips_AdvancedHUDBars.lua         hook on GUIAdvancedHUDBars.lua
-
-  maps and scoreboard
-    ImprovedTooltips_MapBlipColor.lua            hook on MapBlip.lua
-    ImprovedTooltips_MapBlipDiagnostics.lua      it_blipcolors and it_blipstate console commands
-    ImprovedTooltips_MinimapConnection.lua       hook on GUIMinimapConnection.lua
+  nameplates and HUD
     ImprovedTooltips_WelderIcon.lua              hook on GUIUnitStatus.lua, welder icon on nameplates
+    ImprovedTooltips_MistBadge.lua               hook on GUIUnitStatus.lua, nutrient mist badges
+    ImprovedTooltips_MistStatus.lua              hook on Hud/GUIPlayerStatus.lua, mist status icon
+
+  scoreboard
     ImprovedTooltips_TournamentReady.lua         hook on GUIScoreboard.lua
 
   every VM
     ImprovedTooltips_NetworkMessages.lua         hook on NetworkMessages.lua
-    ImprovedTooltips_TeamJoin.lua                hook on NS2Gamerules.lua       (server)
 
-source/ui/bleu_tooltip_icons.dds                 448x64 icon sheet, 7 cells of 64x64
+source/ui/bleu_tooltip_icons.dds                 448x64 icon sheet, 7 cells of 64x64; since 1.2 only
+                                                 the ready and not-ready cells are used
 tools/build_icons.ps1                            regenerates the icon sheet
 tools/check_mod.lua                              static check of source/, run before committing
 preview.jpg                                      Workshop preview, 512x512
 mod.settings                                     Launch Pad project settings
 ```
-
-The repo root doubles as the NS2 Launch Pad project — `mod.settings`, `preview.jpg` and `output/`
-are all Launch Pad needs, so it can be opened and published directly from here.
-
-`preview.jpg` **must stay 512x512 and must stay a JPEG**; Steam rejects other sizes for this item,
-and `mod.settings` names the file by extension.
 
 ## Checking the code
 
@@ -500,54 +135,7 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 
 `ImprovedTooltips_Config.lua`:
 
-- `kTimeFormat` — `"seconds"` (default, `90`), `"suffix"` (`90s`) or `"clock"` (`1:30`)
-- `kShowZeroArmor` — show an explicit `0` for armorless structures rather than hiding the icon
-- `kShowSpeed` — show movement speed for things that move
-- `kTintSelectionPanelIcons` — also tint the icons on vanilla's selection panel to match
-- `kMarineIconColor` / `kAlienIconColor` — per-team tint, applied to the mod's own icons only
-  (vanilla's health and armor art is already team-colored and is left alone)
-- `kShowCooldownPanel` — turn the "In Cooldown" panel off entirely
-- `kCooldownPanelMinDuration` — minimum cooldown, in seconds, to earn a panel entry (default 5)
-- `kCooldownPanelOffset` — panel position, offset from the right edge / vertical middle
-- `kCooldownPanelShowSeconds` — show the remaining seconds under each icon
-- `kSpreadBiomassProgress` — show every biomass level in progress on the tech map, not just the next
-  one. Server-side, like the two hive HUD toggles below; false restores vanilla exactly
-- `kShowHiveBiomassIcons` — biomass icons beside each hive name on the hive status HUD
-- `kShowHiveResearch` — research on the hive rows at all, as the ring or as research slots
-- `kHiveResearchDisplay` — which: `0` NOTIFICATIONS (ring, notifications on the left) or `1` HIVE PANEL
-  (research slots, hive research kept off the left). Exposed in the settings panel
-- `kHiveResearchSlotPositions` / `kHiveResearchSlotScale` — where the research slots sit in a row, and
-  their size as a fraction of a research notification
-- `kShowHiveResearchSlotTimers` / `kHiveResearchSlotTimerScale` — the countdown under each slot
-- `kHiveBiomassIconOrigin` / `kHiveBiomassIconSize` / `kHiveBiomassIconSpacing` — placement of that row
-- `kHiveResearchIconPosition` / `kHiveResearchIconSize` / `kHiveResearchDnaScale` — placement of the ring
-- `kBiomassIconColor` — the color of every biomass icon the mod draws or reaches: the hive HUD row,
-  the tooltip icon and the spectator counter
-- `kColorSpectatorBiomass` — include the spectator top bar counter in that
-- `kHiveResearchRingColor` / `kHiveResearchDnaColor` — tints for the researching indicator
-- `kEnableCBMCompat` — the CBM compatibility module; inert anyway when CBM is not loaded
-- `kColorCBMBiomassFive` / `kCBMBiomassFiveColor` — tint CBM's biomass 5 research icon, and the shade
-- `kUseTopBarSupplyIcon` — mark supply on the tooltip with the HUD top bar's icon instead of vanilla's
-  MAC / Drifter
-- `kHiveResearchRotationDuration` — seconds per turn, matching the ring on the hive itself
-- `kCooldownPanelMarineBackgroundAlpha` / `kCooldownPanelAlienBackgroundAlpha` — panel backing
-  opacity per team; both default to 0, meaning no backing at all
-- `kShowLostArmsLabUpgrades` — keep researched weapon and armor icons on the marine HUD when every
-  arms lab is dead or unpowered, instead of hiding them
-- `kArmsLabLostColor` — the shade they take in that state. Defaults to vanilla's own alert red, the
-  one `GUIMarineHUD:Update` defines and can never reach
-- `kShowBiomassOverlayProgress` — partial fills on the twelve bead bar, and progress meters under
-  its ability icons
-- `kBiomassBeadProgressColor` — tint for a bead being researched. It draws the same slice of the
-  same texture as a finished bead, so this is the only thing telling the two apart
-- `kBiomassAbilityMeterFraction` — meter height as a fraction of the ability icon, rather than a
-  pixel count, since these icons are a twelfth of the bar
-- `kBiomassAbilityMeterColor` / `kBiomassAbilityResearchingColor` — the meter, and the tint an
-  ability icon takes while its research is running. Both match the tech map
-- `kShowSpectatorSupply` — supply counters for both teams on the spectator top bar
-- `kSpectatorSupplyMarineX` / `kSpectatorSupplyAlienX` / `kSpectatorBiomassShiftX` — their positions,
-  and how far vanilla's biomass pair shifts right to make room. Written the way vanilla writes the
-  rest of that bar: marine from the left edge, alien leftward from the right
+- `kVersion` — the mod version, `"1.2"`
 - `kShowTournamentReadyLabels` — the glyph and green/red label at the front of each team's
   scoreboard header under Shine's tournament mode. Inert when that plugin is not running
 - `kReadyLabelText` / `kNotReadyLabelText` — the label strings, brackets included
@@ -556,43 +144,6 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
 - `kReadyGlyphHeightScale` — glyph height as a fraction of the label's measured text height
 - `kReadyGlyphGap` / `kReadyLabelGap` — gaps as fractions of the label's text height, glyph to
   label and label to team name, so they stay in proportion under a scoreboard mod's own font
-- `kColorMarineBlipsByWeapon` — color marine blips on the big map, the one on the map key, by the
-  weapon each player carries. **On** by default from 1.04a, and exposed in the settings panel
-- `kColorMarineMinimapBlipsByWeapon` — the same on every minimap: the marine HUD's corner map, and
-  the commander's and spectator's. Off by default, and exposed in the settings panel
-- `kMapBlipColorRifle` / `kMapBlipColorShotgun` / `kMapBlipColorGrenadeLauncher` / `kMapBlipColorFlamethrower` /
-  `kMapBlipColorHeavyMachineGun` / `kMapBlipColorSubmachinegun` — the **fallback** palette, used only
-  when the runtime read below fails. Values copied from the commander's own `GUIUnitStatus`
-  `kAmmoBarColors`. Every primary weapon is here, rifle included; exos are the one exclusion
-- `kMapBlipReadCommanderPalette` — read the commander's palette straight out of the running game
-  instead, so a weapon any mod adds is picked up with nothing hardcoded here. `GUIUnitStatus` keeps
-  that table as a file-local, so it comes out of `GUIUnitStatus:UpdateUnitStatusBlip`'s upvalues via
-  `debug.getupvalue`, the same technique Shine and NSL use. Set false to force the values above
-- `kMapBlipColorOverrides` — per-weapon colors keyed by `kPlayerStatus` name that win over both the
-  palette read and the fallback. Holds CBM's `Submachinegun` as blue (`#0000FF`) from 1.05, since the
-  palette's orange read as an alien; the place per-weapon custom colors will plug in
-- `kUseCustomWeaponColors` — whether the player's own weapon palette replaces the game's, on every
-  map that colors by weapon. Off by default. Exposed in the settings panel
-- `kCustomWeaponColorRifle` / `Shotgun` / `GrenadeLauncher` / `Flamethrower` / `HeavyMachineGun` /
-  `Submachinegun` — that palette, as `0xRRGGBB`; one field per `kPlayerStatus` name. Defaults are the
-  colors the map uses without it. Exposed in the settings panel
-- `kMapBlipColorRefreshInterval` — seconds between rebuilds of the blip-owner to weapon table.
-  `GetMapBlipColor` runs once per blip per minimap update, so this cannot be per call
-- `kCommanderMinimapPhaseGateArrows` — draw phase gate arrows on the commander's and spectator's
-  corner minimap, following the player's own phase gate line setting. On by default, and exposed in
-  the settings panel
-- `kCommanderMinimapPhaseGateArrowScale` — size of those arrows relative to vanilla's (default 0.6:
-  6 px tall, an arrow every 38 px). 1 draws them at vanilla's size
-- `kShowExoWeaponBars` — a bar and a percentage beside the crosshair for each exo arm, shown only
-  while the exo viewmodel is hidden, whatever the marine HUD bars style. On by default, and exposed in
-  the settings panel
-- `kExoBarInnerOffset` / `kExoBarThickness` / `kExoBarHeight` / `kExoBarTextGap` /
-  `kExoBarFontSize` — exo bar geometry in 1080p pixels, scaled by resolution and by crosshair scale
-  above 1
-- `kExoBarBaseColor`, `kExoBarHeatWarnFrom` / `kExoBarHeatWarnAt`, `kExoBarWarnColor` /
-  `kExoBarHotColor`, `kExoBarChargeReadyColor`, `kExoBarPoolNotReadyAlpha`,
-  `kExoBarPoolReadyColor` / `kExoBarPoolMultiReadyColor` — exo bar colors and thresholds for heat,
-  charge and energy pool arms
 - `kShowWelderNameplateIcon` — a welder icon right of the name of every marine teammate carrying one,
   for the marine commander and marines in the field. On by default, and exposed in the settings panel
 - `kWelderIconCellInset`, `kWelderIconColor` — the build menu welder, cropped from its cell, tinted
@@ -604,6 +155,13 @@ pass is not proof: NS2 runs Lua 5.1, and nothing inside a function runs.
   corner, from the player's own bindings. Off by default, and exposed in the settings panel
 - `kHotkeyLabelScale` / `kHotkeyLabelInset` / `kHotkeyLabelColor` — label size and corner inset, both
   relative to the commander GUI's own scale, and its color (always bright)
+- `kShowNutrientMistIndicators` — the nutrient mist badges (alien commander) and status icon (alien
+  HUD). Always on; no settings panel option
+- `kMistBadgeSize` / `kMistBadgeColor` / `kMistBadgeArrowFraction` / `kMistBadgeGap` — the commander
+  badge: 48 px, green, arrow at 46%, 4 px above the plate
+- `kMistStatusColor` — the status row icon's tint, the alien icon color
+
+The settings removed in 1.2 leave their saved `BIT_*` values in players' options files, unread.
 
 ## Building the assets
 
@@ -618,11 +176,9 @@ block artifacts are very visible on hard-edged white glyphs.
 
 ## Servers
 
-Most of the mod reads client-side state only. The exceptions are the team cooldown broadcast, the
-per-hive biomass and research the hive HUD needs, and a playing team's tech tree sent to the neutral
-spectators who ask for it; no client can read any of these for itself. It
-has to be installed on the server regardless, because of NS2's consistency check rather than anything
-this mod does:
+The mod changes no gameplay. Its one server part sends a playing team's tech tree to the neutral
+spectators who ask for it, which no client can read for itself. It has to be installed on the server
+regardless, because of NS2's consistency check rather than anything this mod does:
 
 - `ns2/lua/ServerConfig.lua` defaults `consistency_enabled = true` and
   `use_own_consistency_config = false`, so a stock server uses the built-in config.
@@ -640,20 +196,33 @@ The Workshop item is tagged `Must be run on Server` for this reason.
 > is read off the config and NS2's server defaults rather than measured. If it turns out a stock
 > server does accept it, the tag and this section should be revisited.
 
-## Known limitations
-
-- **Alien structure maturity is not shown.** A Whip goes 560 → 720 health as it matures, but the
-  mature values are constructor arguments in `AlienStructure.lua` subclasses rather than TechData,
-  so there is no generic way to read them. Only the drop-time value is shown.
-
 ## Credits
 
-- **Shimizu.** The biomass bar's per-bead progress uses his approach, with his permission: bead
-  positions measured from the art, and progress revealed by cropping.
 - **NSL Mod (Dragon).** The spectator tech maps use the same controls and approach as NSL Mod's
   (MIT licensed); the code is this mod's own.
 
 ## Changelog
+
+**1.2 (Workshop, 2026-11-14; for build 345)**
+- **Build 345 made most of the mod part of NS2**, so 1.2 removes everything the game now does on
+  its own: the tooltip values and selection panel tint, the supply icons, the "In Cooldown" panel and
+  cooldown sync, the hive status additions and HIVE RESEARCH DISPLAY (the busy-hive ring with them),
+  the research notification fixes, biomass progress on the tech map and the bead bar, the spectator
+  top bar supply and biomass color, the lost arms lab alert, weapon colored map blips and custom
+  weapon colors, corner minimap phase gate arrows, the exo weapon bars, and CBM compatibility. See
+  [Gone vanilla](#gone-vanilla). 27 files, both server messages for cooldowns and hive state, and
+  nine settings panel rows went with them.
+- **Nutrient mist indicators** (built as 1.13, never published on its own). The alien commander sees
+  a badge (the tech-tree mist icon in green, with the HUD's green up arrow) over every alien entity
+  the mist is helping right now: embryos, anything still growing, and disconnected cysts. A player
+  evolving in a misted egg gets a mist entry in the alien HUD's status row. Grown structures get
+  neither, even inside the mist, because the game's own code does nothing for them (it does not stop
+  off-infestation damage, and mist heals nothing; checked again on build 345). Always on. See
+  `docs/nutrient-mist-indicators.md`.
+- The settings panel keeps HOTKEY LABELS ON COMMANDER BUTTONS and WELDER ICON ON NAMEPLATES.
+- Workshop description rewritten around what the mod still adds, with a "Gone vanilla" section.
+- Tested 2026-11-14 on build 345.4583 beta from Launch Pad: no doubled HUD elements, the two remaining
+  settings, and the remaining features all working, with no script errors in the log.
 
 **1.12 (Workshop, 2026-10-30)**
 - **Tech maps for spectators.** A neutral spectator holds their tech map key (J by default) and

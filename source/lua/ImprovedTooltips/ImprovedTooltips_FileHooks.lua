@@ -2,70 +2,36 @@
 -- lua/ImprovedTooltips/ImprovedTooltips_FileHooks.lua
 --
 -- Registers every file hook the mod uses, grouped by feature. Each is a post-hook: our file runs
--- straight after the game's, and wraps whatever version of it actually loaded. That is what keeps
--- the mod compatible with mods that ship their own copy of a file - CBM, for instance, replaces
--- Player_Client.lua wholesale.
+-- straight after the game's, and wraps whatever version of it actually loaded.
 --
 -- Each hook is registered only in the VM that loads its target, so neither VM hooks a file it never
 -- loads. Two hooks on the same file run in the order they are registered here, each wrapping what
 -- the one before left.
+--
+-- 1.2 (build 345): the commander tooltip values, the In Cooldown panel and its sync, the hive status
+-- additions, the research notification fixes, the biomass bar, the spectator top bar, the arms lab
+-- alert, weapon blip colors, minimap phase gate arrows and the exo weapon bars are part of the game
+-- now, and their hooks are gone.
 
 if Client then
-
-	-- COMMANDER TOOLTIPS. Vanilla funnels every commander tooltip - GUICommanderButtons, GUITechMap,
-	-- GUIBioMassDisplay and GUICommanderHelpWidget - through one pair of functions:
-	-- PlayerUI_GetTooltipDataFromTechId builds the data, and the single GUICommanderTooltip renders
-	-- it. The selection panel you get clicking a structure takes the same health and armor icons.
-	ModLoader.SetupFileHook("lua/Player_Client.lua", "lua/ImprovedTooltips/ImprovedTooltips_TooltipData.lua", "post")
-	ModLoader.SetupFileHook("lua/GUICommanderTooltip.lua", "lua/ImprovedTooltips/ImprovedTooltips_TooltipGUI.lua", "post")
-	ModLoader.SetupFileHook("lua/GUISelectionPanel.lua", "lua/ImprovedTooltips/ImprovedTooltips_SelectionPanel.lua", "post")
 
 	-- COMMANDER BUTTONS: each tab and grid button's hotkey in its bottom-right corner, when switched
 	-- on. Both teams; the marine and alien button scripts are subclasses of this one.
 	ModLoader.SetupFileHook("lua/GUICommanderButtons.lua", "lua/ImprovedTooltips/ImprovedTooltips_HotkeyLabels.lua", "post")
 
-	-- IN COOLDOWN PANEL, and the exo weapon bars: both GUI scripts are registered with ClientUI.
-	-- Commander.lua, client side, replays synced cooldowns into vanilla's own table when the local
-	-- player takes the chair, so vanilla's button dial works too.
+	-- SPECTATOR TECH MAPS: the map is a ClientUI script, registered in ImprovedTooltips_ClientUI.lua
+	-- and fed by the server half below; the key hint goes along the bottom of the overhead view.
 	ModLoader.SetupFileHook("lua/ClientUI.lua", "lua/ImprovedTooltips/ImprovedTooltips_ClientUI.lua", "post")
-	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownDial.lua", "post")
-
-	-- ALIEN HIVE STATUS PANEL, top left: biomass icons, and each hive's research as a busy ring or
-	-- as research slots, per HIVE RESEARCH DISPLAY. The notification queue and stack, so HIVE PANEL
-	-- can keep research done in hives off the left, and so every research completion sounds and
-	-- every research in progress stays in the stack.
-	ModLoader.SetupFileHook("lua/GUIHiveStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveStatusGUI.lua", "post")
-	ModLoader.SetupFileHook("lua/Hud/GUINotificationMixin.lua", "lua/ImprovedTooltips/ImprovedTooltips_ResearchNotifications.lua", "post")
-	ModLoader.SetupFileHook("lua/Hud/GUIEvent.lua", "lua/ImprovedTooltips/ImprovedTooltips_ResearchStack.lua", "post")
-
-	-- BIOMASS BAR, the twelve beads shown with the map, buy menu or tech map open: a partial fill on
-	-- each bead being researched, and progress meters under the ability icons.
-	ModLoader.SetupFileHook("lua/GUIBioMassDisplay.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassOverlay.lua", "post")
-
-	-- SPECTATOR TOP BAR: the biomass counter's color, then a supply counter per team. Separate
-	-- files so each can be switched off alone and neither breaks if the other is wrong.
-	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightTopBar.lua", "post")
-	ModLoader.SetupFileHook("lua/GUIInsight_TopBar.lua", "lua/ImprovedTooltips/ImprovedTooltips_InsightSupply.lua", "post")
-
-	-- SPECTATOR TECH MAPS: the key hint along the bottom of the overhead view. The map itself is a
-	-- ClientUI script (ImprovedTooltips_ClientUI.lua) fed by the server half below.
 	ModLoader.SetupFileHook("lua/GUIInsight_Overhead.lua", "lua/ImprovedTooltips/ImprovedTooltips_SpectatorTechMapHint.lua", "post")
 
-	-- MARINE HUD: researched-but-inactive weapon and armor icons stay on screen in alert red when the
-	-- arms lab is destroyed or unpowered. With Centralized HUD bars, vanilla's right-hand weapon bar
-	-- is hidden while the exo weapon bars show, so a pilot does not get two readouts.
-	ModLoader.SetupFileHook("lua/Hud/Marine/GUIMarineHUD.lua", "lua/ImprovedTooltips/ImprovedTooltips_ArmsLabAlert.lua", "post")
-	ModLoader.SetupFileHook("lua/GUIAdvancedHUDBars.lua", "lua/ImprovedTooltips/ImprovedTooltips_AdvancedHUDBars.lua", "post")
-
-	-- MAPS: marine blips colored by weapon, and phase gate arrows on the commander's and spectator's
-	-- corner minimap.
-	ModLoader.SetupFileHook("lua/MapBlip.lua", "lua/ImprovedTooltips/ImprovedTooltips_MapBlipColor.lua", "post")
-	ModLoader.SetupFileHook("lua/GUIMinimapConnection.lua", "lua/ImprovedTooltips/ImprovedTooltips_MinimapConnection.lua", "post")
-
 	-- NAMEPLATES: a welder icon right of a marine teammate's name, for the marine commander and
-	-- marines in the field. Wraps whichever GUIUnitStatus loaded; CBM and Devnull's AdvancedHud ship
-	-- their own.
+	-- marines in the field. Wraps whichever GUIUnitStatus loaded; Devnull's AdvancedHud ships its own.
 	ModLoader.SetupFileHook("lua/GUIUnitStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_WelderIcon.lua", "post")
+
+	-- NUTRIENT MIST: a badge above every alien entity the mist is helping, for the alien commander,
+	-- and an entry in the alien HUD's status row while the mist is helping you (in an egg).
+	ModLoader.SetupFileHook("lua/GUIUnitStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_MistBadge.lua", "post")
+	ModLoader.SetupFileHook("lua/Hud/GUIPlayerStatus.lua", "lua/ImprovedTooltips/ImprovedTooltips_MistStatus.lua", "post")
 
 	-- SCOREBOARD: a glyph and a green or red label at the front of each team header while Shine's
 	-- tournament mode is waiting for both teams. Inert when that plugin is not running.
@@ -83,23 +49,6 @@ end
 ModLoader.SetupFileHook("lua/NetworkMessages.lua", "lua/ImprovedTooltips/ImprovedTooltips_NetworkMessages.lua", "post")
 
 if Server then
-
-	-- One hook per class, because no file can assume another's class has loaded yet. The helpers
-	-- they share live in ImprovedTooltips_CooldownState.lua and ImprovedTooltips_HiveState.lua,
-	-- neither of which depends on a class.
-	--
-	--   Commander.lua     SetTechCooldown, to broadcast a new cooldown to the team. Hooked here and
-	--                     not on Commander_Server.lua, which Commander.lua loads at its line 69, long
-	--                     before the method is defined further down.
-	--   NS2Gamerules.lua  JoinTeam, to hand a joining player the team's cooldowns and hive state.
-	--   AlienTeam.lua     UpdateBioMassLevel, to show every biomass level in progress on the tech map.
-	--                     Loaded by Server.lua alone, so the class only exists in this VM.
-	--   AlienTeamInfo.lua UpdateAllLocationsSlotData, to publish per-hive biomass and research for the
-	--                     hive status panel, which vanilla gathers for nobody.
-	ModLoader.SetupFileHook("lua/Commander.lua", "lua/ImprovedTooltips/ImprovedTooltips_CooldownSync.lua", "post")
-	ModLoader.SetupFileHook("lua/NS2Gamerules.lua", "lua/ImprovedTooltips/ImprovedTooltips_TeamJoin.lua", "post")
-	ModLoader.SetupFileHook("lua/AlienTeam.lua", "lua/ImprovedTooltips/ImprovedTooltips_BiomassProgress.lua", "post")
-	ModLoader.SetupFileHook("lua/AlienTeamInfo.lua", "lua/ImprovedTooltips/ImprovedTooltips_HiveSync.lua", "post")
 
 	-- TechTree_Server.lua, loaded by TechTree.lua in this VM only: SendTechTreeUpdates, to add the
 	-- neutral spectators who asked for that team's tech tree.

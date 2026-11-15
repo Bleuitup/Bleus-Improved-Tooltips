@@ -27,8 +27,6 @@
 -- GUICommanderButtonsAliens), and NS2 copies methods into a subclass when it is declared. Both
 -- subclass files Script.Load this one's target first and are declared afterwards, so they copy the
 -- wrapped methods; the subclasses are still patched by name below in case one was declared earlier.
--- CBM ships its own GUICommanderButtons.lua; it keeps tabs, bottomButtons, SharedInitializeButtons and
--- Update as vanilla has them, and a post-hook wraps whichever loaded.
 
 if not Client then
 	return

@@ -12,11 +12,18 @@ broken are repeated under "Rules carried from the development notes" below.
 
 ## What this is
 
-A standalone ModLoader NS2 mod (not a Shine extension) that started as research time, cooldown,
-health and armor on the commander tooltips and now also improves the In Cooldown panel, the alien
-hive status panel and research notifications, the biomass bar, the spectator top bar, the marine HUD,
-maps and the scoreboard. Most values are read on the client; team cooldowns and per-hive biomass and
-research are sent by the server in the mod's own network messages.
+A standalone ModLoader NS2 mod (not a Shine extension). It started as research time, cooldown,
+health and armor on the commander tooltips and grew into the In Cooldown panel, hive status
+additions, the biomass bar, spectator supply, the arms lab alert, weapon colored map blips, minimap
+phase gate arrows and exo weapon bars.
+
+**Build 345 ported all of those into the base game**, and **1.2 (2026-11-14) removed them**: 27 files, the cooldown and hive state messages,
+nine settings rows, and the CBM module (build 345 replaces CBM). README's "Gone vanilla" table maps
+each to where it lives in build 345. What remains: welder icon on nameplates, commander hotkey
+labels, nutrient mist indicators, spectator tech maps, and Shine tournament ready labels. Tag `v1.12`
+is the last code with the old features. The tooltip, cooldown, hive, speed, glyph and CBM notes
+below and in `docs/` describe that removed code; keep them as history, and check build 345 before
+reviving any of it. Check new work against the game repo's `beta` branch.
 
 **But it is not a "works on any server" client mod, and must not be described as one.** NS2's
 default consistency config restricts `lua/entry/*.entry`
@@ -30,10 +37,9 @@ they were right.
 ## Code organization (refactor, 2026-09-17)
 
 - **`ImprovedTooltips_Common.lua` holds anything more than one feature needs**: texture paths and the
-  mod's icon sheet cells (`IT.GetOwnIconCoords`), the top bar supply icon, catching items a script
-  creates (`IT.CaptureCreatedGraphicItems`), the positional biomass level tech ids,
-  `IT.GetTechIdByName`, and on the server `IT.SendToPlayer` / `IT.SendToTeam`. Before adding a helper
-  to a feature file, check whether it belongs there.
+  mod's icon sheet cells (`IT.GetOwnIconCoords`), `IT.GetTechIdByName`, and `IT.GetIsMistHelping`.
+  Since 1.2 the version lives in `ImprovedTooltips_Config.lua` (`IT.kVersion`); `Values.lua` is gone.
+  Before adding a helper to a feature file, check whether it belongs there.
 - **The Mods panel is one table.** `kOptions` in `ImprovedTooltips_ModsMenu.lua` holds each option's
   saved key, default, config field and widget; the panel and `ApplyStoredOptions` are built from it.
   Never rename a `BIT_*` key: it is what keeps a player's saved setting.
@@ -189,32 +195,22 @@ and cost time to rule out.
 > `pending-test/*` tag exists, `main` is ahead of the published build — put the test checklist in the
 > tag message, and delete the tag once that work ships. None is outstanding right now.
 
-- **Published: 1.06** (`v1.06`, 2026-09-16), the glyph refresh and the ARC stat row fit. Steam
-  Workshop item `3790290682`. GitHub: https://github.com/Bleuitup/Bleus-Improved-Tooltips. Every
-  earlier version is in the README changelog.
-- **Next: 1.07 candidate.** `feature/hive-research-slots` holds HIVE RESEARCH DISPLAY (NOTIFICATIONS
-  default, HIVE PANEL; BOTH was dropped on 2026-09-17) and the alien research notification fixes,
-  tested over five in-game rounds; see `docs/hive-research-slots.md`. `refactor/cleanup` is built on
-  it and holds the refactor, whose two in-game test sessions were still owed on 2026-09-17.
-- **Parked branches.** `feature/centralized-bars-shields` (alien shield bar and Centralized bar
-  opacity; its first test showed the ydy style not working, the shield number misaligned and many
-  opacity-layer script errors) must be rebased onto the refactor when it resumes, with conflicts
-  expected in Config, ModsMenu, FileHooks, AdvancedHUDBars and Values. `feature/tooltip-text-audit`
-  is planning only. `feature/spectator` and `feature/hive-hud-research` are design docs only.
-  `wip/hive-hud-research-plumbing` is the user's own work in progress and known not to run.
-- **Parked by the user: the same notification bugs in the marine stack.** See the end of
-  `docs/hive-research-slots.md`.
+- **Published: 1.2** (`v1.2`, 2026-11-14). Steam Workshop item `3790290682`. GitHub:
+  https://github.com/Bleuitup/Bleus-Improved-Tooltips. The build 345 cleanup plus the nutrient mist
+  indicators (built as 1.13, never published alone). Every earlier version is in the README changelog;
+  `v1.12` is the last code with the features that went vanilla.
+- **Next: 1.21**, the alien shield bar in the Centralized HUD bars, rebuilt on top of 1.2 on
+  `feature/1.21-shield-bar`. `feature/centralized-bars-shields` is the 1.06-era first attempt (with
+  the opacity slider and style options the user has since dropped); it is reference only.
+- **Parked branches.**
+  `feature/tooltip-text-audit` is planning only and was about the tooltips, now vanilla's.
+  `feature/spectator` is design docs only.
 - `preview.jpg` was generated in an earlier conversation with Claude (the user corrected this on
   2026-09-08; an older note here called it their own artwork). It replaced a rougher placeholder.
   `tools/build_preview.ps1`, which produced that placeholder, has been deleted — do not recreate a
   script that writes `preview.jpg` - it would clobber the current one.
   **It must stay 512x512 and stay a JPEG**: Steam rejects other sizes for this item, and
   `mod.settings` names the file by extension, so a `.png` beside it does nothing.
-- **Durations are raw seconds, settled with the user after in-game review (2026-08-26).** Do not
-  re-propose `M:SS`. `kTimeFormat` keeps the other modes, but `"seconds"` is the decision.
-- **The map blip diagnostic console commands stay**, in `ImprovedTooltips_MapBlipDiagnostics.lua`
-  (user decision, 2026-09-17). They are inert unless typed and are how a "no colors" report gets
-  diagnosed.
 - **Line endings.** `core.autocrlf` is `true` in this clone, so git stores LF and a checkout writes
   CRLF, while files written by the tools are LF; the working tree holds both. Git normalizes either
   way, so do not convert files for their own sake. **But a multi-line `perl -0` substitution written

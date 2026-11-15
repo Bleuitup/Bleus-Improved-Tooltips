@@ -1,8 +1,7 @@
 -- Bleu's Improved Tooltips
 --
--- Most of the work happens on the client: nearly every value shown is already readable there
--- (TechData is shared, the tech tree is networked). Three things are not, and the server sends
--- them: team ability cooldowns, and per-hive biomass and research for the hive status HUD.
+-- Almost all of it runs on the client. The one server part is the spectator tech maps: the server
+-- sends a team's tech tree to the neutral spectators who ask for it.
 --
 -- That does NOT mean it runs on any server. NS2's default consistency config restricts
 -- "lua/entry/*.entry" (core/lua/ConsistencyConfig.lua) and ships with consistency_enabled = true,
@@ -11,7 +10,7 @@
 --
 -- Priority is deliberately low. ModLoader sorts entries by DESCENDING priority and appends each
 -- mod's post-hooks in that order, so a low number means our hooks are registered last and
--- therefore run last - wrapping whatever CBM (100), Shimizu (99) or CompMod (50) left behind
+-- therefore run last - wrapping whatever higher-priority mods left behind
 -- rather than being overwritten by them.
 modEntry = {
 	ModName = "Bleu's Improved Tooltips",

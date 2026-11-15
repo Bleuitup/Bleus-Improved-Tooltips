@@ -1,7 +1,7 @@
 -- Bleu's Improved Tooltips
 -- lua/ImprovedTooltips/ImprovedTooltips_ModsMenu.lua
 --
--- The mod's own settings panel, under Options > Mods, alongside CBM's and anyone else's.
+-- The mod's own settings panel, under Options > Mods, alongside any other mod's.
 --
 -- WHICH MENU THIS IS. There are two registries and they are easy to confuse:
 --
@@ -40,13 +40,6 @@ if not kMainVM then
 	Script.Load("lua/ImprovedTooltips/ImprovedTooltips_Config.lua")
 end
 
--- CBM adds an SMG, which the map colors blue rather than the commander palette's orange (see
--- IT.kMapBlipColorOverrides). The tooltip says so only when that weapon exists: kPlayerStatus gains a
--- Submachinegun entry under CBM and has none in vanilla. Only knowable in game - the main menu VM
--- loads no gameplay Lua, so from the main menu the tooltip reads as it does without CBM.
-local kHasCBMSmg = not kMainVM and type(kPlayerStatus) == "table" and rawget(kPlayerStatus, "Submachinegun") ~= nil
-local kCBMSmgNote = kHasCBMSmg and " SMGs are colored blue." or ""
-
 -- CASING, matching vanilla. Option labels and category names are written in CAPITALS; the tooltip
 -- beneath them is ordinary sentence case with full stops. This is in the strings themselves, not a
 -- transform the widget applies - from ns2/gamestrings/enUS.txt:
@@ -81,26 +74,9 @@ local kCBMSmgNote = kHasCBMSmg and " SMGs are colored blue." or ""
 --            optional; false leaves the row out of the panel. The saved value is still read.
 local kOptions =
 {
-	{
-		key = "BIT_CooldownPanel", field = "kShowCooldownPanel", type = "bool", default = true,
-		widget = "checkbox",
-		label = "IN COOLDOWN PANEL",
-		-- The inner quotes are escaped, not smart quotes: this is a plain double-quoted Lua string, so
-		-- an unescaped " would close it early.
-		tooltip = "Show the \"In Cooldown\" panel listing the commander abilities your team currently has on cooldown. Cooldowns are shared by and to the whole team.",
-	},
-
-	{
-		key = "BIT_CooldownMinTime", field = "kCooldownPanelMinDuration", type = "float", default = 5,
-		-- The slider stores a float; the filter it feeds compares against whole seconds, so round
-		-- rather than truncate.
-		read = function(value) return math.max(0, math.floor(value + 0.5)) end,
-		widget = "number", minValue = 0, maxValue = 30, decimalPlaces = 0,
-		label = "MINIMUM COOLDOWN SHOWN (SECONDS)",
-		-- Deliberately names no abilities: any list here goes stale under a mod that retunes
-		-- cooldowns, and CBM retunes some.
-		tooltip = "Abilities with a cooldown shorter than this are left out. Default is 5. Set to 0 to list everything.",
-	},
+	-- 1.2 (build 345): the In Cooldown panel, weapon blip colors, corner minimap phase gate arrows, exo
+	-- weapon bars and hive research display became vanilla options under Options > Advanced, and their
+	-- rows went with them. Their saved BIT_ values stay in players' options files, unread.
 
 	{
 		-- 1.11. Both teams, so no section. Off by default (user's call, 2026-10-22).
@@ -111,141 +87,12 @@ local kOptions =
 	},
 
 	{
-		-- The big map only from 1.04, and keeps its 1.03 key so a stored ON carries over.
-		section = "MARINES",
-		key = "BIT_WeaponBlips", field = "kColorMarineBlipsByWeapon", type = "bool", default = true,
-		widget = "checkbox",
-		label = "COLOR MAP BLIPS BY WEAPON",
-		-- Says what it covers rather than listing exceptions. Exos are named because a player WILL
-		-- notice theirs staying the team color and wonder whether it is broken; the rifle and the
-		-- sidearms are not, because keeping the color you already chose reads as normal rather than
-		-- as an omission.
-		tooltip = "Colors marines on the map (the one on the map key) by their primary weapon. Weapon color matches the dropped weapon outline. Exosuits are ignored. Seen by marines and spectators only." .. kCBMSmgNote,
-	},
-
-	{
-		section = "MARINES",
-		key = "BIT_WeaponBlipsMinimap", field = "kColorMarineMinimapBlipsByWeapon", type = "bool", default = false,
-		widget = "checkbox",
-		label = "COLOR MINIMAP BLIPS BY WEAPON",
-		tooltip = "The same weapon colors on the minimap: the one in the corner of the marine HUD, and the commander's and spectator's corner map. Set separately from the big map.",
-	},
-
-	{
-		-- 1.09. Off or on, nothing in between: when on, the player's own palette replaces the game's on
-		-- every map that colors by weapon (the two checkboxes above). No game colors on one map and
-		-- custom on the other (user's call, docs/custom-weapon-blip-colors.md). Saved as 0 or 1;
-		-- anything above 0 reads as on, which also covers a hand-edited options file.
-		--
-		-- With both checkboxes off there is nothing for it to apply to, so the row folds away, and the
-		-- palette under it with it.
-		section = "MARINES",
-		key = "BIT_CustomWeaponColors", field = "kUseCustomWeaponColors", type = "int", default = 0,
-		read = function(value) return value >= 1 end,
-		widget = "choice",
-		choices =
-		{
-			{ value = 0, displayString = "OFF" },
-			{ value = 1, displayString = "ON" },
-		},
-		parent = { "BIT_WeaponBlips", "BIT_WeaponBlipsMinimap" }, hideValues = { false },
-		label = "CUSTOM WEAPON COLORS",
-		tooltip = "Use your own weapon colors in place of the game's, on every map where weapon colors are switched on above.",
-	},
-
-	-- The palette. Each row folds away while CUSTOM WEAPON COLORS is OFF (parent, hideValues), the
-	-- way vanilla folds the building highlight color under its checkbox. Defaults are the colors the
-	-- map uses without this, so switching it on changes nothing until a color is picked.
-	{
-		section = "MARINES",
-		key = "BIT_WeaponColorRifle", field = "kCustomWeaponColorRifle", type = "color", default = 0x00FFFF,
-		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
-		label = "RIFLE COLOR",
-		tooltip = "Map color for marines carrying a rifle.",
-	},
-
-	{
-		section = "MARINES",
-		key = "BIT_WeaponColorShotgun", field = "kCustomWeaponColorShotgun", type = "color", default = 0x00FF00,
-		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
-		label = "SHOTGUN COLOR",
-		tooltip = "Map color for marines carrying a shotgun.",
-	},
-
-	{
-		section = "MARINES",
-		key = "BIT_WeaponColorGrenadeLauncher", field = "kCustomWeaponColorGrenadeLauncher", type = "color", default = 0xFF00FF,
-		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
-		label = "GRENADE LAUNCHER COLOR",
-		tooltip = "Map color for marines carrying a grenade launcher.",
-	},
-
-	{
-		section = "MARINES",
-		key = "BIT_WeaponColorFlamethrower", field = "kCustomWeaponColorFlamethrower", type = "color", default = 0xFFFF00,
-		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
-		label = "FLAMETHROWER COLOR",
-		tooltip = "Map color for marines carrying a flamethrower.",
-	},
-
-	{
-		section = "MARINES",
-		key = "BIT_WeaponColorHeavyMachineGun", field = "kCustomWeaponColorHeavyMachineGun", type = "color", default = 0xE60000,
-		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
-		label = "HEAVY MACHINE GUN COLOR",
-		tooltip = "Map color for marines carrying a heavy machine gun.",
-	},
-
-	{
-		-- Only listed in a game running CBM, the one place the weapon exists. The main menu cannot tell
-		-- whether CBM will be loaded, so the row is left out there too.
-		available = kHasCBMSmg,
-		section = "MARINES",
-		key = "BIT_WeaponColorSubmachinegun", field = "kCustomWeaponColorSubmachinegun", type = "color", default = 0x0000FF,
-		widget = "color", parent = "BIT_CustomWeaponColors", hideValues = { 0 },
-		label = "SMG COLOR (CBM)",
-		tooltip = "Map color for marines carrying CBM's submachine gun.",
-	},
-
-	{
-		section = "MARINES",
-		key = "BIT_MinimapPhaseGateArrows", field = "kCommanderMinimapPhaseGateArrows", type = "bool", default = true,
-		widget = "checkbox",
-		label = "PHASE GATE ARROWS ON CORNER MINIMAP",
-		tooltip = "Shows phase gate arrows on the commander's and spectator's corner minimap, like the big map. Follows your phase gate lines setting under Advanced.",
-	},
-
-	{
-		section = "MARINES",
-		key = "BIT_ExoWeaponBars", field = "kShowExoWeaponBars", type = "bool", default = true,
-		widget = "checkbox",
-		label = "EXO WEAPON BARS",
-		tooltip = "Shows heat and charge bars beside the crosshair for each exo arm, in place of the Centralized HUD bars' weapon bar. Only while the exo viewmodel is hidden.",
-	},
-
-	{
 		-- 1.10.
 		section = "MARINES",
 		key = "BIT_WelderNameplateIcon", field = "kShowWelderNameplateIcon", type = "bool", default = true,
 		widget = "checkbox",
 		label = "WELDER ICON ON NAMEPLATES",
 		tooltip = "Shows a welder icon next to the name of every marine teammate carrying one. Seen by the marine commander and by marines in the field.",
-	},
-
-	{
-		-- 0 notifications, 1 hive panel: IT.kHiveResearchDisplay* in the config. Clamped so a
-		-- hand-edited options file cannot select a mode that does not exist.
-		section = "ALIENS",
-		key = "BIT_HiveResearchDisplay", field = "kHiveResearchDisplay", type = "int", default = 0,
-		read = function(value) return math.max(0, math.min(1, value)) end,
-		widget = "choice",
-		choices =
-		{
-			{ value = 0, displayString = "NOTIFICATIONS" },
-			{ value = 1, displayString = "HIVE PANEL" },
-		},
-		label = "HIVE RESEARCH DISPLAY",
-		tooltip = "Where research done in hives is shown. Notifications keeps it on the left, with a ring on the busy hive. Hive panel shows it in each hive's row instead, with progress and time left. Needs the hive status panel on.",
 	},
 }
 
